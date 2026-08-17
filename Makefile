@@ -23,10 +23,16 @@ lint:
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32i_alu \
+		-o build/rv32i_alu_lint.vvp rtl/rv32i_alu.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32im_decoder.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-Irtl rtl/rv32i_alu.v
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -I rtl rtl/rv32im_decoder.v; hierarchy -check -top rv32im_decoder; proc; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -I rtl rtl/rv32i_alu.v; hierarchy -check -top rv32i_alu; proc; check'
 
 unit:
 	@mkdir -p build
@@ -34,6 +40,10 @@ unit:
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
 		rtl/rv32im_decoder.v tb/rv32im_decoder_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32im_decoder_tb.vvp
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32i_alu_tb -o build/rv32i_alu_tb.vvp \
+		rtl/rv32i_alu.v tb/rv32i_alu_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32i_alu_tb.vvp
 
 smoke regression matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
