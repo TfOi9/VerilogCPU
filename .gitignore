@@ -37,6 +37,9 @@ obj_dir/
 *.dump
 *.hexdump
 *.data
+*.image
+*.map
+*.readelf
 *.rpt
 *.lib
 *.db
