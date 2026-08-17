@@ -1,0 +1,56 @@
+# Operating system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build and generated directories
+/build/*
+!/build/.gitkeep
+/build-*/
+/reports/*
+!/reports/.gitkeep
+/.deps/*
+!/.deps/.gitkeep
+obj_dir/
+
+# HDL simulation artifacts
+*.vcd
+*.fst
+*.lxt
+*.lxt2
+*.ghw
+*.wlf
+*.lna
+
+# RISC-V and synthesis artifacts
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.dump
+*.hexdump
+*.data
+*.rpt
+*.lib
+*.db
+
+# Logs and temporary files
+*.log
+*.out
+*.trace
+*.tmp
+*.bak
+
+# Python cache and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
