@@ -11,3 +11,5 @@ RV32IM 指令译码器设计见 [decoder.md](decoder.md)。
 RV32I 整数算术逻辑单元设计见 [alu.md](alu.md)。
 
 RV32M 三级 Booth-Wallace 流水乘法器设计见 [multiplier.md](multiplier.md)。
+
+RV32M 朴素迭代除法器设计见 [divider.md](divider.md)。
