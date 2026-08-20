@@ -13,3 +13,5 @@ RV32I 整数算术逻辑单元设计见 [alu.md](alu.md)。
 RV32M 三级 Booth-Wallace 流水乘法器设计见 [multiplier.md](multiplier.md)。
 
 RV32M 朴素迭代除法器设计见 [divider.md](divider.md)。
+
+参数化物理寄存器文件设计见 [prf.md](prf.md)。
