@@ -21,3 +21,5 @@ RAT、RRAT、物理寄存器空闲表与就绪记分牌设计见 [rename.md](ren
 参数化重排序缓冲区设计见 [rob.md](rob.md)。
 
 参数化整数保留站设计见 [int_rs.md](int_rs.md)。
+
+乘除法保留站设计见 [mdu_rs.md](mdu_rs.md)。

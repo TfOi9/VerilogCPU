@@ -43,6 +43,14 @@ lint:
 		-s rv32_integer_reservation_station \
 		-o build/rv32_integer_reservation_station_lint.vvp \
 		rtl/rv32_integer_reservation_station.v
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_multiply_reservation_station \
+		-o build/rv32_multiply_reservation_station_lint.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_divide_reservation_station \
+		-o build/rv32_divide_reservation_station_lint.vvp \
+		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32im_decoder.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
@@ -59,6 +67,12 @@ lint:
 		-Irtl rtl/rv32_reorder_buffer.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32_integer_reservation_station.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		--top-module rv32_multiply_reservation_station -Irtl \
+		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		--top-module rv32_divide_reservation_station -Irtl \
+		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -I rtl rtl/rv32im_decoder.v; hierarchy -check -top rv32im_decoder; proc; check'
 	@$(TIMEOUT) 30 yosys -q -p \
@@ -83,6 +97,10 @@ lint:
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 8 -set INT_RS_INDEX_WIDTH 3 -set BE_WIDTH 2 -set PHYS_REGS 64 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 32 -set ROB_INDEX_WIDTH 5 -set ROB_TAG_WIDTH 7 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 16 -set INT_RS_INDEX_WIDTH 4 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v; chparam -set MUL_RS_ENTRIES 8 -set MUL_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_multiply_reservation_station; hierarchy -check -top rv32_multiply_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v; chparam -set DIV_RS_ENTRIES 8 -set DIV_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_divide_reservation_station; hierarchy -check -top rv32_divide_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
 unit:
 	@mkdir -p build
@@ -409,6 +427,122 @@ unit:
 		build/rv32_integer_reservation_station_bad_phys.vvp 2>&1 | \
 		grep -q '^ERROR rv32_integer_reservation_station physical address width='
 	@echo "PASS integer reservation station rejected invalid physical address width"
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_mdu_rs_vectors.py \
+		build/mdu_rs_vectors.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_mdu_reservation_stations_tb.RS_ENTRIES=2 \
+		-P rv32_mdu_reservation_stations_tb.RS_INDEX_WIDTH=1 \
+		-P rv32_mdu_reservation_stations_tb.BE_WIDTH=1 \
+		-P rv32_mdu_reservation_stations_tb.PHYS_REGS=48 \
+		-P rv32_mdu_reservation_stations_tb.PHYS_REG_ADDR_WIDTH=6 \
+		-P rv32_mdu_reservation_stations_tb.ROB_ENTRIES=16 \
+		-P rv32_mdu_reservation_stations_tb.ROB_INDEX_WIDTH=4 \
+		-s rv32_mdu_reservation_stations_tb \
+		-o build/rv32_mdu_reservation_stations_tb_2x1.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
+		rtl/rv32_mdu_reservation_stations.v \
+		tb/rv32_mdu_reservation_stations_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_mdu_reservation_stations_tb_2x1.vvp \
+		+VECTOR_FILE=build/mdu_rs_vectors.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_mdu_reservation_stations_tb.RS_ENTRIES=4 \
+		-P rv32_mdu_reservation_stations_tb.RS_INDEX_WIDTH=2 \
+		-P rv32_mdu_reservation_stations_tb.BE_WIDTH=2 \
+		-P rv32_mdu_reservation_stations_tb.PHYS_REGS=64 \
+		-P rv32_mdu_reservation_stations_tb.PHYS_REG_ADDR_WIDTH=6 \
+		-P rv32_mdu_reservation_stations_tb.ROB_ENTRIES=32 \
+		-P rv32_mdu_reservation_stations_tb.ROB_INDEX_WIDTH=5 \
+		-s rv32_mdu_reservation_stations_tb \
+		-o build/rv32_mdu_reservation_stations_tb_4x2.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
+		rtl/rv32_mdu_reservation_stations.v \
+		tb/rv32_mdu_reservation_stations_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_mdu_reservation_stations_tb_4x2.vvp \
+		+VECTOR_FILE=build/mdu_rs_vectors.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_mdu_reservation_stations_tb.RS_ENTRIES=8 \
+		-P rv32_mdu_reservation_stations_tb.RS_INDEX_WIDTH=3 \
+		-P rv32_mdu_reservation_stations_tb.BE_WIDTH=4 \
+		-P rv32_mdu_reservation_stations_tb.PHYS_REGS=96 \
+		-P rv32_mdu_reservation_stations_tb.PHYS_REG_ADDR_WIDTH=7 \
+		-P rv32_mdu_reservation_stations_tb.ROB_ENTRIES=64 \
+		-P rv32_mdu_reservation_stations_tb.ROB_INDEX_WIDTH=6 \
+		-s rv32_mdu_reservation_stations_tb \
+		-o build/rv32_mdu_reservation_stations_tb_8x4.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
+		rtl/rv32_mdu_reservation_stations.v \
+		tb/rv32_mdu_reservation_stations_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_mdu_reservation_stations_tb_8x4.vvp \
+		+VECTOR_FILE=build/mdu_rs_vectors.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_multiply_reservation_station.MUL_RS_ENTRIES=6 \
+		-P rv32_multiply_reservation_station.MUL_RS_INDEX_WIDTH=3 \
+		-s rv32_multiply_reservation_station \
+		-o build/rv32_multiply_reservation_station_bad_entries.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_multiply_reservation_station_bad_entries.vvp 2>&1 | \
+		grep -q '^ERROR rv32_mdu_reservation_station_core RS_ENTRIES not power of two='
+	@echo "PASS MDU reservation station rejected invalid entries"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_multiply_reservation_station.MUL_RS_ENTRIES=2 \
+		-P rv32_multiply_reservation_station.MUL_RS_INDEX_WIDTH=1 \
+		-P rv32_multiply_reservation_station.BE_WIDTH=4 \
+		-s rv32_multiply_reservation_station \
+		-o build/rv32_multiply_reservation_station_too_small.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_multiply_reservation_station_too_small.vvp 2>&1 | \
+		grep -q '^ERROR rv32_mdu_reservation_station_core invalid RS_ENTRIES='
+	@echo "PASS MDU reservation station rejected undersized capacity"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_divide_reservation_station.BE_WIDTH=3 \
+		-s rv32_divide_reservation_station \
+		-o build/rv32_divide_reservation_station_bad_be.vvp \
+		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_divide_reservation_station_bad_be.vvp 2>&1 | \
+		grep -q '^ERROR rv32_mdu_reservation_station_core invalid BE_WIDTH='
+	@echo "PASS MDU reservation station rejected invalid BE_WIDTH"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_multiply_reservation_station.MUL_RS_INDEX_WIDTH=3 \
+		-s rv32_multiply_reservation_station \
+		-o build/rv32_multiply_reservation_station_bad_index.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_multiply_reservation_station_bad_index.vvp 2>&1 | \
+		grep -q '^ERROR rv32_mdu_reservation_station_core index width='
+	@echo "PASS MDU reservation station rejected invalid index width"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_divide_reservation_station.PHYS_REG_ADDR_WIDTH=7 \
+		-s rv32_divide_reservation_station \
+		-o build/rv32_divide_reservation_station_bad_phys.vvp \
+		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_divide_reservation_station_bad_phys.vvp 2>&1 | \
+		grep -q '^ERROR rv32_mdu_reservation_station_core physical address width='
+	@echo "PASS MDU reservation station rejected invalid physical address width"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_multiply_reservation_station.ROB_TAG_WIDTH=5 \
+		-s rv32_multiply_reservation_station \
+		-o build/rv32_multiply_reservation_station_bad_tag.vvp \
+		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_multiply_reservation_station_bad_tag.vvp 2>&1 | \
+		grep -q '^ERROR rv32_mdu_reservation_station_core invalid ROB_TAG_WIDTH='
+	@echo "PASS MDU reservation station rejected invalid ROB tag width"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_mdu_reservation_station_bad_op_tb \
+		-o build/rv32_mdu_reservation_station_bad_op.vvp \
+		rtl/rv32_mdu_reservation_stations.v \
+		tb/rv32_mdu_reservation_stations_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_mdu_reservation_station_bad_op.vvp 2>&1 | \
+		grep -q '^ERROR rv32_mdu_reservation_station_core unsupported op='
+	@echo "PASS MDU reservation station rejected misclassified operation"
 
 smoke regression matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
