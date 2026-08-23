@@ -4,7 +4,7 @@
 
 `rv32m_multiplier` 是单发射、完全流水化的 RV32M 乘法执行单元，支持 `MUL`、`MULH`、`MULHSU` 和 `MULHU`。模块采用 radix-4 Booth 编码、Wallace Tree 压缩和最终进位传播加法。无回压时延迟为三个周期，流水线填满后每周期可以接收并完成一条请求。
 
-接口通过 `ROB_TAG_WIDTH` 参数配置 ROB tag 宽度。请求携带操作码、两个 32 位操作数和 ROB tag，响应返回对应的 32 位结果及原 tag。后续 MUL 保留站在请求握手后释放表项，完成网络通过响应接口施加回压并接收结果。
+接口通过 `ROB_TAG_WIDTH` 参数配置 ROB tag 宽度，默认 7 位，对应 32 项 ROB 的 5 位索引和 2 位 generation。请求携带操作码、两个 32 位操作数和 ROB tag，响应返回对应的 32 位结果及原 tag。后续 MUL 保留站在请求握手后释放表项，完成网络通过响应接口施加回压并接收结果。
 
 ## Booth 部分积
 

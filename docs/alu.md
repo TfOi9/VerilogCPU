@@ -4,7 +4,7 @@
 
 `rv32i_alu` 是单发射、单周期的整数与控制流执行单元。模块支持 RV32I 的寄存器和立即数算术、逻辑、移位、比较、LUI、AUIPC、条件分支、JAL 与 JALR。乘除法、访存地址生成、FENCE、SYSTEM 和 HALT 不进入本模块。
 
-多发射后端为每个整数执行端口实例化一个相同的 ALU。默认 ROB tag 宽度为 5 位，也可通过 `ROB_TAG_WIDTH` 参数调整。ALU 在响应中原样返回请求的 ROB tag，供完成网络定位 ROB 项。
+多发射后端为每个整数执行端口实例化一个相同的 ALU。默认 ROB tag 宽度为 7 位，对应 32 项 ROB 的 5 位索引和 2 位 generation，也可通过 `ROB_TAG_WIDTH` 参数调整。ALU 在响应中原样返回请求的 ROB tag，供完成网络定位 ROB 项。
 
 ## 内部结构
 

@@ -36,6 +36,9 @@ lint:
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32_rename_unit -o build/rv32_rename_unit_lint.vvp \
 		rtl/rv32_rename_unit.v
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_reorder_buffer -o build/rv32_reorder_buffer_lint.vvp \
+		rtl/rv32_reorder_buffer.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32im_decoder.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
@@ -48,6 +51,8 @@ lint:
 		-Irtl rtl/rv32_physical_register_file.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32_rename_unit.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-Irtl rtl/rv32_reorder_buffer.v
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -I rtl rtl/rv32im_decoder.v; hierarchy -check -top rv32im_decoder; proc; check'
 	@$(TIMEOUT) 30 yosys -q -p \
@@ -60,6 +65,12 @@ lint:
 		'read_verilog -I rtl rtl/rv32_physical_register_file.v; hierarchy -check -top rv32_physical_register_file; proc; memory; opt; check'
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_rename_unit.v; hierarchy -check -top rv32_rename_unit; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 16 -set ROB_INDEX_WIDTH 4 -set ROB_TAG_WIDTH 6 -set BE_WIDTH 1 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 32 -set ROB_INDEX_WIDTH 5 -set ROB_TAG_WIDTH 7 -set BE_WIDTH 2 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 -set BE_WIDTH 4 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
 unit:
 	@mkdir -p build
@@ -233,6 +244,68 @@ unit:
 	@$(TIMEOUT) 30 vvp -N build/rv32_rename_unit_bad_addr.vvp 2>&1 | \
 		grep -q '^ERROR rv32_rename_unit address width='
 	@echo "PASS rename unit rejected invalid PHYS_REG_ADDR_WIDTH"
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_rob_vectors.py \
+		build/rob_vectors_16x1.txt --entries 16 --width 1
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_reorder_buffer_tb.ROB_ENTRIES=16 \
+		-P rv32_reorder_buffer_tb.ROB_INDEX_WIDTH=4 \
+		-P rv32_reorder_buffer_tb.BE_WIDTH=1 \
+		-s rv32_reorder_buffer_tb \
+		-o build/rv32_reorder_buffer_tb_16x1.vvp \
+		rtl/rv32_reorder_buffer.v tb/rv32_reorder_buffer_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_reorder_buffer_tb_16x1.vvp \
+		+VECTOR_FILE=build/rob_vectors_16x1.txt
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_rob_vectors.py \
+		build/rob_vectors_32x2.txt --entries 32 --width 2
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_reorder_buffer_tb.ROB_ENTRIES=32 \
+		-P rv32_reorder_buffer_tb.ROB_INDEX_WIDTH=5 \
+		-P rv32_reorder_buffer_tb.BE_WIDTH=2 \
+		-s rv32_reorder_buffer_tb \
+		-o build/rv32_reorder_buffer_tb_32x2.vvp \
+		rtl/rv32_reorder_buffer.v tb/rv32_reorder_buffer_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_reorder_buffer_tb_32x2.vvp \
+		+VECTOR_FILE=build/rob_vectors_32x2.txt
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_rob_vectors.py \
+		build/rob_vectors_64x4.txt --entries 64 --width 4
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_reorder_buffer_tb.ROB_ENTRIES=64 \
+		-P rv32_reorder_buffer_tb.ROB_INDEX_WIDTH=6 \
+		-P rv32_reorder_buffer_tb.BE_WIDTH=4 \
+		-s rv32_reorder_buffer_tb \
+		-o build/rv32_reorder_buffer_tb_64x4.vvp \
+		rtl/rv32_reorder_buffer.v tb/rv32_reorder_buffer_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_reorder_buffer_tb_64x4.vvp \
+		+VECTOR_FILE=build/rob_vectors_64x4.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_reorder_buffer.ROB_ENTRIES=24 \
+		-P rv32_reorder_buffer.ROB_INDEX_WIDTH=5 \
+		-P rv32_reorder_buffer.ROB_TAG_WIDTH=7 \
+		-s rv32_reorder_buffer \
+		-o build/rv32_reorder_buffer_bad_entries.vvp \
+		rtl/rv32_reorder_buffer.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_reorder_buffer_bad_entries.vvp 2>&1 | \
+		grep -q '^ERROR rv32_reorder_buffer ROB_ENTRIES not power of two='
+	@echo "PASS reorder buffer rejected non-power-of-two entries"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_reorder_buffer.BE_WIDTH=3 \
+		-s rv32_reorder_buffer \
+		-o build/rv32_reorder_buffer_bad_be.vvp \
+		rtl/rv32_reorder_buffer.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_reorder_buffer_bad_be.vvp 2>&1 | \
+		grep -q '^ERROR rv32_reorder_buffer invalid BE_WIDTH='
+	@echo "PASS reorder buffer rejected invalid BE_WIDTH"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_reorder_buffer.ROB_TAG_WIDTH=6 \
+		-s rv32_reorder_buffer \
+		-o build/rv32_reorder_buffer_bad_tag.vvp \
+		rtl/rv32_reorder_buffer.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_reorder_buffer_bad_tag.vvp 2>&1 | \
+		grep -q '^ERROR rv32_reorder_buffer tag width='
+	@echo "PASS reorder buffer rejected invalid ROB_TAG_WIDTH"
 
 smoke regression matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2

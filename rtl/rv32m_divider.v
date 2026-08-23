@@ -2,7 +2,7 @@
 `include "rv32im_defs.vh"
 
 module rv32m_divider #(
-    parameter ROB_TAG_WIDTH = 5
+    parameter ROB_TAG_WIDTH = 7
 ) (
     input  wire                     clk_i,
     input  wire                     reset_i,
