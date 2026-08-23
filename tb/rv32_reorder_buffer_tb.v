@@ -32,6 +32,7 @@ module rv32_reorder_buffer_tb;
     wire alloc_ready_o;
     wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] alloc_tag_o;
     wire [ROB_INDEX_WIDTH:0] occupancy_o;
+    wire [ROB_INDEX_WIDTH-1:0] head_index_o;
 
     reg [BE_WIDTH-1:0] completion_valid_i;
     reg [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] completion_tag_i;
@@ -150,6 +151,7 @@ module rv32_reorder_buffer_tb;
         .alloc_ready_o(alloc_ready_o),
         .alloc_tag_o(alloc_tag_o),
         .occupancy_o(occupancy_o),
+        .head_index_o(head_index_o),
         .completion_valid_i(completion_valid_i),
         .completion_tag_i(completion_tag_i),
         .completion_value_i(completion_value_i),
@@ -263,6 +265,7 @@ module rv32_reorder_buffer_tb;
             check(commit_valid_o == {BE_WIDTH{1'b0}}, 3);
             check(completion_ready_o == {BE_WIDTH{1'b1}}, 4);
             check(!recover_busy_o && !recover_redirect_valid_o, 5);
+            check(head_index_o == 0, 6);
         end
     endtask
 
@@ -365,6 +368,7 @@ module rv32_reorder_buffer_tb;
             clear_inputs;
             #1;
             check(occupancy_o == 0, 52);
+            check(head_index_o == BE_WIDTH, 521);
 
             item_index = 0;
             allocate_one(32'h2000, 1'b0);

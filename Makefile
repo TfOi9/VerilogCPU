@@ -39,6 +39,10 @@ lint:
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32_reorder_buffer -o build/rv32_reorder_buffer_lint.vvp \
 		rtl/rv32_reorder_buffer.v
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_integer_reservation_station \
+		-o build/rv32_integer_reservation_station_lint.vvp \
+		rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32im_decoder.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
@@ -53,6 +57,8 @@ lint:
 		-Irtl rtl/rv32_rename_unit.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32_reorder_buffer.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-Irtl rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -I rtl rtl/rv32im_decoder.v; hierarchy -check -top rv32im_decoder; proc; check'
 	@$(TIMEOUT) 30 yosys -q -p \
@@ -71,6 +77,12 @@ lint:
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 32 -set ROB_INDEX_WIDTH 5 -set ROB_TAG_WIDTH 7 -set BE_WIDTH 2 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 -set BE_WIDTH 4 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 4 -set INT_RS_INDEX_WIDTH 2 -set BE_WIDTH 1 -set PHYS_REGS 48 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 16 -set ROB_INDEX_WIDTH 4 -set ROB_TAG_WIDTH 6 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 8 -set INT_RS_INDEX_WIDTH 3 -set BE_WIDTH 2 -set PHYS_REGS 64 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 32 -set ROB_INDEX_WIDTH 5 -set ROB_TAG_WIDTH 7 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 16 -set INT_RS_INDEX_WIDTH 4 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
 unit:
 	@mkdir -p build
@@ -306,6 +318,97 @@ unit:
 		build/rv32_reorder_buffer_bad_tag.vvp 2>&1 | \
 		grep -q '^ERROR rv32_reorder_buffer tag width='
 	@echo "PASS reorder buffer rejected invalid ROB_TAG_WIDTH"
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_int_rs_vectors.py \
+		build/int_rs_vectors_4x1.txt --entries 4 --width 1 \
+		--phys-regs 48 --rob-entries 16
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_integer_reservation_station_tb.INT_RS_ENTRIES=4 \
+		-P rv32_integer_reservation_station_tb.INT_RS_INDEX_WIDTH=2 \
+		-P rv32_integer_reservation_station_tb.BE_WIDTH=1 \
+		-P rv32_integer_reservation_station_tb.PHYS_REGS=48 \
+		-P rv32_integer_reservation_station_tb.PHYS_REG_ADDR_WIDTH=6 \
+		-P rv32_integer_reservation_station_tb.ROB_ENTRIES=16 \
+		-P rv32_integer_reservation_station_tb.ROB_INDEX_WIDTH=4 \
+		-s rv32_integer_reservation_station_tb \
+		-o build/rv32_integer_reservation_station_tb_4x1.vvp \
+		rtl/rv32_integer_reservation_station.v \
+		tb/rv32_integer_reservation_station_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_integer_reservation_station_tb_4x1.vvp \
+		+VECTOR_FILE=build/int_rs_vectors_4x1.txt
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_int_rs_vectors.py \
+		build/int_rs_vectors_8x2.txt --entries 8 --width 2 \
+		--phys-regs 64 --rob-entries 32
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_integer_reservation_station_tb.INT_RS_ENTRIES=8 \
+		-P rv32_integer_reservation_station_tb.INT_RS_INDEX_WIDTH=3 \
+		-P rv32_integer_reservation_station_tb.BE_WIDTH=2 \
+		-P rv32_integer_reservation_station_tb.PHYS_REGS=64 \
+		-P rv32_integer_reservation_station_tb.PHYS_REG_ADDR_WIDTH=6 \
+		-P rv32_integer_reservation_station_tb.ROB_ENTRIES=32 \
+		-P rv32_integer_reservation_station_tb.ROB_INDEX_WIDTH=5 \
+		-s rv32_integer_reservation_station_tb \
+		-o build/rv32_integer_reservation_station_tb_8x2.vvp \
+		rtl/rv32_integer_reservation_station.v \
+		tb/rv32_integer_reservation_station_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_integer_reservation_station_tb_8x2.vvp \
+		+VECTOR_FILE=build/int_rs_vectors_8x2.txt
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_int_rs_vectors.py \
+		build/int_rs_vectors_16x4.txt --entries 16 --width 4 \
+		--phys-regs 96 --rob-entries 64
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_integer_reservation_station_tb.INT_RS_ENTRIES=16 \
+		-P rv32_integer_reservation_station_tb.INT_RS_INDEX_WIDTH=4 \
+		-P rv32_integer_reservation_station_tb.BE_WIDTH=4 \
+		-P rv32_integer_reservation_station_tb.PHYS_REGS=96 \
+		-P rv32_integer_reservation_station_tb.PHYS_REG_ADDR_WIDTH=7 \
+		-P rv32_integer_reservation_station_tb.ROB_ENTRIES=64 \
+		-P rv32_integer_reservation_station_tb.ROB_INDEX_WIDTH=6 \
+		-s rv32_integer_reservation_station_tb \
+		-o build/rv32_integer_reservation_station_tb_16x4.vvp \
+		rtl/rv32_integer_reservation_station.v \
+		tb/rv32_integer_reservation_station_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_integer_reservation_station_tb_16x4.vvp \
+		+VECTOR_FILE=build/int_rs_vectors_16x4.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_integer_reservation_station.INT_RS_ENTRIES=6 \
+		-P rv32_integer_reservation_station.INT_RS_INDEX_WIDTH=3 \
+		-s rv32_integer_reservation_station \
+		-o build/rv32_integer_reservation_station_bad_entries.vvp \
+		rtl/rv32_integer_reservation_station.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_integer_reservation_station_bad_entries.vvp 2>&1 | \
+		grep -q '^ERROR rv32_integer_reservation_station INT_RS_ENTRIES not power of two='
+	@echo "PASS integer reservation station rejected invalid entries"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_integer_reservation_station.BE_WIDTH=3 \
+		-s rv32_integer_reservation_station \
+		-o build/rv32_integer_reservation_station_bad_be.vvp \
+		rtl/rv32_integer_reservation_station.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_integer_reservation_station_bad_be.vvp 2>&1 | \
+		grep -q '^ERROR rv32_integer_reservation_station invalid BE_WIDTH='
+	@echo "PASS integer reservation station rejected invalid BE_WIDTH"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_integer_reservation_station.INT_RS_INDEX_WIDTH=4 \
+		-s rv32_integer_reservation_station \
+		-o build/rv32_integer_reservation_station_bad_index.vvp \
+		rtl/rv32_integer_reservation_station.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_integer_reservation_station_bad_index.vvp 2>&1 | \
+		grep -q '^ERROR rv32_integer_reservation_station index width='
+	@echo "PASS integer reservation station rejected invalid index width"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_integer_reservation_station.PHYS_REG_ADDR_WIDTH=7 \
+		-s rv32_integer_reservation_station \
+		-o build/rv32_integer_reservation_station_bad_phys.vvp \
+		rtl/rv32_integer_reservation_station.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_integer_reservation_station_bad_phys.vvp 2>&1 | \
+		grep -q '^ERROR rv32_integer_reservation_station physical address width='
+	@echo "PASS integer reservation station rejected invalid physical address width"
 
 smoke regression matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2

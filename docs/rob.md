@@ -10,6 +10,8 @@
 
 ROB 使用 head、tail 和 occupancy 描述循环队列。每项包含 busy、generation、complete，以及 PC、原指令、操作类型、逻辑目的寄存器、新旧物理寄存器、执行结果、预测和实际控制流、LSQ tag、异常原因与异常地址。每个槽位另有 `next_generation`，表示该槽下一次分配时使用的 generation。
 
+`head_index_o` 只读输出当前 head 槽位，供保留站按环形 ROB 距离比较指令年龄；复位期间输出零。年龄比较只需要 index，完成和回滚匹配仍必须使用包含 generation 的完整 tag。
+
 成功分配时，输出 tag 使用 `{next_generation, slot_index}`，表项在上升沿写入该 generation，同时 `next_generation` 加一并按参数宽度自然回绕。完成只有在 busy、索引和 generation 全部匹配且表项尚未 complete 时才被接受。这样，错误路径撤销后迟到的结果以及槽位复用前的旧结果不会修改新表项。
 
 ## 分配、完成与提交
@@ -35,6 +37,8 @@ commit 组合逻辑从 head 开始选择连续的 complete 前缀。`commit_vali
 rename/dispatch 使用 allocation tag，并在同一 bundle fire 时把 PC、指令和重命名元数据写入 ROB。完成仲裁网络连接 completion 端，只有 accept lane 才能同时写 PRF。`commit_fire_o`、rd 和 new physical register 直接连接 rename 的 commit 接口。
 
 恢复时，`recover_busy_o` 连接 rename 的 `recover_i`，rollback 的 writes-rd、rd、new-phys 和 old-phys 直接连接现有回滚接口。rollback tag 和 LSQ tag 提供给后续保留站与 LSQ，用于逐批删除同一批错误路径指令。前端使用 redirect valid 和 redirect PC 重新取指。
+
+`head_index_o` 连接各保留站的 oldest-ready 年龄选择输入。head 在提交上升沿更新，保留站在周期内观察更新前的稳定值；提交只会整体平移 live ROB 窗口，不改变剩余指令之间的年龄顺序。
 
 选择性 tail rollback 不能直接连接 ALU、乘法器和除法器的全局 `flush_i`，否则可能杀死误预测分支之前的更老执行。恢复期间应通过 completion ready 施加回压；恢复结束后，执行单元携带的 generation tag 由 ROB 判断为 live 或 stale。全局 `flush_i` 只留给复位或清除整个后端的场景。
 

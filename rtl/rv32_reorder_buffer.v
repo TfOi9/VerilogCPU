@@ -32,6 +32,7 @@ module rv32_reorder_buffer #(
     output wire                                             alloc_ready_o,
     output wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              alloc_tag_o,
     output wire [ROB_INDEX_WIDTH:0]                         occupancy_o,
+    output wire [ROB_INDEX_WIDTH-1:0]                       head_index_o,
 
     input  wire [BE_WIDTH-1:0]                              completion_valid_i,
     input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              completion_tag_i,
@@ -227,6 +228,7 @@ module rv32_reorder_buffer #(
     assign alloc_tag_o = alloc_tag_reg;
     assign occupancy_o = reset_i ? {(ROB_INDEX_WIDTH+1){1'b0}} :
         occupancy_reg;
+    assign head_index_o = reset_i ? {ROB_INDEX_WIDTH{1'b0}} : head_reg;
     assign completion_ready_o = completion_ready_reg;
     assign completion_accept_o = completion_accept_reg;
 

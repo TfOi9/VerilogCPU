@@ -19,3 +19,5 @@ RV32M 朴素迭代除法器设计见 [divider.md](divider.md)。
 RAT、RRAT、物理寄存器空闲表与就绪记分牌设计见 [rename.md](rename.md)。
 
 参数化重排序缓冲区设计见 [rob.md](rob.md)。
+
+参数化整数保留站设计见 [int_rs.md](int_rs.md)。
