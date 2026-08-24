@@ -45,6 +45,8 @@ module rv32_reorder_buffer #(
     input  wire [(BE_WIDTH*32)-1:0]                         completion_exception_tval_i,
     output wire [BE_WIDTH-1:0]                              completion_ready_o,
     output wire [BE_WIDTH-1:0]                              completion_accept_o,
+    output wire [BE_WIDTH-1:0]                              completion_writes_rd_o,
+    output wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        completion_phys_o,
 
     input  wire [BE_WIDTH-1:0]                              commit_ready_i,
     output wire [BE_WIDTH-1:0]                              commit_valid_o,
@@ -119,6 +121,8 @@ module rv32_reorder_buffer #(
     reg [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] alloc_tag_reg;
     reg [BE_WIDTH-1:0] completion_ready_reg;
     reg [BE_WIDTH-1:0] completion_accept_reg;
+    reg [BE_WIDTH-1:0] completion_writes_rd_reg;
+    reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] completion_phys_reg;
 
     reg [BE_WIDTH-1:0] commit_valid_reg;
     reg [BE_WIDTH-1:0] commit_fire_reg;
@@ -231,6 +235,8 @@ module rv32_reorder_buffer #(
     assign head_index_o = reset_i ? {ROB_INDEX_WIDTH{1'b0}} : head_reg;
     assign completion_ready_o = completion_ready_reg;
     assign completion_accept_o = completion_accept_reg;
+    assign completion_writes_rd_o = completion_writes_rd_reg;
+    assign completion_phys_o = completion_phys_reg;
 
     assign commit_valid_o = commit_valid_reg;
     assign commit_fire_o = commit_fire_reg;
@@ -332,6 +338,9 @@ module rv32_reorder_buffer #(
     always @* begin
         completion_ready_reg = {BE_WIDTH{1'b0}};
         completion_accept_reg = {BE_WIDTH{1'b0}};
+        completion_writes_rd_reg = {BE_WIDTH{1'b0}};
+        completion_phys_reg =
+            {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
         mispredict_found_reg = 1'b0;
         mispredict_tag_reg = {ROB_TAG_WIDTH{1'b0}};
         mispredict_next_pc_reg = 32'd0;
@@ -374,6 +383,12 @@ module rv32_reorder_buffer #(
                         completion_tag_value_reg[
                             ROB_TAG_WIDTH-1:ROB_INDEX_WIDTH])) begin
                 completion_accept_reg[completion_lane_index] = 1'b1;
+                completion_writes_rd_reg[completion_lane_index] =
+                    entry_writes_rd[completion_slot_reg];
+                completion_phys_reg[
+                    completion_lane_index*PHYS_REG_ADDR_WIDTH +:
+                    PHYS_REG_ADDR_WIDTH] =
+                    entry_new_phys[completion_slot_reg];
                 if (completion_control_valid_i[completion_lane_index] &&
                         (entry_predicted_next_pc[completion_slot_reg] !=
                             completion_next_pc_i[

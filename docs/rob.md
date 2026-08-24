@@ -20,6 +20,8 @@ allocation 输入必须是从 lane 0 开始的连续有效前缀。模块按周�
 
 completion 的 ready 和 accept 含义不同。正常周期 ready 为高，使完成来源能够交付结果；accept 只对匹配 live tag 的首次完成为高，PRF 和完成广播必须用 accept 作为写入使能。恢复期间 ready 为低，保证更老的在途结果留在执行单元或完成缓冲。恢复结束后，年轻指令的陈旧结果会以 ready 高、accept 低的方式被排空。
 
+每个 accept lane 同时通过 `completion_writes_rd_o` 和 `completion_phys_o` 返回 ROB 表项保存的目的寄存器元数据。未接受、重复、generation 不匹配或已经完成的 lane 返回零。完成网络据此生成 PRF 写入和保留站广播，不需要让执行单元携带目的物理寄存器。
+
 commit 组合逻辑从 head 开始选择连续的 complete 前缀。`commit_valid_o` 表示候选项，`commit_fire_o` 还要求当前 lane 和所有更老 lane 的 `commit_ready_i` 为高。只有 fire 项在上升沿释放；因此 store 可以保持在 ROB 头部，直到后续 LSQ 和 D-Cache 确认其架构副作用可以提交。HALT、非法指令、系统指令和访存异常也只在对应 commit fire 时对外生效。
 
 同一正常周期可以提交旧项、完成其他 live 项并分配新项。所有组合输出观察上升沿之前的状态，所以本周期刚完成的 head 最早在下一周期出现在 commit valid 上。head、tail 和 occupancy 在同一上升沿根据实际 commit 与 allocation 数量统一更新。

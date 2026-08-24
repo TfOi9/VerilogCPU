@@ -45,6 +45,8 @@ module rv32_reorder_buffer_tb;
     reg [(BE_WIDTH*32)-1:0] completion_exception_tval_i;
     wire [BE_WIDTH-1:0] completion_ready_o;
     wire [BE_WIDTH-1:0] completion_accept_o;
+    wire [BE_WIDTH-1:0] completion_writes_rd_o;
+    wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] completion_phys_o;
 
     reg [BE_WIDTH-1:0] commit_ready_i;
     wire [BE_WIDTH-1:0] commit_valid_o;
@@ -163,6 +165,8 @@ module rv32_reorder_buffer_tb;
         .completion_exception_tval_i(completion_exception_tval_i),
         .completion_ready_o(completion_ready_o),
         .completion_accept_o(completion_accept_o),
+        .completion_writes_rd_o(completion_writes_rd_o),
+        .completion_phys_o(completion_phys_o),
         .commit_ready_i(commit_ready_i),
         .commit_valid_o(commit_valid_o),
         .commit_fire_o(commit_fire_o),
@@ -264,6 +268,9 @@ module rv32_reorder_buffer_tb;
             check(alloc_ready_o == 1'b1, 2);
             check(commit_valid_o == {BE_WIDTH{1'b0}}, 3);
             check(completion_ready_o == {BE_WIDTH{1'b1}}, 4);
+            check(completion_writes_rd_o == {BE_WIDTH{1'b0}} &&
+                completion_phys_o ==
+                    {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}}, 41);
             check(!recover_busy_o && !recover_redirect_valid_o, 5);
             check(head_index_o == 0, 6);
         end
@@ -383,6 +390,8 @@ module rv32_reorder_buffer_tb;
             completion_exception_tval_i[31:0] = 32'hbad00000;
             #1;
             check(completion_accept_o[0], 54);
+            check(completion_writes_rd_o[0] &&
+                (completion_phys_o[PHYS_REG_ADDR_WIDTH-1:0] == 32), 541);
             check(!commit_valid_o[0], 55);
             clock_edge;
             completion_valid_i = {BE_WIDTH{1'b0}};
@@ -434,10 +443,14 @@ module rv32_reorder_buffer_tb;
             completion_tag_i[ROB_TAG_WIDTH-1:0] = first_tag;
             #1;
             check(completion_ready_o[0] && !completion_accept_o[0], 74);
+            check(!completion_writes_rd_o[0] &&
+                (completion_phys_o[PHYS_REG_ADDR_WIDTH-1:0] == 0), 741);
             clock_edge;
             completion_tag_i[ROB_TAG_WIDTH-1:0] = reused_tag;
             #1;
             check(completion_accept_o[0], 75);
+            check(completion_writes_rd_o[0] &&
+                (completion_phys_o[PHYS_REG_ADDR_WIDTH-1:0] == 32), 751);
             clock_edge;
             clear_inputs;
 

@@ -101,6 +101,47 @@ lint:
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v; chparam -set MUL_RS_ENTRIES 8 -set MUL_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_multiply_reservation_station; hierarchy -check -top rv32_multiply_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v; chparam -set DIV_RS_ENTRIES 8 -set DIV_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_divide_reservation_station; hierarchy -check -top rv32_divide_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network.BE_WIDTH=1 \
+		-P rv32_completion_writeback_network.SOURCE_COUNT=3 \
+		-P rv32_completion_writeback_network.PHYS_REGS=48 \
+		-P rv32_completion_writeback_network.PHYS_REG_ADDR_WIDTH=6 \
+		-P rv32_completion_writeback_network.ROB_TAG_WIDTH=6 \
+		-s rv32_completion_writeback_network \
+		-o build/rv32_completion_writeback_network_lint_1x3.vvp \
+		rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network.BE_WIDTH=2 \
+		-P rv32_completion_writeback_network.SOURCE_COUNT=4 \
+		-s rv32_completion_writeback_network \
+		-o build/rv32_completion_writeback_network_lint_2x4.vvp \
+		rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network.BE_WIDTH=4 \
+		-P rv32_completion_writeback_network.SOURCE_COUNT=6 \
+		-P rv32_completion_writeback_network.PHYS_REGS=96 \
+		-P rv32_completion_writeback_network.PHYS_REG_ADDR_WIDTH=7 \
+		-P rv32_completion_writeback_network.ROB_TAG_WIDTH=8 \
+		-s rv32_completion_writeback_network \
+		-o build/rv32_completion_writeback_network_lint_4x6.vvp \
+		rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-GBE_WIDTH=1 -GSOURCE_COUNT=3 -GPHYS_REGS=48 \
+		-GPHYS_REG_ADDR_WIDTH=6 -GROB_TAG_WIDTH=6 \
+		-Irtl rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-GBE_WIDTH=2 -GSOURCE_COUNT=4 \
+		-Irtl rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-GBE_WIDTH=4 -GSOURCE_COUNT=6 -GPHYS_REGS=96 \
+		-GPHYS_REG_ADDR_WIDTH=7 -GROB_TAG_WIDTH=8 \
+		-Irtl rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 1 -set SOURCE_COUNT 3 -set PHYS_REGS 48 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_TAG_WIDTH 6 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 2 -set SOURCE_COUNT 4 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
 unit:
 	@mkdir -p build
@@ -543,6 +584,76 @@ unit:
 		build/rv32_mdu_reservation_station_bad_op.vvp 2>&1 | \
 		grep -q '^ERROR rv32_mdu_reservation_station_core unsupported op='
 	@echo "PASS MDU reservation station rejected misclassified operation"
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_writeback_vectors.py \
+		build/writeback_vectors_1x3.txt --width 1 --sources 3
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network_tb.BE_WIDTH=1 \
+		-P rv32_completion_writeback_network_tb.SOURCE_COUNT=3 \
+		-P rv32_completion_writeback_network_tb.PHYS_REGS=48 \
+		-P rv32_completion_writeback_network_tb.PHYS_REG_ADDR_WIDTH=6 \
+		-P rv32_completion_writeback_network_tb.ROB_TAG_WIDTH=6 \
+		-s rv32_completion_writeback_network_tb \
+		-o build/rv32_completion_writeback_network_tb_1x3.vvp \
+		rtl/rv32_completion_writeback_network.v \
+		tb/rv32_completion_writeback_network_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_completion_writeback_network_tb_1x3.vvp \
+		+VECTOR_FILE=build/writeback_vectors_1x3.txt
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_writeback_vectors.py \
+		build/writeback_vectors_2x4.txt --width 2 --sources 4
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network_tb.BE_WIDTH=2 \
+		-P rv32_completion_writeback_network_tb.SOURCE_COUNT=4 \
+		-s rv32_completion_writeback_network_tb \
+		-o build/rv32_completion_writeback_network_tb_2x4.vvp \
+		rtl/rv32_completion_writeback_network.v \
+		tb/rv32_completion_writeback_network_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_completion_writeback_network_tb_2x4.vvp \
+		+VECTOR_FILE=build/writeback_vectors_2x4.txt
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_writeback_vectors.py \
+		build/writeback_vectors_4x6.txt --width 4 --sources 6
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network_tb.BE_WIDTH=4 \
+		-P rv32_completion_writeback_network_tb.SOURCE_COUNT=6 \
+		-P rv32_completion_writeback_network_tb.PHYS_REGS=96 \
+		-P rv32_completion_writeback_network_tb.PHYS_REG_ADDR_WIDTH=7 \
+		-P rv32_completion_writeback_network_tb.ROB_TAG_WIDTH=8 \
+		-s rv32_completion_writeback_network_tb \
+		-o build/rv32_completion_writeback_network_tb_4x6.vvp \
+		rtl/rv32_completion_writeback_network.v \
+		tb/rv32_completion_writeback_network_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_completion_writeback_network_tb_4x6.vvp \
+		+VECTOR_FILE=build/writeback_vectors_4x6.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_completion_writeback_integration_tb \
+		-o build/rv32_completion_writeback_integration_tb.vvp \
+		rtl/rv32_completion_writeback_network.v \
+		rtl/rv32_reorder_buffer.v \
+		rtl/rv32_physical_register_file.v \
+		tb/rv32_completion_writeback_integration_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_completion_writeback_integration_tb.vvp
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network.BE_WIDTH=3 \
+		-s rv32_completion_writeback_network \
+		-o build/rv32_completion_writeback_network_bad_be.vvp \
+		rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_completion_writeback_network_bad_be.vvp 2>&1 | \
+		grep -q '^ERROR rv32_completion_writeback_network invalid BE_WIDTH='
+	@echo "PASS writeback network rejected invalid BE_WIDTH"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_completion_writeback_network.PHYS_REGS=48 \
+		-P rv32_completion_writeback_network.PHYS_REG_ADDR_WIDTH=7 \
+		-s rv32_completion_writeback_network \
+		-o build/rv32_completion_writeback_network_bad_phys.vvp \
+		rtl/rv32_completion_writeback_network.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_completion_writeback_network_bad_phys.vvp 2>&1 | \
+		grep -q '^ERROR rv32_completion_writeback_network physical address width='
+	@echo "PASS writeback network rejected invalid physical address width"
 
 smoke regression matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
