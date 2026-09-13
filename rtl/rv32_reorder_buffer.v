@@ -8,7 +8,7 @@ module rv32_reorder_buffer #(
     parameter ROB_TAG_WIDTH = 7,
     parameter BE_WIDTH = 1,
     parameter PHYS_REG_ADDR_WIDTH = 6,
-    parameter LSQ_TAG_WIDTH = 4
+    parameter LSQ_TAG_WIDTH = 5
 ) (
     input  wire                                             clk_i,
     input  wire                                             reset_i,
@@ -166,6 +166,7 @@ module rv32_reorder_buffer #(
     integer completion_lane_index;
     integer completion_other_lane_index;
     integer commit_lane_index;
+    integer commit_fire_lane_index;
     integer rollback_lane_index;
     integer sequential_entry_index;
     integer sequential_lane_index;
@@ -378,7 +379,12 @@ module rv32_reorder_buffer #(
                     completion_valid_i[completion_lane_index] &&
                     !completion_duplicate_reg &&
                     entry_busy[completion_slot_reg] &&
-                    !entry_complete[completion_slot_reg] &&
+                    (!entry_complete[completion_slot_reg] ||
+                        (entry_op[completion_slot_reg] == `RV32_OP_SB ||
+                         entry_op[completion_slot_reg] == `RV32_OP_SH ||
+                         entry_op[completion_slot_reg] == `RV32_OP_SW) &&
+                        completion_exception_valid_i[completion_lane_index] &&
+                        !entry_exception_valid[completion_slot_reg]) &&
                     (entry_generation[completion_slot_reg] ==
                         completion_tag_value_reg[
                             ROB_TAG_WIDTH-1:ROB_INDEX_WIDTH])) begin
@@ -415,7 +421,6 @@ module rv32_reorder_buffer #(
 
     always @* begin
         commit_valid_reg = {BE_WIDTH{1'b0}};
-        commit_fire_reg = {BE_WIDTH{1'b0}};
         commit_tag_reg = {(BE_WIDTH*ROB_TAG_WIDTH){1'b0}};
         commit_pc_reg = {(BE_WIDTH*32){1'b0}};
         commit_instruction_reg = {(BE_WIDTH*32){1'b0}};
@@ -436,10 +441,8 @@ module rv32_reorder_buffer #(
         commit_exception_valid_reg = {BE_WIDTH{1'b0}};
         commit_exception_cause_reg = {(BE_WIDTH*4){1'b0}};
         commit_exception_tval_reg = {(BE_WIDTH*32){1'b0}};
-        commit_count = 0;
         commit_slot_reg = {ROB_INDEX_WIDTH{1'b0}};
         commit_prefix_reg = !reset_i && !recovery_busy_reg;
-        commit_fire_prefix_reg = !reset_i && !recovery_busy_reg;
 
         for (commit_lane_index = 0; commit_lane_index < BE_WIDTH;
                 commit_lane_index = commit_lane_index + 1) begin
@@ -492,15 +495,25 @@ module rv32_reorder_buffer #(
                     commit_lane_index*32 +: 32] =
                     entry_exception_tval[commit_slot_reg];
 
-                if (commit_fire_prefix_reg &&
-                        commit_ready_i[commit_lane_index]) begin
-                    commit_fire_reg[commit_lane_index] = 1'b1;
-                    commit_count = commit_count + 1;
-                end else begin
-                    commit_fire_prefix_reg = 1'b0;
-                end
             end else begin
                 commit_prefix_reg = 1'b0;
+            end
+        end
+    end
+
+    always @* begin
+        commit_fire_reg = {BE_WIDTH{1'b0}};
+        commit_count = 0;
+        commit_fire_prefix_reg = !reset_i && !recovery_busy_reg;
+        for (commit_fire_lane_index = 0;
+                commit_fire_lane_index < BE_WIDTH;
+                commit_fire_lane_index = commit_fire_lane_index + 1) begin
+            if (commit_fire_prefix_reg &&
+                    commit_valid_reg[commit_fire_lane_index] &&
+                    commit_ready_i[commit_fire_lane_index]) begin
+                commit_fire_reg[commit_fire_lane_index] = 1'b1;
+                commit_count = commit_count + 1;
+            end else begin
                 commit_fire_prefix_reg = 1'b0;
             end
         end

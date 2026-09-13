@@ -24,4 +24,8 @@ RAT、RRAT、物理寄存器空闲表与就绪记分牌设计见 [rename.md](ren
 
 乘除法保留站设计见 [mdu_rs.md](mdu_rs.md)。
 
+LOAD/STORE 保留站设计见 [memory_rs.md](memory_rs.md)。
+
+访存队列设计见 [lsq.md](lsq.md)。
+
 完成仲裁与物理寄存器写回网络设计见 [writeback.md](writeback.md)。

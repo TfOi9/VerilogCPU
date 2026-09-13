@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit memory-lint memory-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -19,7 +19,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint:
+lint: memory-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -143,7 +143,7 @@ lint:
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit:
+unit: memory-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -658,3 +658,69 @@ unit:
 smoke regression matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
 	@exit 2
+
+memory-lint:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-s rv32_memory_reservation_station \
+		-o build/rv32_memory_reservation_station_lint.vvp \
+		rtl/rv32_memory_reservation_station.v
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-s rv32_load_store_queue -o build/rv32_load_store_queue_lint.vvp \
+		rtl/rv32_load_store_queue.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-Irtl rtl/rv32_memory_reservation_station.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-Irtl rtl/rv32_load_store_queue.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-GBE_WIDTH=4 -GRS_ENTRIES=16 -GRS_INDEX_WIDTH=4 \
+		-Irtl rtl/rv32_memory_reservation_station.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-GBE_WIDTH=4 -GLSQ_ENTRIES=16 -GLSQ_INDEX_WIDTH=4 \
+		-GLSQ_TAG_WIDTH=6 -Irtl rtl/rv32_load_store_queue.v
+	@$(TIMEOUT) 120 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_memory_reservation_station.v; hierarchy -check -top rv32_memory_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
+	@$(TIMEOUT) 120 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_load_store_queue.v; hierarchy -check -top rv32_load_store_queue; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
+
+memory-unit:
+	@mkdir -p build
+	@for width in 1 2 4; do \
+		for kind in 0 1; do \
+			$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+				-P rv32_memory_reservation_station_tb.BE_WIDTH=$$width \
+				-P rv32_memory_reservation_station_tb.IS_STORE=$$kind \
+				-s rv32_memory_reservation_station_tb \
+				-o build/memory_rs_$${width}_$${kind}.vvp \
+				rtl/rv32_memory_reservation_station.v \
+				tb/rv32_memory_reservation_station_tb.v || exit 1; \
+			$(TIMEOUT) 30 vvp -N build/memory_rs_$${width}_$${kind}.vvp || exit 1; \
+		done; \
+		do_entries=8; do_index=3; \
+		if [ $$width -eq 4 ]; then do_entries=16; do_index=4; fi; \
+		$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+			-P rv32_load_store_queue_tb.BE_WIDTH=$$width \
+			-P rv32_load_store_queue_tb.LSQ_ENTRIES=$$do_entries \
+			-P rv32_load_store_queue_tb.LSQ_INDEX_WIDTH=$$do_index \
+			-s rv32_load_store_queue_tb -o build/lsq_$$width.vvp \
+			rtl/rv32_load_store_queue.v tb/rv32_load_store_queue_tb.v || exit 1; \
+		$(TIMEOUT) 30 vvp -N build/lsq_$$width.vvp || exit 1; \
+	done
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-s rv32_lsq_rob_integration_tb -o build/lsq_rob_integration.vvp \
+		rtl/rv32_load_store_queue.v rtl/rv32_completion_writeback_network.v \
+		rtl/rv32_reorder_buffer.v tb/rv32_lsq_rob_integration_tb.v
+	@$(TIMEOUT) 30 vvp -N build/lsq_rob_integration.vvp
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-P rv32_load_store_queue.LSQ_ENTRIES=6 \
+		-s rv32_load_store_queue -o build/lsq_bad_capacity.vvp \
+		rtl/rv32_load_store_queue.v
+	@$(TIMEOUT) 30 vvp -N build/lsq_bad_capacity.vvp 2>&1 | \
+		grep -q '^ERROR rv32_load_store_queue invalid parameters'
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-P rv32_memory_reservation_station.BE_WIDTH=3 \
+		-s rv32_memory_reservation_station \
+		-o build/memory_rs_bad_width.vvp \
+		rtl/rv32_memory_reservation_station.v
+	@$(TIMEOUT) 30 vvp -N build/memory_rs_bad_width.vvp 2>&1 | \
+		grep -q '^ERROR rv32_memory_reservation_station invalid parameters'
