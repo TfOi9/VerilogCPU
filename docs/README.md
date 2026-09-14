@@ -32,4 +32,6 @@ LOAD/STORE 保留站设计见 [memory_rs.md](memory_rs.md)。
 
 流水线 L1 指令缓存设计见 [icache.md](icache.md)。
 
+流水线 L1 数据缓存设计见 [dcache.md](dcache.md)。
+
 完成仲裁与物理寄存器写回网络设计见 [writeback.md](writeback.md)。

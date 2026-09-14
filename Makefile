@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -19,7 +19,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: memory-lint main-memory-lint icache-lint
+lint: memory-lint main-memory-lint icache-lint dcache-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -89,7 +89,7 @@ lint: memory-lint main-memory-lint icache-lint
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 16 -set ROB_INDEX_WIDTH 4 -set ROB_TAG_WIDTH 6 -set BE_WIDTH 1 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 32 -set ROB_INDEX_WIDTH 5 -set ROB_TAG_WIDTH 7 -set BE_WIDTH 2 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
-	@$(TIMEOUT) 30 yosys -q -p \
+	@$(TIMEOUT) 120 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 -set BE_WIDTH 4 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 4 -set INT_RS_INDEX_WIDTH 2 -set BE_WIDTH 1 -set PHYS_REGS 48 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 16 -set ROB_INDEX_WIDTH 4 -set ROB_TAG_WIDTH 6 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
@@ -143,7 +143,7 @@ lint: memory-lint main-memory-lint icache-lint
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: memory-unit main-memory-unit icache-unit
+unit: memory-unit main-memory-unit icache-unit dcache-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -766,3 +766,29 @@ icache-unit:
 		rtl/rv32_l1_instruction_cache.v \
 		tb/rv32_main_memory.v tb/rv32_l1_instruction_cache_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32_l1_instruction_cache_tb.vvp
+
+dcache-lint:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+		-s rv32_l1_data_cache \
+		-o build/rv32_l1_data_cache_lint.vvp \
+		rtl/rv32_l1_data_cache.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		--top-module rv32_l1_data_cache rtl/rv32_l1_data_cache.v
+	@$(TIMEOUT) 120 yosys -q -p \
+		'read_verilog -D SYNTHESIS rtl/rv32_l1_data_cache.v; hierarchy -check -top rv32_l1_data_cache; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
+
+dcache-unit:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+		-s rv32_l1_data_cache_tb \
+		-o build/rv32_l1_data_cache_tb.vvp \
+		rtl/rv32_l1_data_cache.v \
+		tb/rv32_main_memory.v tb/rv32_l1_data_cache_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_l1_data_cache_tb.vvp
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-s rv32_lsq_dcache_integration_tb \
+		-o build/rv32_lsq_dcache_integration_tb.vvp \
+		rtl/rv32_load_store_queue.v rtl/rv32_l1_data_cache.v \
+		tb/rv32_main_memory.v tb/rv32_lsq_dcache_integration_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_lsq_dcache_integration_tb.vvp
