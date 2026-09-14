@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -19,7 +19,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: memory-lint main-memory-lint
+lint: memory-lint main-memory-lint icache-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -143,7 +143,7 @@ lint: memory-lint main-memory-lint
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: memory-unit main-memory-unit
+unit: memory-unit main-memory-unit icache-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -745,3 +745,24 @@ main-memory-unit:
 	@$(TIMEOUT) 30 vvp -N build/rv32_main_memory_tb.vvp \
 		+MEM_IMAGE=build/images/main-memory-rv32i/accumulate.image \
 		+CHECK_IMAGE
+
+icache-lint:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+		-s rv32_l1_instruction_cache \
+		-o build/rv32_l1_instruction_cache_lint.vvp \
+		rtl/rv32_l1_instruction_cache.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		--top-module rv32_l1_instruction_cache \
+		rtl/rv32_l1_instruction_cache.v
+	@$(TIMEOUT) 120 yosys -q -p \
+		'read_verilog -D SYNTHESIS rtl/rv32_l1_instruction_cache.v; hierarchy -check -top rv32_l1_instruction_cache; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
+
+icache-unit:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+		-s rv32_l1_instruction_cache_tb \
+		-o build/rv32_l1_instruction_cache_tb.vvp \
+		rtl/rv32_l1_instruction_cache.v \
+		tb/rv32_main_memory.v tb/rv32_l1_instruction_cache_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_l1_instruction_cache_tb.vvp
