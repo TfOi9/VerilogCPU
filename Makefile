@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit predictor-lint predictor-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit predictor-lint predictor-unit fetch-lint fetch-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -19,7 +19,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint
+lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint fetch-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -143,7 +143,7 @@ lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: memory-unit main-memory-unit icache-unit dcache-unit predictor-unit
+unit: memory-unit main-memory-unit icache-unit dcache-unit predictor-unit fetch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -853,3 +853,100 @@ predictor-unit:
 			grep -q "^ERROR rv32_branch_predictor $$expected" || exit 1; \
 	done
 	@echo "PASS branch predictor rejected protocol violations"
+
+fetch-lint:
+	@mkdir -p build
+	@for fe_width in 1 2 4; do \
+		for be_width in 1 2 4; do \
+			$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+				-P rv32_fetch_pipeline.FE_WIDTH=$$fe_width \
+				-P rv32_fetch_pipeline.BE_WIDTH=$$be_width \
+				-s rv32_fetch_pipeline \
+				-o build/rv32_fetch_pipeline_lint_$${fe_width}_$${be_width}.vvp \
+				rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+				rtl/rv32_fetch_pipeline.v || exit 1; \
+			$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 \
+				-Wall --top-module rv32_fetch_pipeline -Irtl \
+				-GFE_WIDTH=$$fe_width -GBE_WIDTH=$$be_width \
+				rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+				rtl/rv32_fetch_pipeline.v || exit 1; \
+			$(TIMEOUT) 120 yosys -q -p \
+				'read_verilog -D SYNTHESIS -I rtl rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v rtl/rv32_fetch_pipeline.v; chparam -set FE_WIDTH '"$$fe_width"' -set BE_WIDTH '"$$be_width"' rv32_fetch_pipeline; hierarchy -check -top rv32_fetch_pipeline; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check' || exit 1; \
+		done; \
+	done
+
+fetch-unit:
+	@mkdir -p build
+	@for fe_width in 1 2 4; do \
+		for be_width in 1 2 4; do \
+			$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+				-P rv32_fetch_pipeline_tb.FE_WIDTH=$$fe_width \
+				-P rv32_fetch_pipeline_tb.BE_WIDTH=$$be_width \
+				-s rv32_fetch_pipeline_tb \
+				-o build/rv32_fetch_pipeline_tb_$${fe_width}_$${be_width}.vvp \
+				rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+				rtl/rv32_fetch_pipeline.v \
+				tb/rv32_fetch_pipeline_tb.v || exit 1; \
+			$(TIMEOUT) 30 vvp -N \
+				build/rv32_fetch_pipeline_tb_$${fe_width}_$${be_width}.vvp || exit 1; \
+		done; \
+	done
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_fetch_icache_integration_tb \
+		-o build/rv32_fetch_icache_integration_tb.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+		rtl/rv32_fetch_pipeline.v rtl/rv32_l1_instruction_cache.v \
+		tb/rv32_main_memory.v tb/rv32_fetch_icache_integration_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_fetch_icache_integration_tb.vvp
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_fetch_pipeline.FE_WIDTH=3 \
+		-s rv32_fetch_pipeline -o build/rv32_fetch_pipeline_bad_fe.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+		rtl/rv32_fetch_pipeline.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_fetch_pipeline_bad_fe.vvp 2>&1 | \
+		grep -q '^ERROR rv32_fetch_pipeline invalid FE_WIDTH='
+	@echo "PASS fetch pipeline rejected invalid FE_WIDTH"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_fetch_pipeline.BE_WIDTH=3 \
+		-s rv32_fetch_pipeline -o build/rv32_fetch_pipeline_bad_be.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+		rtl/rv32_fetch_pipeline.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_fetch_pipeline_bad_be.vvp 2>&1 | \
+		grep -q '^ERROR rv32_fetch_pipeline invalid BE_WIDTH='
+	@echo "PASS fetch pipeline rejected invalid BE_WIDTH"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_fetch_pipeline.FETCH_QUEUE_ENTRIES=6 \
+		-P rv32_fetch_pipeline.FETCH_QUEUE_INDEX_WIDTH=3 \
+		-s rv32_fetch_pipeline \
+		-o build/rv32_fetch_pipeline_bad_entries.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+		rtl/rv32_fetch_pipeline.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_fetch_pipeline_bad_entries.vvp 2>&1 | \
+		grep -q '^ERROR rv32_fetch_pipeline invalid queue entries='
+	@echo "PASS fetch pipeline rejected invalid queue entries"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_fetch_pipeline.FETCH_QUEUE_INDEX_WIDTH=4 \
+		-s rv32_fetch_pipeline \
+		-o build/rv32_fetch_pipeline_bad_index.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+		rtl/rv32_fetch_pipeline.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_fetch_pipeline_bad_index.vvp 2>&1 | \
+		grep -q '^ERROR rv32_fetch_pipeline queue index width='
+	@echo "PASS fetch pipeline rejected invalid queue index width"
+	@for violation in 1 2; do \
+		$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+			-P rv32_fetch_pipeline_protocol_tb.VIOLATION=$$violation \
+			-s rv32_fetch_pipeline_protocol_tb \
+			-o build/rv32_fetch_pipeline_protocol_$$violation.vvp \
+			rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+			rtl/rv32_fetch_pipeline.v \
+			tb/rv32_fetch_pipeline_tb.v || exit 1; \
+		if [ $$violation -eq 1 ]; then expected='non-prefix ready'; \
+		else expected='unaligned redirect'; fi; \
+		$(TIMEOUT) 30 vvp -N \
+			build/rv32_fetch_pipeline_protocol_$$violation.vvp 2>&1 | \
+			grep -q "^ERROR rv32_fetch_pipeline $$expected" || exit 1; \
+	done
+	@echo "PASS fetch pipeline rejected protocol violations"
