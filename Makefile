@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit predictor-lint predictor-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -19,7 +19,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: memory-lint main-memory-lint icache-lint dcache-lint
+lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -143,7 +143,7 @@ lint: memory-lint main-memory-lint icache-lint dcache-lint
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: memory-unit main-memory-unit icache-unit dcache-unit
+unit: memory-unit main-memory-unit icache-unit dcache-unit predictor-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -792,3 +792,64 @@ dcache-unit:
 		rtl/rv32_load_store_queue.v rtl/rv32_l1_data_cache.v \
 		tb/rv32_main_memory.v tb/rv32_lsq_dcache_integration_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32_lsq_dcache_integration_tb.vvp
+
+predictor-lint:
+	@mkdir -p build
+	@for width in 1 2 4; do \
+		$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+			-P rv32_branch_predictor.FE_WIDTH=$$width \
+			-P rv32_branch_predictor.BE_WIDTH=$$width \
+			-s rv32_branch_predictor \
+			-o build/rv32_branch_predictor_lint_$$width.vvp \
+			rtl/rv32_branch_predictor.v || exit 1; \
+		$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+			--top-module rv32_branch_predictor -Irtl \
+			-GFE_WIDTH=$$width -GBE_WIDTH=$$width \
+			rtl/rv32_branch_predictor.v || exit 1; \
+		$(TIMEOUT) 120 yosys -q -p \
+			'read_verilog -D SYNTHESIS -I rtl rtl/rv32_branch_predictor.v; chparam -set FE_WIDTH '"$$width"' -set BE_WIDTH '"$$width"' rv32_branch_predictor; hierarchy -check -top rv32_branch_predictor; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check' || exit 1; \
+	done
+
+predictor-unit:
+	@mkdir -p build
+	@for width in 1 2 4; do \
+		$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+			-P rv32_branch_predictor_tb.FE_WIDTH=$$width \
+			-P rv32_branch_predictor_tb.BE_WIDTH=$$width \
+			-s rv32_branch_predictor_tb \
+			-o build/rv32_branch_predictor_tb_$$width.vvp \
+			rtl/rv32_branch_predictor.v \
+			tb/rv32_branch_predictor_tb.v || exit 1; \
+		$(TIMEOUT) 30 vvp -N \
+			build/rv32_branch_predictor_tb_$$width.vvp || exit 1; \
+	done
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_branch_predictor.FE_WIDTH=3 \
+		-s rv32_branch_predictor \
+		-o build/rv32_branch_predictor_bad_fe.vvp \
+		rtl/rv32_branch_predictor.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_branch_predictor_bad_fe.vvp 2>&1 | \
+		grep -q '^ERROR rv32_branch_predictor invalid FE_WIDTH='
+	@echo "PASS branch predictor rejected invalid FE_WIDTH"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_branch_predictor.BE_WIDTH=3 \
+		-s rv32_branch_predictor \
+		-o build/rv32_branch_predictor_bad_be.vvp \
+		rtl/rv32_branch_predictor.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_branch_predictor_bad_be.vvp 2>&1 | \
+		grep -q '^ERROR rv32_branch_predictor invalid BE_WIDTH='
+	@echo "PASS branch predictor rejected invalid BE_WIDTH"
+	@for violation in 1 2; do \
+		$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+			-P rv32_branch_predictor_protocol_tb.VIOLATION=$$violation \
+			-s rv32_branch_predictor_protocol_tb \
+			-o build/rv32_branch_predictor_protocol_$$violation.vvp \
+			rtl/rv32_branch_predictor.v \
+			tb/rv32_branch_predictor_tb.v || exit 1; \
+		if [ $$violation -eq 1 ]; then expected='non-control update'; \
+		else expected='jump not taken'; fi; \
+		$(TIMEOUT) 30 vvp -N \
+			build/rv32_branch_predictor_protocol_$$violation.vvp 2>&1 | \
+			grep -q "^ERROR rv32_branch_predictor $$expected" || exit 1; \
+	done
+	@echo "PASS branch predictor rejected protocol violations"
