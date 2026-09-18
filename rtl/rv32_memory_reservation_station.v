@@ -85,6 +85,7 @@ module rv32_memory_reservation_station #(
     integer best;
     integer best_distance;
     integer candidate_distance;
+    integer occupancy_index;
     integer sequential_index;
     integer sequential_lane;
     reg address_handshake;
@@ -181,10 +182,7 @@ module rv32_memory_reservation_station #(
             end
         end
 
-        occupancy_o = 0;
         reserved_slots = 0;
-        for (i = 0; i < RS_ENTRIES; i = i + 1)
-            if (busy[i]) occupancy_o = occupancy_o + 1'b1;
         dispatch_ready_o = !reset_i && !flush_i && !recover_i;
         for (i = 0; i < BE_WIDTH; i = i + 1) begin
             alloc_slot[i] = 0;
@@ -266,6 +264,13 @@ module rv32_memory_reservation_station #(
                 end
             end
         end
+    end
+
+    always @* begin
+        occupancy_o = 0;
+        for (occupancy_index = 0; occupancy_index < RS_ENTRIES;
+                occupancy_index = occupancy_index + 1)
+            if (busy[occupancy_index]) occupancy_o = occupancy_o + 1'b1;
     end
 
     always @(posedge clk_i) begin

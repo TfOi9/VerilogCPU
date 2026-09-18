@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit predictor-lint predictor-unit fetch-lint fetch-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -19,7 +19,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint fetch-lint
+lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint fetch-lint dispatch-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -143,7 +143,7 @@ lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint fetch-
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: memory-unit main-memory-unit icache-unit dcache-unit predictor-unit fetch-unit
+unit: memory-unit main-memory-unit icache-unit dcache-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -950,3 +950,76 @@ fetch-unit:
 			grep -q "^ERROR rv32_fetch_pipeline $$expected" || exit 1; \
 	done
 	@echo "PASS fetch pipeline rejected protocol violations"
+
+dispatch-lint:
+	@mkdir -p build
+	@for fe_width in 1 2 4; do \
+		for be_width in 1 2 4; do \
+			$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+				-P rv32_decode_rename_dispatch.FE_WIDTH=$$fe_width \
+				-P rv32_decode_rename_dispatch.BE_WIDTH=$$be_width \
+				-s rv32_decode_rename_dispatch \
+				-o build/rv32_decode_rename_dispatch_lint_$${fe_width}_$${be_width}.vvp \
+				rtl/rv32im_decoder.v rtl/rv32_rename_unit.v \
+				rtl/rv32_physical_register_file.v \
+				rtl/rv32_decode_rename_dispatch.v || exit 1; \
+			$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 \
+				-Wall --top-module rv32_decode_rename_dispatch -Irtl \
+				-GFE_WIDTH=$$fe_width -GBE_WIDTH=$$be_width \
+				rtl/rv32im_decoder.v rtl/rv32_rename_unit.v \
+				rtl/rv32_physical_register_file.v \
+				rtl/rv32_decode_rename_dispatch.v || exit 1; \
+			$(TIMEOUT) 120 yosys -q -p \
+				'read_verilog -D SYNTHESIS -I rtl rtl/rv32im_decoder.v rtl/rv32_rename_unit.v rtl/rv32_physical_register_file.v rtl/rv32_decode_rename_dispatch.v; chparam -set FE_WIDTH '"$$fe_width"' -set BE_WIDTH '"$$be_width"' rv32_decode_rename_dispatch; hierarchy -check -top rv32_decode_rename_dispatch; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check' || exit 1; \
+		done; \
+	done
+
+dispatch-unit:
+	@mkdir -p build
+	@for fe_width in 1 2 4; do \
+		for be_width in 1 2 4; do \
+			$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+				-P rv32_decode_rename_dispatch_tb.FE_WIDTH=$$fe_width \
+				-P rv32_decode_rename_dispatch_tb.BE_WIDTH=$$be_width \
+				-s rv32_decode_rename_dispatch_tb \
+				-o build/rv32_decode_rename_dispatch_tb_$${fe_width}_$${be_width}.vvp \
+				rtl/rv32im_decoder.v rtl/rv32_rename_unit.v \
+				rtl/rv32_physical_register_file.v \
+				rtl/rv32_decode_rename_dispatch.v \
+				tb/rv32_decode_rename_dispatch_tb.v || exit 1; \
+			$(TIMEOUT) 30 vvp -N \
+				build/rv32_decode_rename_dispatch_tb_$${fe_width}_$${be_width}.vvp || exit 1; \
+		done; \
+	done
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_dispatch_integration_tb \
+		-o build/rv32_dispatch_integration_tb.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_rename_unit.v \
+		rtl/rv32_physical_register_file.v \
+		rtl/rv32_decode_rename_dispatch.v rtl/rv32_reorder_buffer.v \
+		rtl/rv32_integer_reservation_station.v \
+		rtl/rv32_memory_reservation_station.v \
+		rtl/rv32_load_store_queue.v tb/rv32_dispatch_integration_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_dispatch_integration_tb.vvp
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-P rv32_decode_rename_dispatch.FE_WIDTH=3 \
+		-s rv32_decode_rename_dispatch \
+		-o build/rv32_decode_rename_dispatch_bad_fe.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_rename_unit.v \
+		rtl/rv32_physical_register_file.v \
+		rtl/rv32_decode_rename_dispatch.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_decode_rename_dispatch_bad_fe.vvp 2>&1 | \
+		grep -q '^ERROR rv32_decode_rename_dispatch invalid parameters'
+	@echo "PASS dispatch rejected invalid parameters"
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+		-s rv32_decode_rename_dispatch_protocol_tb \
+		-o build/rv32_decode_rename_dispatch_protocol.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_rename_unit.v \
+		rtl/rv32_physical_register_file.v \
+		rtl/rv32_decode_rename_dispatch.v \
+		tb/rv32_decode_rename_dispatch_tb.v
+	@$(TIMEOUT) 30 vvp -N \
+		build/rv32_decode_rename_dispatch_protocol.vvp 2>&1 | \
+		grep -q '^ERROR rv32_decode_rename_dispatch non-prefix fetch valid'
+	@echo "PASS dispatch rejected protocol violations"

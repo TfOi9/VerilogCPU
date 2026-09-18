@@ -142,6 +142,7 @@ module rv32_load_store_queue #(
     integer best_store_distance;
     integer i;
     integer j;
+    integer occupancy_index;
     integer byte_index;
     integer alloc_choice;
     integer access_bytes;
@@ -300,10 +301,7 @@ module rv32_load_store_queue #(
         candidate_distance = ROB_ENTRIES;
         best_distance = ROB_ENTRIES;
         commit_slot = 0;
-        occupancy_o = 0;
         reserved_slots = 0;
-        for (i = 0; i < LSQ_ENTRIES; i = i + 1)
-            if (busy[i]) occupancy_o = occupancy_o + 1'b1;
         alloc_ready_o = !reset_i && !flush_i && !recover_i;
         alloc_lsq_tag_o = 0;
         for (i = 0; i < BE_WIDTH; i = i + 1) begin
@@ -473,6 +471,13 @@ module rv32_load_store_queue #(
                 end
             end
         end
+    end
+
+    always @* begin
+        occupancy_o = 0;
+        for (occupancy_index = 0; occupancy_index < LSQ_ENTRIES;
+                occupancy_index = occupancy_index + 1)
+            if (busy[occupancy_index]) occupancy_o = occupancy_o + 1'b1;
     end
 
     always @(posedge clk_i) begin

@@ -38,4 +38,6 @@ Bimodal 与 BTB 分支预测器设计见 [predictor.md](predictor.md)。
 
 参数化取指流水线设计见 [fetch.md](fetch.md)。
 
+Decode、Rename 与 Dispatch 流水线设计见 [dispatch.md](dispatch.md)。
+
 完成仲裁与物理寄存器写回网络设计见 [writeback.md](writeback.md)。
