@@ -34,6 +34,8 @@ LOAD/STORE 保留站设计见 [memory_rs.md](memory_rs.md)。
 
 流水线 L1 数据缓存设计见 [dcache.md](dcache.md)。
 
+I/D Cache 行接口仲裁与 AXI4-Lite 转换设计见 [cache_axi_bridge.md](cache_axi_bridge.md)。
+
 Bimodal 与 BTB 分支预测器设计见 [predictor.md](predictor.md)。
 
 参数化取指流水线设计见 [fetch.md](fetch.md)。

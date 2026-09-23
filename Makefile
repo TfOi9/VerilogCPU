@@ -2,10 +2,11 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
+FAKERAM ?= ../RISC-V-CPU-2026/scripts/ram/sram_fakeram.sv
 PROGRAM ?= tests/programs/accumulate.c
 ARCH ?= rv32i
 OUT_DIR ?= build/images/accumulate-$(ARCH)
@@ -19,7 +20,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint fetch-lint dispatch-lint
+lint: memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint predictor-lint fetch-lint dispatch-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -143,7 +144,7 @@ lint: memory-lint main-memory-lint icache-lint dcache-lint predictor-lint fetch-
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: memory-unit main-memory-unit icache-unit dcache-unit predictor-unit fetch-unit dispatch-unit
+unit: memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -748,50 +749,87 @@ main-memory-unit:
 
 icache-lint:
 	@mkdir -p build
-	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+	@$(TIMEOUT) 30 iverilog -g2005 -i -Wall \
+		-s rv32_l1_instruction_cache \
+		-o build/rv32_l1_instruction_cache_2005.vvp \
+		rtl/rv32_l1_instruction_cache.v
+	@$(TIMEOUT) 30 iverilog -g2012 -Wall \
 		-s rv32_l1_instruction_cache \
 		-o build/rv32_l1_instruction_cache_lint.vvp \
-		rtl/rv32_l1_instruction_cache.v
-	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		$(FAKERAM) rtl/rv32_l1_instruction_cache.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1800-2012 -Wall \
+		-Wno-TIMESCALEMOD -Wno-BLKSEQ \
 		--top-module rv32_l1_instruction_cache \
-		rtl/rv32_l1_instruction_cache.v
+		$(FAKERAM) rtl/rv32_l1_instruction_cache.v
 	@$(TIMEOUT) 120 yosys -q -p \
-		'read_verilog -D SYNTHESIS rtl/rv32_l1_instruction_cache.v; hierarchy -check -top rv32_l1_instruction_cache; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
+		'read_verilog -sv -D SYNTHESIS $(FAKERAM) rtl/rv32_l1_instruction_cache.v; hierarchy -check -top rv32_l1_instruction_cache; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
 
 icache-unit:
 	@mkdir -p build
-	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+	@$(TIMEOUT) 30 iverilog -g2012 -Wall \
 		-s rv32_l1_instruction_cache_tb \
 		-o build/rv32_l1_instruction_cache_tb.vvp \
-		rtl/rv32_l1_instruction_cache.v \
+		$(FAKERAM) rtl/rv32_l1_instruction_cache.v \
 		tb/rv32_main_memory.v tb/rv32_l1_instruction_cache_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32_l1_instruction_cache_tb.vvp
+	@$(TIMEOUT) 30 iverilog -g2012 -Wall \
+		-s rv32_l1_cache_parameter_tb \
+		-o build/rv32_l1_cache_parameter_tb.vvp \
+		$(FAKERAM) rtl/rv32_l1_instruction_cache.v \
+		rtl/rv32_l1_data_cache.v tb/rv32_main_memory.v \
+		tb/rv32_l1_cache_parameter_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_l1_cache_parameter_tb.vvp
 
 dcache-lint:
 	@mkdir -p build
-	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+	@$(TIMEOUT) 30 iverilog -g2005 -i -Wall \
+		-s rv32_l1_data_cache \
+		-o build/rv32_l1_data_cache_2005.vvp \
+		rtl/rv32_l1_data_cache.v
+	@$(TIMEOUT) 30 iverilog -g2012 -Wall \
 		-s rv32_l1_data_cache \
 		-o build/rv32_l1_data_cache_lint.vvp \
-		rtl/rv32_l1_data_cache.v
-	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
-		--top-module rv32_l1_data_cache rtl/rv32_l1_data_cache.v
+		$(FAKERAM) rtl/rv32_l1_data_cache.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1800-2012 -Wall \
+		-Wno-TIMESCALEMOD -Wno-BLKSEQ \
+		--top-module rv32_l1_data_cache $(FAKERAM) rtl/rv32_l1_data_cache.v
 	@$(TIMEOUT) 120 yosys -q -p \
-		'read_verilog -D SYNTHESIS rtl/rv32_l1_data_cache.v; hierarchy -check -top rv32_l1_data_cache; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
+		'read_verilog -sv -D SYNTHESIS $(FAKERAM) rtl/rv32_l1_data_cache.v; hierarchy -check -top rv32_l1_data_cache; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check'
 
 dcache-unit:
 	@mkdir -p build
-	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+	@$(TIMEOUT) 30 iverilog -g2012 -Wall \
 		-s rv32_l1_data_cache_tb \
 		-o build/rv32_l1_data_cache_tb.vvp \
-		rtl/rv32_l1_data_cache.v \
+		$(FAKERAM) rtl/rv32_l1_data_cache.v \
 		tb/rv32_main_memory.v tb/rv32_l1_data_cache_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32_l1_data_cache_tb.vvp
-	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+	@$(TIMEOUT) 30 iverilog -g2012 -I rtl \
 		-s rv32_lsq_dcache_integration_tb \
 		-o build/rv32_lsq_dcache_integration_tb.vvp \
-		rtl/rv32_load_store_queue.v rtl/rv32_l1_data_cache.v \
+		$(FAKERAM) rtl/rv32_load_store_queue.v rtl/rv32_l1_data_cache.v \
 		tb/rv32_main_memory.v tb/rv32_lsq_dcache_integration_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32_lsq_dcache_integration_tb.vvp
+
+cache-bridge-lint:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall -s rv32_l1_cache_axi_bridge \
+		-o build/rv32_l1_cache_axi_bridge_2005.vvp \
+		rtl/rv32_l1_cache_axi_bridge.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+		-Wno-UNUSEDSIGNAL -Wno-DECLFILENAME \
+		--top-module rv32_l1_cache_axi_bridge \
+		rtl/rv32_l1_cache_axi_bridge.v
+	@$(TIMEOUT) 30 yosys -q -p \
+		'read_verilog rtl/rv32_l1_cache_axi_bridge.v; hierarchy -check -top rv32_l1_cache_axi_bridge; proc; opt; select -assert-none t:$$dlatch; check'
+
+cache-bridge-unit:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -Wall \
+		-s rv32_l1_cache_axi_bridge_tb \
+		-o build/rv32_l1_cache_axi_bridge_tb.vvp \
+		rtl/rv32_l1_cache_axi_bridge.v tb/rv32_l1_cache_axi_bridge_tb.v
+	@$(TIMEOUT) 30 vvp -N build/rv32_l1_cache_axi_bridge_tb.vvp
 
 predictor-lint:
 	@mkdir -p build
@@ -891,9 +929,10 @@ fetch-unit:
 				build/rv32_fetch_pipeline_tb_$${fe_width}_$${be_width}.vvp || exit 1; \
 		done; \
 	done
-	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+	@$(TIMEOUT) 30 iverilog -g2012 -Wall -I rtl \
 		-s rv32_fetch_icache_integration_tb \
 		-o build/rv32_fetch_icache_integration_tb.vvp \
+		$(FAKERAM) \
 		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
 		rtl/rv32_fetch_pipeline.v rtl/rv32_l1_instruction_cache.v \
 		tb/rv32_main_memory.v tb/rv32_fetch_icache_integration_tb.v

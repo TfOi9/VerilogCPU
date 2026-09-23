@@ -165,7 +165,7 @@ module rv32_l1_data_cache_tb;
                 if (tail >= 2048)
                     $fatal(1, "ERROR scoreboard overflow");
                 expected_error[tail] = request_address_i[1:0] != 0 ||
-                    request_address_i > 32'h000ffffc ||
+                    request_address_i > 32'h0ffffffc ||
                     force_expected_error;
                 expected_data[tail] = expected_error[tail] ||
                     request_write_i ? 32'd0 : model_word(request_address_i);
@@ -174,7 +174,7 @@ module rv32_l1_data_cache_tb;
                 expected_seen[tail] = 1'b0;
                 tail = tail + 1;
                 if (request_address_i[1:0] == 0 &&
-                        request_address_i <= 32'h000ffffc)
+                        request_address_i <= 32'h0ffffffc)
                     valid_count = valid_count + 1;
                 if (request_write_i && !expected_error[tail-1] &&
                         request_address_i < 8192)
@@ -395,7 +395,14 @@ module rv32_l1_data_cache_tb;
                 $fatal(1, "ERROR random memory consistency byte %0d", i);
 
         baseline = memory_read_count + memory_write_count;
-        issue(0, 32'h00100000, 0, 0);
+        force_expected_error = 1'b1;
+        issue(0, 32'h0ffffffc, 0, 0);
+        drain();
+        force_expected_error = 1'b0;
+        if (memory_read_count + memory_write_count != baseline + 1)
+            $fatal(1, "ERROR final RAM word was rejected by cache");
+        baseline = memory_read_count + memory_write_count;
+        issue(0, 32'h10000000, 0, 0);
         issue(1, 32'h00000003, 32'h12345678, 4'hf);
         drain();
         if (memory_read_count + memory_write_count != baseline)
