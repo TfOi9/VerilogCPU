@@ -114,6 +114,7 @@ module rv32_lsq_dcache_integration_tb;
         .cache_request_address_o(cache_request_address),
         .cache_request_write_data_o(cache_request_write_data),
         .cache_request_byte_enable_o(cache_request_byte_enable),
+        .cache_request_mmio_o(),
         .cache_response_valid_i(cache_response_valid),
         .cache_response_ready_o(cache_response_ready),
         .cache_response_read_data_i(cache_response_read_data),

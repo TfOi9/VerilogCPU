@@ -1,8 +1,7 @@
 # Bare-metal startup for the Verilog CPU image format.
 #
-# The CPU starts at _start (address zero).  The instruction that loads 255
-# into a0 is the simulator HALT marker; it must remain immediately after the
-# call to main so the return value in a0 is observed before the marker runs.
+# The CPU starts at _start (address zero).  After main returns, its result in
+# a0 is written once to the official exit MMIO address.
 
     .option norelax
     .section .rom, "ax", @progbits
@@ -25,7 +24,8 @@ _start:
 
 .Lcall_main:
     jal     ra, main
-.Lhalt:
-    li      a0, 255
-    j       .Lhalt
+    lui     t0, 0x80000
+    sw      a0, 0(t0)
+.Lhang:
+    j       .Lhang
     .size _start, .-_start

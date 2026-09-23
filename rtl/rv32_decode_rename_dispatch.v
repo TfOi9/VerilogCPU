@@ -507,8 +507,7 @@ module rv32_decode_rename_dispatch #(
                         exception_tval_reg[selection_lane_index*32 +: 32] =
                             candidate_instruction[
                                 selection_lane_index*32 +: 32];
-                    end else if (lane_class == `RV32_CLASS_SYSTEM ||
-                            lane_class == `RV32_CLASS_HALT) begin
+                    end else if (lane_class == `RV32_CLASS_SYSTEM) begin
                         complete_reg[selection_lane_index] = 1'b1;
                         if (lane_op == `RV32_OP_ECALL) begin
                             exception_valid_reg[selection_lane_index] = 1'b1;

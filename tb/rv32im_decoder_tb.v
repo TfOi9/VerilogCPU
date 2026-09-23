@@ -366,8 +366,8 @@ module rv32im_decoder_tb;
 
         check_decode(
             32'h0ff00513,
-            `RV32_OP_HALT, `RV32_CLASS_HALT, 32'd0,
-            5'd0, 5'd0, 5'd0, 1'b0, 1'b0, 1'b0,
+            `RV32_OP_ADDI, `RV32_CLASS_INT, 32'd255,
+            5'd10, 5'd0, 5'd0, 1'b1, 1'b0, 1'b1,
             `RV32_MEMORY_NONE, 1'b0, 1'b0, 1'b1
         );
         check_decode(

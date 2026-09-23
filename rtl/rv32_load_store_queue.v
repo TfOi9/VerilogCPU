@@ -10,7 +10,7 @@ module rv32_load_store_queue #(
     parameter ROB_ENTRIES = 32,
     parameter ROB_INDEX_WIDTH = 5,
     parameter ROB_TAG_WIDTH = 7,
-    parameter MEMORY_BYTES = 1048576
+    parameter MEMORY_BYTES = 268435456
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -65,6 +65,7 @@ module rv32_load_store_queue #(
     output wire [31:0] cache_request_address_o,
     output wire [31:0] cache_request_write_data_o,
     output wire [3:0] cache_request_byte_enable_o,
+    output wire cache_request_mmio_o,
     input  wire cache_response_valid_i,
     output wire cache_response_ready_o,
     input  wire [31:0] cache_response_read_data_i,
@@ -111,6 +112,7 @@ module rv32_load_store_queue #(
     reg [31:0] request_address;
     reg [31:0] request_write_data;
     reg [3:0] request_byte_enable;
+    reg request_mmio;
     reg inflight;
     reg inflight_write;
     reg inflight_discard;
@@ -212,11 +214,26 @@ module rv32_load_store_queue #(
     function address_fault;
         input [31:0] addr;
         input [`RV32_MEMORY_WIDTH-1:0] code;
+        input store_value;
         integer bytes;
         begin
             bytes = size_bytes(code);
-            address_fault = bytes == 0 || (addr & (bytes-1)) != 0 ||
-                addr > MEMORY_BYTES - bytes;
+            if (bytes == 0 || (addr & (bytes-1)) != 0)
+                address_fault = 1'b1;
+            else if (addr == 32'h80000000)
+                address_fault = !store_value ||
+                    code != `RV32_MEMORY_WORD;
+            else
+                address_fault = addr > MEMORY_BYTES - bytes;
+        end
+    endfunction
+
+    function is_mmio_store;
+        input [31:0] addr;
+        input [`RV32_MEMORY_WIDTH-1:0] code;
+        begin
+            is_mmio_store = addr == 32'h80000000 &&
+                code == `RV32_MEMORY_WORD;
         end
     endfunction
 
@@ -271,6 +288,7 @@ module rv32_load_store_queue #(
     assign cache_request_address_o = request_address;
     assign cache_request_write_data_o = request_write_data;
     assign cache_request_byte_enable_o = request_byte_enable;
+    assign cache_request_mmio_o = request_mmio;
     assign store_data_ready_o = !reset_i && !flush_i && !recover_i &&
         store_data_valid_i && data_match && !data_valid[data_slot];
     assign cache_response_ready_o = !reset_i && !flush_i &&
@@ -518,6 +536,7 @@ module rv32_load_store_queue #(
             request_address <= 0;
             request_write_data <= 0;
             request_byte_enable <= 0;
+            request_mmio <= 1'b0;
             inflight <= 1'b0;
             inflight_write <= 1'b0;
             inflight_discard <= 1'b0;
@@ -658,6 +677,9 @@ module rv32_load_store_queue #(
                                 (4'b1111 >> (4-size_bytes(
                                     width[sequential_commit_slot])))
                                     << address[sequential_commit_slot][1:0];
+                            request_mmio <= is_mmio_store(
+                                address[sequential_commit_slot],
+                                width[sequential_commit_slot]);
                             write_requested[sequential_commit_slot] <= 1'b1;
                         end else if (request_candidate >= 0) begin
                             request_valid <= 1'b1;
@@ -669,6 +691,7 @@ module rv32_load_store_queue #(
                                 2'b00};
                             request_write_data <= 0;
                             request_byte_enable <= 0;
+                            request_mmio <= 1'b0;
                             started[request_candidate] <= 1'b1;
                         end
                     end else if (request_candidate >= 0) begin
@@ -681,6 +704,7 @@ module rv32_load_store_queue #(
                             2'b00};
                         request_write_data <= 0;
                         request_byte_enable <= 0;
+                        request_mmio <= 1'b0;
                         started[request_candidate] <= 1'b1;
                     end
                 end
@@ -689,7 +713,7 @@ module rv32_load_store_queue #(
                     address_valid[load_slot] <= 1'b1;
                     address[load_slot] <= load_address_i;
                     fault_valid[load_slot] <= address_fault(load_address_i,
-                        width[load_slot]);
+                        width[load_slot], 1'b0);
                     fault_cause[load_slot] <= address_fault_cause(
                         load_address_i, width[load_slot], 1'b0);
                 end
@@ -697,7 +721,7 @@ module rv32_load_store_queue #(
                     address_valid[store_slot] <= 1'b1;
                     address[store_slot] <= store_address_i;
                     fault_valid[store_slot] <= address_fault(store_address_i,
-                        width[store_slot]);
+                        width[store_slot], 1'b1);
                     fault_cause[store_slot] <= address_fault_cause(
                         store_address_i, width[store_slot], 1'b1);
                 end

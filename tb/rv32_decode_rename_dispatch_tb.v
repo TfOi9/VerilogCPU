@@ -410,9 +410,13 @@ module rv32_decode_rename_dispatch_tb;
         clear_fetch;
         put_lane(0, 32'h00000210, 32'h0ff00513);
         #1;
-        check(rob_alloc_complete_o[0] &&
-            !rob_alloc_exception_valid_o[0] &&
-            !(|int_dispatch_valid_o), 42);
+        check(dispatch_fire_o && int_dispatch_valid_o[0] &&
+            !rob_alloc_complete_o[0] &&
+            !rob_alloc_exception_valid_o[0], 42);
+        check(dispatch_op_o[0 +: `RV32_OP_WIDTH] == `RV32_OP_ADDI &&
+            dispatch_immediate_o[0 +: 32] == 32'd255 &&
+            rob_alloc_writes_rd_o[0] && rob_alloc_rd_o[0 +: 5] == 5'd10,
+            44);
         tick;
         clear_fetch;
 
@@ -478,24 +482,15 @@ module rv32_decode_rename_dispatch_tb;
         check(free_count_o == free_count_before, 56);
         int_dispatch_ready_i = 1'b1;
 
-        if (FE_WIDTH >= 2 && BE_WIDTH >= 2) begin
-            int_occupancy_i = INT_RS_ENTRIES;
-            put_lane(0, 32'h00000230, 32'h0ff00513);
+        int_occupancy_i = INT_RS_ENTRIES;
+        put_lane(0, 32'h00000230, 32'h0ff00513);
+        if (FE_WIDTH >= 2 && BE_WIDTH >= 2)
             put_lane(1, 32'h00000234, 32'h00100a13);
-            #1;
-            check(dispatch_valid_o[1:0] == 2'b01 &&
-                fetch_ready_o[1:0] == 2'b01 && dispatch_fire_o, 46);
-            tick;
-            int_occupancy_i = 0;
-            clear_fetch;
-        end else begin
-            int_occupancy_i = INT_RS_ENTRIES;
-            put_lane(0, 32'h00000230, 32'h00100a13);
-            #1;
-            check(!dispatch_fire_o && !(|dispatch_valid_o), 46);
-            int_occupancy_i = 0;
-            clear_fetch;
-        end
+        #1;
+        check(!dispatch_fire_o && !(|fetch_ready_o) &&
+            !(|dispatch_valid_o), 46);
+        int_occupancy_i = 0;
+        clear_fetch;
 
         put_lane(0, 32'h00000240, 32'h00100a13);
         recover_i = 1'b1;

@@ -1,11 +1,11 @@
-/* Linker layout for a 1 MiB, byte-addressed RV32 memory. */
+/* Linker layout for the official 256 MiB byte-addressed RV32 memory. */
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
 MEMORY
 {
     rom (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00001000
-    ram (rwx) : ORIGIN = 0x00001000, LENGTH = 0x000FF000
+    ram (rwx) : ORIGIN = 0x00001000, LENGTH = 0x0FFFF000
 }
 
 SECTIONS
@@ -58,8 +58,8 @@ SECTIONS
 
     __stack_top = ORIGIN(ram) + LENGTH(ram);
     _end = .;
-    ASSERT(__stack_top == 0x00100000, "stack top must match 1 MiB memory")
-    ASSERT(_end <= __stack_top, "linked image exceeds 1 MiB memory")
+    ASSERT(__stack_top == 0x10000000, "stack top must match 256 MiB memory")
+    ASSERT(_end <= __stack_top, "linked image exceeds 256 MiB memory")
 
     /DISCARD/ :
     {

@@ -63,6 +63,7 @@ module rv32_load_store_queue_tb;
     wire [31:0] cache_request_address_o;
     wire [31:0] cache_request_write_data_o;
     wire [3:0] cache_request_byte_enable_o;
+    wire cache_request_mmio_o;
     reg cache_response_valid_i;
     wire cache_response_ready_o;
     reg [31:0] cache_response_read_data_i;
@@ -135,6 +136,7 @@ module rv32_load_store_queue_tb;
         .cache_request_address_o(cache_request_address_o),
         .cache_request_write_data_o(cache_request_write_data_o),
         .cache_request_byte_enable_o(cache_request_byte_enable_o),
+        .cache_request_mmio_o(cache_request_mmio_o),
         .cache_response_valid_i(cache_response_valid_i),
         .cache_response_ready_o(cache_response_ready_o),
         .cache_response_read_data_i(cache_response_read_data_i),
@@ -295,9 +297,31 @@ module rv32_load_store_queue_tb;
             check(cache_request_write_o == write_value, "request write");
             check(cache_request_address_o == address_value,
                 "request address");
+            check(!cache_request_mmio_o, "RAM request route");
             if (write_value)
                 check(cache_request_byte_enable_o == byte_mask,
                     "request byte mask");
+            cache_request_ready_i = 1;
+            tick(); cache_request_ready_i = 0;
+        end
+    endtask
+
+    task expect_mmio_request;
+        input [31:0] data_value;
+        begin
+            wait_count = 0;
+            while (!cache_request_valid_o && wait_count < 30) begin
+                tick(); wait_count = wait_count + 1;
+            end
+            check(cache_request_valid_o, "MMIO request timeout");
+            check(cache_request_write_o, "MMIO request write");
+            check(cache_request_mmio_o, "MMIO request route");
+            check(cache_request_address_o == 32'h80000000,
+                "MMIO request address");
+            check(cache_request_write_data_o == data_value,
+                "MMIO request data");
+            check(cache_request_byte_enable_o == 4'hf,
+                "MMIO request byte mask");
             cache_request_ready_i = 1;
             tick(); cache_request_ready_i = 0;
         end
@@ -450,8 +474,75 @@ module rv32_load_store_queue_tb;
 
         reset_case();
         allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
-        load_address(tag(0), first_tag, 32'h00100000);
+        load_address(tag(0), first_tag, 32'h0ffffffc);
+        expect_request(0, 32'h0ffffffc, 0);
+        send_response(32'hdeadbeef, 0);
+        expect_completion(tag(0), 32'hdeadbeef, 0, 0);
+
+        reset_case();
+        allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        load_address(tag(0), first_tag, 32'h10000000);
         expect_completion(tag(0), 0, 1, 5);
+        check(!cache_request_valid_o, "RAM upper bound no request");
+
+        reset_case();
+        allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        load_address(tag(0), first_tag, 32'h80000000);
+        expect_completion(tag(0), 0, 1, 5);
+        check(!cache_request_valid_o, "MMIO load no request");
+
+        reset_case();
+        allocate_one(1, tag(0), `RV32_MEMORY_BYTE, 0, first_tag);
+        store_address(tag(0), first_tag, 32'h80000000);
+        expect_completion(tag(0), 0, 1, 7);
+        check(!cache_request_valid_o, "byte MMIO store no request");
+
+        reset_case();
+        allocate_one(1, tag(0), `RV32_MEMORY_HALF, 0, first_tag);
+        store_address(tag(0), first_tag, 32'h80000000);
+        expect_completion(tag(0), 0, 1, 7);
+        check(!cache_request_valid_o, "narrow MMIO store no request");
+
+        reset_case();
+        allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        store_address(tag(0), first_tag, 32'h80000004);
+        expect_completion(tag(0), 0, 1, 7);
+        check(!cache_request_valid_o, "invalid MMIO address no request");
+
+        reset_case();
+        allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        store_address(tag(0), first_tag, 32'h80000000);
+        store_data(tag(0), first_tag, 32'h12345678);
+        expect_completion(tag(0), 0, 0, 0);
+        commit_valid_i[0] = 1; commit_lsq_valid_i[0] = 1;
+        commit_op_i[0 +: `RV32_OP_WIDTH] = `RV32_OP_SW;
+        commit_rob_tag_i[0 +: ROB_TAG_WIDTH] = tag(0);
+        commit_lsq_tag_i[0 +: LSQ_TAG_WIDTH] = first_tag;
+        #1; check(!commit_ready_o[0], "MMIO store waits for request");
+        expect_mmio_request(32'h12345678);
+        #1; check(!commit_ready_o[0], "MMIO store waits for response");
+        send_response(0, 0);
+        #1; check(commit_ready_o[0], "MMIO store response acknowledged");
+        commit_fire_i[0] = 1; tick();
+        commit_fire_i = 0; commit_valid_i = 0;
+
+        reset_case();
+        allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        store_address(tag(0), first_tag, 32'h80000000);
+        store_data(tag(0), first_tag, 32'h89abcdef);
+        expect_completion(tag(0), 0, 0, 0);
+        commit_valid_i[0] = 1; commit_lsq_valid_i[0] = 1;
+        commit_op_i[0 +: `RV32_OP_WIDTH] = `RV32_OP_SW;
+        commit_rob_tag_i[0 +: ROB_TAG_WIDTH] = tag(0);
+        commit_lsq_tag_i[0 +: LSQ_TAG_WIDTH] = first_tag;
+        expect_mmio_request(32'h89abcdef);
+        send_response(0, 1);
+        #1; check(!commit_ready_o[0], "MMIO error awaits ROB update");
+        expect_completion(tag(0), 0, 1, 7);
+        commit_exception_valid_i[0] = 1;
+        #1; check(commit_ready_o[0], "MMIO error ready after ROB update");
+        commit_fire_i[0] = 1; tick();
+        commit_fire_i = 0; commit_valid_i = 0;
 
         reset_case();
         allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);

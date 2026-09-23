@@ -339,6 +339,7 @@ module rv32_dispatch_integration_tb;
         .cache_request_valid_o(), .cache_request_ready_i(1'b0),
         .cache_request_write_o(), .cache_request_address_o(),
         .cache_request_write_data_o(), .cache_request_byte_enable_o(),
+        .cache_request_mmio_o(),
         .cache_response_valid_i(1'b0), .cache_response_ready_o(),
         .cache_response_read_data_i(32'd0), .cache_response_error_i(1'b0)
     );

@@ -52,7 +52,6 @@
 `define RV32_OP_DIVU     6'd46
 `define RV32_OP_REM      6'd47
 `define RV32_OP_REMU     6'd48
-`define RV32_OP_HALT     6'd49
 
 `define RV32_CLASS_WIDTH 4
 
@@ -65,7 +64,6 @@
 `define RV32_CLASS_MUL     4'd6
 `define RV32_CLASS_DIV     4'd7
 `define RV32_CLASS_SYSTEM  4'd8
-`define RV32_CLASS_HALT    4'd9
 
 `define RV32_MEMORY_WIDTH 2
 

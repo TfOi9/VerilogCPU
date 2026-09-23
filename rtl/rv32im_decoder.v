@@ -42,12 +42,7 @@ module rv32im_decoder (
         load_unsigned_o = 1'b0;
         serialize_o     = 1'b0;
 
-        if (instruction_i == 32'h0ff00513) begin
-            legal_o = 1'b1;
-            op_o    = `RV32_OP_HALT;
-            class_o = `RV32_CLASS_HALT;
-        end else begin
-            case (opcode)
+        case (opcode)
                 7'b0110111: begin
                     legal_o     = 1'b1;
                     op_o        = `RV32_OP_LUI;
@@ -339,8 +334,7 @@ module rv32im_decoder (
                 default: begin
                     legal_o = 1'b0;
                 end
-            endcase
-        end
+        endcase
     end
 
 endmodule

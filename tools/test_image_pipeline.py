@@ -5,7 +5,6 @@ from __future__ import print_function
 
 import os
 import json
-import subprocess
 import sys
 import tempfile
 
@@ -14,7 +13,7 @@ import make_image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE = os.path.join(ROOT, "tests", "programs", "accumulate.c")
-SORA = os.environ.get("SORA_DIR", os.path.join(os.path.dirname(ROOT), "SORA"))
+MMIO_EXIT_SEQUENCE = bytes.fromhex("b7 02 00 80 23 a0 a2 00")
 
 
 def parse_image(path):
@@ -40,22 +39,6 @@ def parse_image(path):
     return segments
 
 
-def run_sora(executable, image):
-    if not os.path.isfile(executable) or not os.access(executable, os.X_OK):
-        return None
-    result = subprocess.run(
-        [executable, image, "false"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-        timeout=30,
-        check=False,
-    )
-    if result.returncode != 0:
-        raise AssertionError("{} failed:\n{}".format(executable, result.stderr))
-    return result.stdout.strip()
-
-
 def main():
     with tempfile.TemporaryDirectory(prefix="image-test-",
                                      dir=os.path.join(ROOT, "build")) as out_dir:
@@ -74,7 +57,7 @@ def main():
                 assert address < make_image.MEMORY_SIZE
                 assert address + len(data) <= make_image.MEMORY_SIZE
             rom = next(data for address, data in segments if address == 0)
-            assert bytes(rom).find(make_image.HALT_BYTES) >= 0
+            assert bytes(rom).find(MMIO_EXIT_SEQUENCE) >= 0
             assert os.path.getsize(binary) <= make_image.MEMORY_SIZE
             assert os.path.isfile(elf)
 
@@ -85,7 +68,8 @@ def main():
             with open(manifest) as stream:
                 metadata = json.load(stream)
             assert metadata["entry"] == "0x00000000"
-            assert metadata["halt_instruction"] == "0x0ff00513"
+            assert "halt_instruction" not in metadata
+            assert "halt_address" not in metadata
             assert int(metadata["memory_size"]) == make_image.MEMORY_SIZE
             assert any(
                 item["memory_size"] > item["file_size"]
@@ -95,12 +79,6 @@ def main():
                 address = int(item["address"], 16)
                 assert address + item["memory_size"] <= make_image.MEMORY_SIZE
 
-            interpreter = os.path.join(SORA, "build-release", "interpreter")
-            simulator = os.path.join(SORA, "build-release", "simulator")
-            for executable in (interpreter, simulator):
-                result = run_sora(executable, image)
-                if result is not None:
-                    assert result.splitlines()[0] == "186", (executable, result)
             print("PASS {} accumulation image".format(arch))
     return 0
 
@@ -108,6 +86,6 @@ def main():
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (AssertionError, OSError, subprocess.SubprocessError) as exc:
+    except (AssertionError, OSError) as exc:
         print("FAIL: {}".format(exc), file=sys.stderr)
         sys.exit(1)

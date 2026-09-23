@@ -21,9 +21,9 @@ rename 返回的两个源物理编号直接读取内部 PRF。PRF 与 rename rea
 - INT、BRANCH、JUMP 进入整数保留站；
 - MUL 和 DIV 进入对应 MDU 保留站；
 - LOAD 和 STORE 同时分配 LSQ 与对应访存保留站，LSQ 产生的 tag 同时写入 ROB 和访存 RS；
-- FENCE、HALT、ECALL、EBREAK、非法指令及取指错误只进入 ROB。
+- FENCE、ECALL、EBREAK、非法指令及取指错误只进入 ROB。
 
-ROB-only 项在分配时直接 complete。FENCE 和 HALT 不产生异常；取指访问错误、非法指令、EBREAK 和 ECALL 分别记录异常原因 1、2、3 和 11。对应 `tval` 分别为 PC、原始指令、PC 和零。异常只随 ROB 项按序提交，不在 dispatch 阶段产生架构副作用。
+ROB-only 项在分配时直接 complete。FENCE 不产生异常；取指访问错误、非法指令、EBREAK 和 ECALL 分别记录异常原因 1、2、3 和 11。对应 `tval` 分别为 PC、原始指令、PC 和零。异常只随 ROB 项按序提交，不在 dispatch 阶段产生架构副作用。`0x0ff00513` 按普通 ADDI 分配目的物理寄存器并进入整数保留站，资源不足时必须与其他整数指令一样回压。
 
 ## 接线与验证
 

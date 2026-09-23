@@ -21,6 +21,13 @@ RV32IM；可以参照 https://msyksphinz-self.github.io/riscv-isadoc/html/rvi.ht
 - 一个向量加法：https://github.com/ucb-bar/riscv-benchmarks/blob/master/vvadd/vvadd_main.c#L26-L31
 - SORA 仓库中 data/testcases/ 下的所有 .c
 
+### 内存与程序结束
+
+- 外部 RAM 为 256 MiB 小端内存，地址范围为 `0x00000000` 到 `0x0fffffff`。
+- 程序通过向 `0x80000000` 执行对齐的 32 位 Store 结束，写数据为返回值，byte enable 必须为 `4'hf`。
+- 结束 Store 只有到达 ROB 头部后才能对外发出，并且必须等待写响应。
+- `0x0ff00513` 是标准的 `ADDI a0, x0, 255`，不得作为特殊终止指令。
+
 以上程序都需要：
 
 - 从 .c 代码用 riscv-gnu-toolchain-gcc 编译出 .o

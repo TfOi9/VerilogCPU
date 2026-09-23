@@ -5,9 +5,8 @@ The stages are intentionally explicit:
 
     C -> C object -> ELF -> raw binary and @address byte image
 
-The image format is the SORA-compatible format consumed by the reference
-simulator: an ``@ADDRESS`` line selects a byte address and subsequent tokens
-are little-endian bytes written at consecutive addresses.
+The image uses ``@ADDRESS`` to select a byte address followed by little-endian
+bytes written at consecutive addresses.
 """
 
 from __future__ import print_function
@@ -21,10 +20,8 @@ import subprocess
 import sys
 
 
-MEMORY_SIZE = 1024 * 1024
+MEMORY_SIZE = 256 * 1024 * 1024
 ROM_SIZE = 0x1000
-HALT_WORD = 0x0FF00513
-HALT_BYTES = struct.pack("<I", HALT_WORD)
 PT_LOAD = 1
 PF_X = 1
 EM_RISCV = 243
@@ -123,7 +120,7 @@ def read_elf(elf_path):
         end = address + p_memsz
         if end > MEMORY_SIZE or end < address:
             raise BuildError(
-                "ELF load segment {} exceeds the 1 MiB address range: "
+                "ELF load segment {} exceeds the 256 MiB address range: "
                 "0x{:08x}+0x{:x}".format(index, address, p_memsz))
         if p_filesz:
             data = blob[p_offset:p_offset + p_filesz]
@@ -146,7 +143,8 @@ def read_elf(elf_path):
         previous_end = segment["address"] + segment["memory_size"]
 
     if entry >= MEMORY_SIZE:
-        raise BuildError("ELF entry 0x{:08x} is outside 1 MiB memory".format(entry))
+        raise BuildError(
+            "ELF entry 0x{:08x} is outside 256 MiB memory".format(entry))
     if not any(
         segment["address"] <= entry < segment["address"] + segment["memory_size"]
         and segment["flags"] & PF_X for segment in segments
@@ -154,23 +152,6 @@ def read_elf(elf_path):
         raise BuildError("ELF entry 0x{:08x} is not in an executable segment".format(entry))
 
     return {"entry": entry, "flags": flags, "segments": segments}
-
-
-def find_halt(elf_info):
-    for segment in elf_info["segments"]:
-        if not (segment["flags"] & PF_X):
-            continue
-        data = segment["data"]
-        start = 0
-        while True:
-            offset = data.find(HALT_BYTES, start)
-            if offset < 0:
-                break
-            address = segment["address"] + offset
-            if address % 4 == 0:
-                return address
-            start = offset + 1
-    return None
 
 
 def write_image(image_path, elf_info):
@@ -184,7 +165,7 @@ def write_image(image_path, elf_info):
                     "{:02X}".format(value) for value in data[offset:offset + 16])))
 
 
-def write_manifest(manifest_path, args, paths, elf_info, halt_address):
+def write_manifest(manifest_path, args, paths, elf_info):
     output = {
         "format": "verilog-cpu-image-v1",
         "arch": args.arch,
@@ -192,9 +173,6 @@ def write_manifest(manifest_path, args, paths, elf_info, halt_address):
         "entry": "0x{:08x}".format(elf_info["entry"]),
         "memory_size": MEMORY_SIZE,
         "rom_size": ROM_SIZE,
-        "halt_instruction": "0x{:08x}".format(HALT_WORD),
-        "halt_address": ("0x{:08x}".format(halt_address)
-                         if halt_address is not None else None),
         "segments": [
             {
                 "address": "0x{:08x}".format(item["address"]),
@@ -308,13 +286,9 @@ def main(argv=None):
         run([readelf, "-h", "-l", "-S", elf], stdout=stream)
 
     elf_info = read_elf(elf)
-    halt_address = find_halt(elf_info)
     if elf_info["entry"] != 0:
         raise BuildError("entry must be 0 for the Verilog CPU, got 0x{:08x}".format(
             elf_info["entry"]))
-    if halt_address is None:
-        raise BuildError("executable image does not contain HALT 0x{:08x}".format(
-            HALT_WORD))
     write_image(image, elf_info)
     paths = {
         "object": c_object,
@@ -328,7 +302,7 @@ def main(argv=None):
         "readelf": readelf_output,
         "manifest": manifest,
     }
-    write_manifest(manifest, args, paths, elf_info, halt_address)
+    write_manifest(manifest, args, paths, elf_info)
 
     load_bytes = sum(item["file_size"] for item in elf_info["segments"])
     memory_high_water = max(
@@ -336,7 +310,6 @@ def main(argv=None):
         default=0)
     print("generated {}".format(image))
     print("  entry: 0x{:08x}".format(elf_info["entry"]))
-    print("  halt:  0x{:08x}".format(halt_address))
     print("  load bytes: {}".format(load_bytes))
     print("  memory high-water: 0x{:08x} / 0x{:08x}".format(
         memory_high_water, MEMORY_SIZE))

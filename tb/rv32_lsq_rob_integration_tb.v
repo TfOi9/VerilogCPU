@@ -116,6 +116,7 @@ module rv32_lsq_rob_integration_tb;
         .cache_request_address_o(cache_req_address),
         .cache_request_write_data_o(cache_req_data),
         .cache_request_byte_enable_o(cache_req_mask),
+        .cache_request_mmio_o(),
         .cache_response_valid_i(cache_resp_valid),
         .cache_response_ready_o(cache_resp_ready),
         .cache_response_read_data_i(cache_resp_data),
