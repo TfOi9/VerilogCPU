@@ -32,6 +32,8 @@ commit 组合逻辑从 head 开始选择连续的 complete 前缀。`commit_vali
 
 控制流完成携带实际 next PC。ROB 将它与分配时保存的预测 next PC 比较；同周期出现多个误预测时，按相对 head 的距离选择最老分支。误预测完成所在周期已经握手的正常提交、完成和分配仍在该上升沿生效，新分配项属于该分支之后的错误路径，必须一并回滚。
 
+每个被接受的控制流完成还输出一次预测器训练事件，包括操作类型、PC、预测 next PC、实际 next PC 和实际 taken。训练与执行完成同步，不需要等待该分支提交；stale tag、重复完成和恢复期间的完成不会产生训练事件。
+
 下一周期 ROB 进入注册的 recovery 状态，发出一次 redirect，并暂停 allocation、commit 和 completion。每周期从 tail 前一项开始输出最多 `BE_WIDTH` 个回滚项，直到误预测分支本身为止；分支保留并保持 complete。最后一批年轻项在上升沿删除时同时退出 recovery，不增加空的恢复周期。若分支已经是 tail 前一项，仍保留一个只发 redirect、不含 rollback 项的恢复周期。
 
 状态优先级固定为同步复位、已进入的 recovery、正常周期。复位清空全部表项、指针、occupancy 和 generation；reset 为高时所有有效输出被屏蔽。

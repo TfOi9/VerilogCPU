@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit build core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -10,6 +10,22 @@ FAKERAM ?= ../RISC-V-CPU-2026/scripts/ram/sram_fakeram.sv
 PROGRAM ?= tests/programs/accumulate.c
 ARCH ?= rv32i
 OUT_DIR ?= build/images/accumulate-$(ARCH)
+CPU2026_DIR ?= ../RISC-V-CPU-2026
+OFFICIAL_BUILD ?= build/official
+FILELIST ?= verilog/filelist.f
+JOBS ?= 4
+APPIMAGE ?=
+
+CORE_RTL := \
+	rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+	rtl/rv32_fetch_pipeline.v rtl/rv32_physical_register_file.v \
+	rtl/rv32_rename_unit.v rtl/rv32_decode_rename_dispatch.v \
+	rtl/rv32_reorder_buffer.v rtl/rv32_integer_reservation_station.v \
+	rtl/rv32i_alu.v rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
+	rtl/rv32_mdu_reservation_stations.v \
+	rtl/rv32_memory_reservation_station.v \
+	rtl/rv32_load_store_queue.v \
+	rtl/rv32_completion_writeback_network.v rtl/rv32_cpu_core.v
 
 doctor:
 	@./tools/doctor.sh
@@ -20,7 +36,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint predictor-lint fetch-lint dispatch-lint
+lint: core-lint memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint predictor-lint fetch-lint dispatch-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -144,7 +160,7 @@ lint: memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint pre
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
+unit: core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -656,9 +672,48 @@ unit: memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit pre
 		grep -q '^ERROR rv32_completion_writeback_network physical address width='
 	@echo "PASS writeback network rejected invalid physical address width"
 
-smoke regression matrix perf synth report:
+build:
+	@$(TIMEOUT) 300 $(PYTHON) $(CPU2026_DIR)/scripts/build.py \
+		--filelist $(FILELIST) --out $(OFFICIAL_BUILD) --jobs $(JOBS) \
+		--appimage "$(APPIMAGE)"
+
+smoke: build
+	@$(TIMEOUT) 120 $(PYTHON) tools/make_image.py \
+		tests/programs/accumulate.c --arch rv32im \
+		--out-dir build/images/smoke-rv32im
+	@$(TIMEOUT) 300 $(PYTHON) $(CPU2026_DIR)/scripts/run.py \
+		build/images/smoke-rv32im/accumulate.bin \
+		--build $(OFFICIAL_BUILD) --sim $(OFFICIAL_BUILD)/sim \
+		--expected 5050 --max-cycles 1000000 --latency 10
+	@$(TIMEOUT) 120 $(PYTHON) tools/make_image.py \
+		tests/programs/core_ooo.c --arch rv32im \
+		--out-dir build/images/core-ooo-rv32im
+	@$(TIMEOUT) 300 $(PYTHON) $(CPU2026_DIR)/scripts/run.py \
+		build/images/core-ooo-rv32im/core_ooo.bin \
+		--build $(OFFICIAL_BUILD) --sim $(OFFICIAL_BUILD)/sim \
+		--expected 42 --max-cycles 1000000 --latency 10
+
+regression matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
 	@exit 2
+
+core-lint:
+	@mkdir -p build
+	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
+		-s rv32_cpu_core -o build/rv32_cpu_core_lint.vvp $(CORE_RTL)
+	@$(TIMEOUT) 60 verilator --lint-only --language 1364-2005 -Wall \
+		--top-module rv32_cpu_core -Irtl $(CORE_RTL)
+	@$(TIMEOUT) 120 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); hierarchy -check -top rv32_cpu_core; proc; memory; opt; check'
+
+core-unit:
+	@mkdir -p build
+	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
+		-P rv32_cpu_core.FE_WIDTH=2 -s rv32_cpu_core \
+		-o build/rv32_cpu_core_bad_width.vvp $(CORE_RTL)
+	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_bad_width.vvp 2>&1 | \
+		grep -q '^ERROR rv32_cpu_core only supports single issue'
+	@echo "PASS core rejected non-single-issue configuration"
 
 memory-lint:
 	@mkdir -p build

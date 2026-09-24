@@ -47,6 +47,15 @@ module rv32_reorder_buffer #(
     output wire [BE_WIDTH-1:0]                              completion_accept_o,
     output wire [BE_WIDTH-1:0]                              completion_writes_rd_o,
     output wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        completion_phys_o,
+    output reg  [BE_WIDTH-1:0]                              predictor_update_valid_o,
+    output reg  [(BE_WIDTH*`RV32_OP_WIDTH)-1:0]             predictor_update_op_o,
+    output reg  [(BE_WIDTH*32)-1:0]                         predictor_update_pc_o,
+    output reg  [(BE_WIDTH*32)-1:0]
+                                                            predictor_update_predicted_next_pc_o,
+    output reg  [(BE_WIDTH*32)-1:0]
+                                                            predictor_update_actual_next_pc_o,
+    output reg  [BE_WIDTH-1:0]
+                                                            predictor_update_actual_taken_o,
 
     input  wire [BE_WIDTH-1:0]                              commit_ready_i,
     output wire [BE_WIDTH-1:0]                              commit_valid_o,
@@ -342,6 +351,15 @@ module rv32_reorder_buffer #(
         completion_writes_rd_reg = {BE_WIDTH{1'b0}};
         completion_phys_reg =
             {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
+        predictor_update_valid_o = {BE_WIDTH{1'b0}};
+        predictor_update_op_o =
+            {(BE_WIDTH*`RV32_OP_WIDTH){1'b0}};
+        predictor_update_pc_o = {(BE_WIDTH*32){1'b0}};
+        predictor_update_predicted_next_pc_o =
+            {(BE_WIDTH*32){1'b0}};
+        predictor_update_actual_next_pc_o =
+            {(BE_WIDTH*32){1'b0}};
+        predictor_update_actual_taken_o = {BE_WIDTH{1'b0}};
         mispredict_found_reg = 1'b0;
         mispredict_tag_reg = {ROB_TAG_WIDTH{1'b0}};
         mispredict_next_pc_reg = 32'd0;
@@ -395,6 +413,24 @@ module rv32_reorder_buffer #(
                     completion_lane_index*PHYS_REG_ADDR_WIDTH +:
                     PHYS_REG_ADDR_WIDTH] =
                     entry_new_phys[completion_slot_reg];
+                if (completion_control_valid_i[completion_lane_index]) begin
+                    predictor_update_valid_o[completion_lane_index] = 1'b1;
+                    predictor_update_op_o[
+                        completion_lane_index*`RV32_OP_WIDTH +:
+                        `RV32_OP_WIDTH] = entry_op[completion_slot_reg];
+                    predictor_update_pc_o[
+                        completion_lane_index*32 +: 32] =
+                        entry_pc[completion_slot_reg];
+                    predictor_update_predicted_next_pc_o[
+                        completion_lane_index*32 +: 32] =
+                        entry_predicted_next_pc[completion_slot_reg];
+                    predictor_update_actual_next_pc_o[
+                        completion_lane_index*32 +: 32] =
+                        completion_next_pc_i[
+                            completion_lane_index*32 +: 32];
+                    predictor_update_actual_taken_o[completion_lane_index] =
+                        completion_control_taken_i[completion_lane_index];
+                end
                 if (completion_control_valid_i[completion_lane_index] &&
                         (entry_predicted_next_pc[completion_slot_reg] !=
                             completion_next_pc_i[
