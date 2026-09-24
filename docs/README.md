@@ -38,6 +38,8 @@ I/D Cache 行接口仲裁与 AXI4-Lite 转换设计见 [cache_axi_bridge.md](cac
 
 官方单发射乱序核心与 `student_top` 接线见 [cpu_core.md](cpu_core.md)。
 
+官方 RV32IM 正确性回归配置与结果见 [correctness.md](correctness.md)。
+
 Bimodal 与 BTB 分支预测器设计见 [predictor.md](predictor.md)。
 
 参数化取指流水线设计见 [fetch.md](fetch.md)。

@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit build core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit build test core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -11,10 +11,14 @@ PROGRAM ?= tests/programs/accumulate.c
 ARCH ?= rv32i
 OUT_DIR ?= build/images/accumulate-$(ARCH)
 CPU2026_DIR ?= ../RISC-V-CPU-2026
+TESTCASES ?= $(CPU2026_DIR)/testcases
 OFFICIAL_BUILD ?= build/official
 FILELIST ?= verilog/filelist.f
 JOBS ?= 4
 APPIMAGE ?=
+MAX_CYCLES ?= 30000000
+LATENCY ?= 10
+Case ?=
 
 CORE_RTL := \
 	rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
@@ -693,7 +697,15 @@ smoke: build
 		--build $(OFFICIAL_BUILD) --sim $(OFFICIAL_BUILD)/sim \
 		--expected 42 --max-cycles 1000000 --latency 10
 
-regression matrix perf synth report:
+test: build
+	@$(TIMEOUT) 600 $(PYTHON) $(CPU2026_DIR)/scripts/testcase.py \
+		--kind correctness --build $(OFFICIAL_BUILD) \
+		--testcases "$(TESTCASES)" --max-cycles $(MAX_CYCLES) \
+		--latency $(LATENCY) --sim $(OFFICIAL_BUILD)/sim $(if $(Case),--case "$(Case)",)
+
+regression: unit smoke test
+
+matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
 	@exit 2
 
