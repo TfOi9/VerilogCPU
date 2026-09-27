@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit build test core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke regression matrix perf synth report image image-test
+.PHONY: doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix perf synth report image image-test
 
 PYTHON ?= python3
 TIMEOUT ?= timeout
@@ -13,6 +13,7 @@ OUT_DIR ?= build/images/accumulate-$(ARCH)
 CPU2026_DIR ?= ../RISC-V-CPU-2026
 TESTCASES ?= $(CPU2026_DIR)/testcases
 OFFICIAL_BUILD ?= build/official
+DUAL_BUILD ?= build/official-dual
 FILELIST ?= verilog/filelist.f
 JOBS ?= 4
 APPIMAGE ?=
@@ -681,6 +682,12 @@ build:
 		--filelist $(FILELIST) --out $(OFFICIAL_BUILD) --jobs $(JOBS) \
 		--appimage "$(APPIMAGE)"
 
+build-dual:
+	@$(TIMEOUT) 300 $(PYTHON) tools/build_configured.py \
+		--framework $(CPU2026_DIR) --filelist $(FILELIST) \
+		--out $(DUAL_BUILD) --fe-width 2 --be-width 2 --jobs $(JOBS) \
+		--appimage "$(APPIMAGE)"
+
 smoke: build
 	@$(TIMEOUT) 120 $(PYTHON) tools/make_image.py \
 		tests/programs/accumulate.c --arch rv32im \
@@ -697,13 +704,35 @@ smoke: build
 		--build $(OFFICIAL_BUILD) --sim $(OFFICIAL_BUILD)/sim \
 		--expected 42 --max-cycles 1000000 --latency 10
 
+smoke-dual: build-dual
+	@$(TIMEOUT) 120 $(PYTHON) tools/make_image.py \
+		tests/programs/accumulate.c --arch rv32im \
+		--out-dir build/images/smoke-rv32im
+	@$(TIMEOUT) 300 $(PYTHON) $(CPU2026_DIR)/scripts/run.py \
+		build/images/smoke-rv32im/accumulate.bin \
+		--build $(DUAL_BUILD) --sim $(DUAL_BUILD)/sim \
+		--expected 5050 --max-cycles 1000000 --latency 10
+	@$(TIMEOUT) 120 $(PYTHON) tools/make_image.py \
+		tests/programs/core_ooo.c --arch rv32im \
+		--out-dir build/images/core-ooo-rv32im
+	@$(TIMEOUT) 300 $(PYTHON) $(CPU2026_DIR)/scripts/run.py \
+		build/images/core-ooo-rv32im/core_ooo.bin \
+		--build $(DUAL_BUILD) --sim $(DUAL_BUILD)/sim \
+		--expected 42 --max-cycles 1000000 --latency 10
+
 test: build
 	@$(TIMEOUT) 600 $(PYTHON) $(CPU2026_DIR)/scripts/testcase.py \
 		--kind correctness --build $(OFFICIAL_BUILD) \
 		--testcases "$(TESTCASES)" --max-cycles $(MAX_CYCLES) \
 		--latency $(LATENCY) --sim $(OFFICIAL_BUILD)/sim $(if $(Case),--case "$(Case)",)
 
-regression: unit smoke test
+test-dual: build-dual
+	@$(TIMEOUT) 1800 $(PYTHON) $(CPU2026_DIR)/scripts/testcase.py \
+		--kind correctness --build $(DUAL_BUILD) \
+		--testcases "$(TESTCASES)" --max-cycles $(MAX_CYCLES) \
+		--latency $(LATENCY) --sim $(DUAL_BUILD)/sim $(if $(Case),--case "$(Case)",)
+
+regression: unit smoke test smoke-dual test-dual
 
 matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
@@ -717,15 +746,39 @@ core-lint:
 		--top-module rv32_cpu_core -Irtl $(CORE_RTL)
 	@$(TIMEOUT) 120 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); hierarchy -check -top rv32_cpu_core; proc; memory; opt; check'
+	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
+		-P rv32_cpu_core.FE_WIDTH=2 -P rv32_cpu_core.BE_WIDTH=2 \
+		-s rv32_cpu_core -o build/rv32_cpu_core_dual_lint.vvp $(CORE_RTL)
+	@$(TIMEOUT) 60 verilator --lint-only --language 1364-2005 -Wall \
+		--top-module rv32_cpu_core -GFE_WIDTH=2 -GBE_WIDTH=2 \
+		-Irtl $(CORE_RTL)
+	@$(TIMEOUT) 120 yosys -q -p \
+		'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); chparam -set FE_WIDTH 2 -set BE_WIDTH 2 rv32_cpu_core; hierarchy -check -top rv32_cpu_core; proc; memory; opt; check'
 
 core-unit:
 	@mkdir -p build
 	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
-		-P rv32_cpu_core.FE_WIDTH=2 -s rv32_cpu_core \
-		-o build/rv32_cpu_core_bad_width.vvp $(CORE_RTL)
-	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_bad_width.vvp 2>&1 | \
-		grep -q '^ERROR rv32_cpu_core only supports single issue'
-	@echo "PASS core rejected non-single-issue configuration"
+		-P rv32_cpu_core.FE_WIDTH=2 -P rv32_cpu_core.BE_WIDTH=2 \
+		-s rv32_cpu_core -o build/rv32_cpu_core_dual.vvp $(CORE_RTL)
+	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_dual.vvp
+	@$(TIMEOUT) 120 verilator --binary --timing --assert \
+		--language 1364-2005 -Wall -Wno-fatal \
+		--top-module rv32_cpu_core_dual_issue_tb \
+		--Mdir build/rv32_cpu_core_dual_issue_tb_obj \
+		-o rv32_cpu_core_dual_issue_tb -Irtl \
+		$(CORE_RTL) tb/rv32_cpu_core_dual_issue_tb.v
+	@$(TIMEOUT) 30 build/rv32_cpu_core_dual_issue_tb_obj/rv32_cpu_core_dual_issue_tb
+	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
+		-P rv32_cpu_core.FE_WIDTH=2 -P rv32_cpu_core.BE_WIDTH=1 \
+		-s rv32_cpu_core -o build/rv32_cpu_core_bad_mixed_width.vvp $(CORE_RTL)
+	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_bad_mixed_width.vvp 2>&1 | \
+		grep -q '^ERROR rv32_cpu_core unsupported width configuration'
+	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
+		-P rv32_cpu_core.FE_WIDTH=4 -P rv32_cpu_core.BE_WIDTH=4 \
+		-s rv32_cpu_core -o build/rv32_cpu_core_bad_four_width.vvp $(CORE_RTL)
+	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_bad_four_width.vvp 2>&1 | \
+		grep -q '^ERROR rv32_cpu_core unsupported width configuration'
+	@echo "PASS core width configuration checks"
 
 memory-lint:
 	@mkdir -p build

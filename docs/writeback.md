@@ -4,7 +4,7 @@
 
 `rv32_completion_writeback_network` 连接执行单元响应、ROB completion 端口、物理寄存器文件、rename 就绪记分牌和全部保留站的广播端口。模块每周期最多向 ROB 交付 `BE_WIDTH` 条结果，并且只广播 ROB 接受的 live 指令结果。
 
-默认 `SOURCE_COUNT` 为 `BE_WIDTH + 2`。来源 0 到 `BE_WIDTH-1` 对应整数 ALU，来源 `BE_WIDTH` 对应乘法器，来源 `BE_WIDTH+1` 对应除法器。端口采用通用压平总线，后续 LSQ 可以通过增加 `SOURCE_COUNT` 并追加来源接入，无需修改仲裁逻辑。每个来源携带 ROB tag、结果值、控制流信息和异常信息；不支持某类信息的执行单元把对应字段接零。
+默认 `SOURCE_COUNT` 为 `BE_WIDTH + 2`，适用于整数 ALU、乘法器和除法器。整机核心还接入 LSQ，因此显式配置为 `BE_WIDTH + 3`：来源 0 到 `BE_WIDTH-1` 对应整数 ALU，之后依次为乘法器、除法器和 LSQ。端口采用通用压平总线，每个来源携带 ROB tag、结果值、控制流信息和异常信息；不支持某类信息的执行单元把对应字段接零。
 
 ## 来源缓冲与握手
 

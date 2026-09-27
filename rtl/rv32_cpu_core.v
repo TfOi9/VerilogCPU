@@ -52,7 +52,7 @@ module rv32_cpu_core #(
 );
     /* verilator lint_off PINCONNECTEMPTY */
     /* verilator lint_off UNUSEDSIGNAL */
-    localparam COMPLETION_SOURCES = 4;
+    localparam COMPLETION_SOURCES = BE_WIDTH + 3;
 
     wire recover_busy;
     wire recover_redirect_valid;
@@ -152,13 +152,13 @@ module rv32_cpu_core #(
     wire [(BE_WIDTH*32)-1:0] int_issue_immediate;
     wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] int_issue_rob_tag;
 
-    wire alu_response_valid;
-    wire alu_response_ready;
-    wire [31:0] alu_response_value;
-    wire [ROB_TAG_WIDTH-1:0] alu_response_rob_tag;
-    wire alu_response_control_valid;
-    wire alu_response_control_taken;
-    wire [31:0] alu_response_next_pc;
+    wire [BE_WIDTH-1:0] alu_response_valid;
+    wire [BE_WIDTH-1:0] alu_response_ready;
+    wire [(BE_WIDTH*32)-1:0] alu_response_value;
+    wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] alu_response_rob_tag;
+    wire [BE_WIDTH-1:0] alu_response_control_valid;
+    wire [BE_WIDTH-1:0] alu_response_control_taken;
+    wire [(BE_WIDTH*32)-1:0] alu_response_next_pc;
 
     wire mul_response_valid;
     wire mul_response_ready;
@@ -247,17 +247,22 @@ module rv32_cpu_core #(
     assign source_control_valid = {3'b000, alu_response_control_valid};
     assign source_control_taken = {3'b000, alu_response_control_taken};
     assign source_next_pc = {96'd0, alu_response_next_pc};
-    assign source_exception_valid = {lsq_completion_exception_valid, 3'b000};
-    assign source_exception_cause = {lsq_completion_exception_cause, 12'd0};
-    assign source_exception_tval = {lsq_completion_exception_tval, 96'd0};
-    assign alu_response_ready = source_ready[0];
-    assign mul_response_ready = source_ready[1];
-    assign div_response_ready = source_ready[2];
-    assign lsq_completion_ready = source_ready[3];
+    assign source_exception_valid = {lsq_completion_exception_valid,
+        {(BE_WIDTH+2){1'b0}}};
+    assign source_exception_cause = {lsq_completion_exception_cause,
+        {(4*(BE_WIDTH+2)){1'b0}}};
+    assign source_exception_tval = {lsq_completion_exception_tval,
+        {(32*(BE_WIDTH+2)){1'b0}}};
+    assign alu_response_ready = source_ready[BE_WIDTH-1:0];
+    assign mul_response_ready = source_ready[BE_WIDTH];
+    assign div_response_ready = source_ready[BE_WIDTH+1];
+    assign lsq_completion_ready = source_ready[BE_WIDTH+2];
 
     initial begin
-        if (FE_WIDTH != 1 || BE_WIDTH != 1) begin
-            $display("ERROR rv32_cpu_core only supports single issue");
+        if (!((FE_WIDTH == 1 && BE_WIDTH == 1) ||
+                (FE_WIDTH == 2 && BE_WIDTH == 2))) begin
+            $display("ERROR rv32_cpu_core unsupported width configuration FE_WIDTH=%0d BE_WIDTH=%0d",
+                FE_WIDTH, BE_WIDTH);
             $finish(1);
         end
     end
@@ -492,24 +497,38 @@ module rv32_cpu_core #(
         .issue_rob_tag_o(int_issue_rob_tag)
     );
 
-    rv32i_alu #(.ROB_TAG_WIDTH(ROB_TAG_WIDTH)) alu (
-        .clk_i(clk_i), .reset_i(reset_i), .flush_i(1'b0),
-        .request_valid_i(int_issue_valid[0]),
-        .request_ready_o(int_issue_ready[0]),
-        .request_op_i(int_issue_op[0 +: `RV32_OP_WIDTH]),
-        .request_lhs_i(int_issue_lhs[0 +: 32]),
-        .request_rhs_i(int_issue_rhs[0 +: 32]),
-        .request_pc_i(int_issue_pc[0 +: 32]),
-        .request_immediate_i(int_issue_immediate[0 +: 32]),
-        .request_rob_tag_i(int_issue_rob_tag[0 +: ROB_TAG_WIDTH]),
-        .response_valid_o(alu_response_valid),
-        .response_ready_i(alu_response_ready),
-        .response_value_o(alu_response_value),
-        .response_rob_tag_o(alu_response_rob_tag),
-        .response_control_valid_o(alu_response_control_valid),
-        .response_control_taken_o(alu_response_control_taken),
-        .response_next_pc_o(alu_response_next_pc)
-    );
+    genvar alu_lane;
+    generate
+        for (alu_lane = 0; alu_lane < BE_WIDTH;
+                alu_lane = alu_lane + 1) begin : generate_alu
+            rv32i_alu #(.ROB_TAG_WIDTH(ROB_TAG_WIDTH)) alu (
+                .clk_i(clk_i), .reset_i(reset_i), .flush_i(1'b0),
+                .request_valid_i(int_issue_valid[alu_lane]),
+                .request_ready_o(int_issue_ready[alu_lane]),
+                .request_op_i(int_issue_op[
+                    alu_lane*`RV32_OP_WIDTH +: `RV32_OP_WIDTH]),
+                .request_lhs_i(int_issue_lhs[alu_lane*32 +: 32]),
+                .request_rhs_i(int_issue_rhs[alu_lane*32 +: 32]),
+                .request_pc_i(int_issue_pc[alu_lane*32 +: 32]),
+                .request_immediate_i(
+                    int_issue_immediate[alu_lane*32 +: 32]),
+                .request_rob_tag_i(int_issue_rob_tag[
+                    alu_lane*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]),
+                .response_valid_o(alu_response_valid[alu_lane]),
+                .response_ready_i(alu_response_ready[alu_lane]),
+                .response_value_o(
+                    alu_response_value[alu_lane*32 +: 32]),
+                .response_rob_tag_o(alu_response_rob_tag[
+                    alu_lane*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]),
+                .response_control_valid_o(
+                    alu_response_control_valid[alu_lane]),
+                .response_control_taken_o(
+                    alu_response_control_taken[alu_lane]),
+                .response_next_pc_o(
+                    alu_response_next_pc[alu_lane*32 +: 32])
+            );
+        end
+    endgenerate
 
     rv32_multiply_reservation_station #(
         .MUL_RS_ENTRIES(MUL_RS_ENTRIES),

@@ -1,10 +1,12 @@
-# 单发射乱序 CPU 核心
+# 单/双发射乱序 CPU 核心
 
-`rv32_cpu_core` 将已有前端、重命名、ROB、保留站、执行单元、LSQ 与完成网络闭环。当前里程碑固定 `FE_WIDTH=1`、`BE_WIDTH=1`，保留其他容量参数；宽度 2 和 4 会在后续阶段启用。`student_top` 在核心外实例化分离的 I/D Cache 与 AXI4-Lite 桥接层，并只暴露官方规定的总线端口。
+`rv32_cpu_core` 将已有前端、重命名、ROB、保留站、执行单元、LSQ 与完成网络闭环。当前支持 `FE_WIDTH=BE_WIDTH=1` 和 `FE_WIDTH=BE_WIDTH=2`；混合宽度与宽度 4 留待后续阶段。`student_top` 保持单发射默认参数，在核心外实例化分离的 I/D Cache 与 AXI4-Lite 桥接层，并只暴露官方规定的总线端口。
 
 ## 执行与写回
 
-整数、乘法、除法和 LSQ 构成四个完成源。完成网络为每个来源保留一个缓冲，仲裁结果送入 ROB；只有 ROB 接受且目标指令需要写寄存器时，结果才写入物理寄存器并广播唤醒各保留站。整数 ALU 同时返回控制流实际方向和下一 PC，ROB 在接受控制流完成的周期生成预测器训练信息。
+核心按 `BE_WIDTH` 实例化整数 ALU，因此双发射配置可以同周期执行两条就绪的整数或控制流指令。乘法器、除法器和 LSU 各保留一个。完成源数量为 `BE_WIDTH+3`：低 `BE_WIDTH` 个来源对应整数 ALU，随后依次为乘法器、除法器和 LSQ。完成网络为每个来源保留一个缓冲，每周期最多向 ROB 交付 `BE_WIDTH` 条结果；只有 ROB 接受且目标指令需要写寄存器时，结果才写入物理寄存器并广播唤醒各保留站。
+
+每个整数 ALU 独立传递 ROB tag、结果、控制流方向和实际下一 PC，也独立接受完成网络回压。多个分支同周期完成时，ROB 选择程序顺序中最老的错误预测作为恢复点。多于 `BE_WIDTH` 个来源同时完成时，其余结果留在各来源缓冲中，不允许覆盖或丢失。
 
 ROB 检测到预测目标不一致后保存正确 PC，并从尾部逆序撤销年轻指令。rollback 总线同时连接 rename、所有保留站和 LSQ；恢复期间暂停 dispatch、issue、completion 和 commit，较老指令及其尚未消费的完成结果继续保留。Fetch 在收到 redirect 时清空取指队列并使旧 I-Cache 响应失效。
 
@@ -18,4 +20,6 @@ Store 只有位于 ROB 头部时才能由 LSQ 发出。LSQ 等待 D-Cache 或 AX
 
 `student_top` 实例化核心、参数化 I-Cache、参数化 D-Cache 和共享 AXI bridge。核心到 D 侧的一笔请求只能进入 D-Cache 或 MMIO 路径之一；顶层记录该请求的归属，响应只返回给原请求。Cache miss 使用 128 位行接口，MMIO 使用一个 32 位 AXI 写事务。
 
-`verilog/filelist.f` 以仓库内相对路径列出所有 RTL。`make build` 使用 CPU 2026 官方脚本生成模拟器，`make smoke` 运行累加程序以及覆盖 RAW/WAW、乘除法、LSQ forwarding、分支恢复和错误路径 MMIO 抑制的 directed 程序。
+`verilog/filelist.f` 以仓库内相对路径列出所有 RTL。`make build` 使用 CPU 2026 官方脚本生成默认单发射模拟器；`make build-dual` 使用相同文件列表、FakeRAM 和官方 harness，并将顶层宽度设为 2，产物位于 `build/official-dual`。`make smoke-dual` 与 `make test-dual` 分别执行双发射短程序和官方 correctness 回归，不覆盖单发射构建目录。
+
+双发射核心定向测试使用受控取指响应，检查同周期双整数 issue、双 ALU 完成、ALU/乘除法/LSQ 同周期完成冲突、bundle 内 RAW/WAW、跨 bundle 唤醒、两个分支同周期完成时的最老错误预测恢复，以及错误路径 MMIO Store 抑制。
