@@ -2,9 +2,9 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix perf synth report image image-test
+.PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix perf synth report image image-test
 
-PYTHON ?= python3
+PYTHON ?= $(shell command -v /opt/homebrew/bin/python3 2>/dev/null || command -v python3)
 TIMEOUT ?= timeout
 FAKERAM ?= ../RISC-V-CPU-2026/scripts/ram/sram_fakeram.sv
 PROGRAM ?= tests/programs/accumulate.c
@@ -14,6 +14,9 @@ CPU2026_DIR ?= ../RISC-V-CPU-2026
 TESTCASES ?= $(CPU2026_DIR)/testcases
 OFFICIAL_BUILD ?= build/official
 DUAL_BUILD ?= build/official-dual
+FE_WIDTH ?= 1
+BE_WIDTH ?= 1
+CONFIGURED_BUILD ?= build/official-$(FE_WIDTH)x$(BE_WIDTH)
 FILELIST ?= verilog/filelist.f
 JOBS ?= 4
 APPIMAGE ?=
@@ -30,7 +33,7 @@ CORE_RTL := \
 	rtl/rv32_mdu_reservation_stations.v \
 	rtl/rv32_memory_reservation_station.v \
 	rtl/rv32_load_store_queue.v \
-	rtl/rv32_completion_writeback_network.v rtl/rv32_cpu_core.v
+	rtl/rv32_completion_writeback_network.v rtl/rv32_issue_arbiter.v rtl/rv32_cpu_core.v
 
 doctor:
 	@./tools/doctor.sh
@@ -41,7 +44,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: core-lint memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint predictor-lint fetch-lint dispatch-lint
+lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint predictor-lint fetch-lint dispatch-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -165,7 +168,7 @@ lint: core-lint memory-lint main-memory-lint icache-lint dcache-lint cache-bridg
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
+unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -678,8 +681,9 @@ unit: core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridg
 	@echo "PASS writeback network rejected invalid physical address width"
 
 build:
-	@$(TIMEOUT) 300 $(PYTHON) $(CPU2026_DIR)/scripts/build.py \
-		--filelist $(FILELIST) --out $(OFFICIAL_BUILD) --jobs $(JOBS) \
+	@$(TIMEOUT) 300 $(PYTHON) tools/build_configured.py \
+		--framework $(CPU2026_DIR) --filelist $(FILELIST) \
+		--out $(OFFICIAL_BUILD) --fe-width 1 --be-width 1 --jobs $(JOBS) \
 		--appimage "$(APPIMAGE)"
 
 build-dual:
@@ -687,6 +691,31 @@ build-dual:
 		--framework $(CPU2026_DIR) --filelist $(FILELIST) \
 		--out $(DUAL_BUILD) --fe-width 2 --be-width 2 --jobs $(JOBS) \
 		--appimage "$(APPIMAGE)"
+
+build-configured:
+	@$(TIMEOUT) 300 $(PYTHON) tools/build_configured.py \
+		--framework $(CPU2026_DIR) --filelist $(FILELIST) \
+		--out $(CONFIGURED_BUILD) --fe-width $(FE_WIDTH) --be-width $(BE_WIDTH) \
+		--jobs $(JOBS) --appimage "$(APPIMAGE)"
+
+smoke-configured: build-configured
+	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
+		--testcases "$(TESTCASES)" --filelist $(FILELIST) --mode smoke \
+		--fe-width $(FE_WIDTH) --be-width $(BE_WIDTH) --sim $(CONFIGURED_BUILD)/sim \
+		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) \
+		--report reports/smoke-$(FE_WIDTH)x$(BE_WIDTH).json
+
+test-configured: build-configured
+	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
+		--testcases "$(TESTCASES)" --filelist $(FILELIST) --mode test \
+		--fe-width $(FE_WIDTH) --be-width $(BE_WIDTH) --sim $(CONFIGURED_BUILD)/sim \
+		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) \
+		--report reports/correctness-$(FE_WIDTH)x$(BE_WIDTH).json $(if $(Case),--case "$(Case)",)
+
+regression-widths: lint unit
+	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
+		--testcases "$(TESTCASES)" --filelist $(FILELIST) --jobs $(JOBS) \
+		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) --appimage "$(APPIMAGE)"
 
 smoke: build
 	@$(TIMEOUT) 120 $(PYTHON) tools/make_image.py \
@@ -721,16 +750,18 @@ smoke-dual: build-dual
 		--expected 42 --max-cycles 1000000 --latency 10
 
 test: build
-	@$(TIMEOUT) 600 $(PYTHON) $(CPU2026_DIR)/scripts/testcase.py \
-		--kind correctness --build $(OFFICIAL_BUILD) \
-		--testcases "$(TESTCASES)" --max-cycles $(MAX_CYCLES) \
-		--latency $(LATENCY) --sim $(OFFICIAL_BUILD)/sim $(if $(Case),--case "$(Case)",)
+	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
+		--testcases "$(TESTCASES)" --filelist $(FILELIST) --mode test \
+		--fe-width 1 --be-width 1 --sim $(OFFICIAL_BUILD)/sim \
+		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) \
+		--report reports/correctness-1x1.json $(if $(Case),--case "$(Case)",)
 
 test-dual: build-dual
-	@$(TIMEOUT) 1800 $(PYTHON) $(CPU2026_DIR)/scripts/testcase.py \
-		--kind correctness --build $(DUAL_BUILD) \
-		--testcases "$(TESTCASES)" --max-cycles $(MAX_CYCLES) \
-		--latency $(LATENCY) --sim $(DUAL_BUILD)/sim $(if $(Case),--case "$(Case)",)
+	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
+		--testcases "$(TESTCASES)" --filelist $(FILELIST) --mode test \
+		--fe-width 2 --be-width 2 --sim $(DUAL_BUILD)/sim \
+		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) \
+		--report reports/correctness-2x2.json $(if $(Case),--case "$(Case)",)
 
 regression: unit smoke test smoke-dual test-dual
 
@@ -738,47 +769,79 @@ matrix perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
 	@exit 2
 
+issue-lint:
+	@mkdir -p build
+	@for width in 1 2 4; do \
+		$(TIMEOUT) 30 iverilog -g2005 -Wall -s rv32_issue_arbiter \
+			-P rv32_issue_arbiter.BE_WIDTH=$$width \
+			-o build/issue_lint_$$width.vvp rtl/rv32_issue_arbiter.v || exit 1; \
+		$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
+			--top-module rv32_issue_arbiter -GBE_WIDTH=$$width \
+			rtl/rv32_issue_arbiter.v || exit 1; \
+		$(TIMEOUT) 30 yosys -q -p 'read_verilog rtl/rv32_issue_arbiter.v; chparam -set BE_WIDTH '"$$width"' rv32_issue_arbiter; hierarchy -check -top rv32_issue_arbiter; proc; opt; select -assert-none t:$$dlatch; check' || exit 1; \
+	done
+
+issue-unit:
+	@mkdir -p build
+	@for width in 1 2 4; do \
+		$(TIMEOUT) 30 $(PYTHON) tools/generate_issue_vectors.py \
+			build/issue_$$width.txt --width $$width || exit 1; \
+		$(TIMEOUT) 30 iverilog -g2005 -Wall -s rv32_issue_arbiter_tb \
+			-P rv32_issue_arbiter_tb.BE_WIDTH=$$width \
+			-o build/issue_tb_$$width.vvp rtl/rv32_issue_arbiter.v tb/rv32_issue_arbiter_tb.v || exit 1; \
+		$(TIMEOUT) 30 vvp -N build/issue_tb_$$width.vvp +VECTOR_FILE=build/issue_$$width.txt || exit 1; \
+	done
+
 core-lint:
 	@mkdir -p build
-	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
-		-s rv32_cpu_core -o build/rv32_cpu_core_lint.vvp $(CORE_RTL)
-	@$(TIMEOUT) 60 verilator --lint-only --language 1364-2005 -Wall \
-		--top-module rv32_cpu_core -Irtl $(CORE_RTL)
-	@$(TIMEOUT) 120 yosys -q -p \
-		'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); hierarchy -check -top rv32_cpu_core; proc; memory; opt; check'
-	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
-		-P rv32_cpu_core.FE_WIDTH=2 -P rv32_cpu_core.BE_WIDTH=2 \
-		-s rv32_cpu_core -o build/rv32_cpu_core_dual_lint.vvp $(CORE_RTL)
-	@$(TIMEOUT) 60 verilator --lint-only --language 1364-2005 -Wall \
-		--top-module rv32_cpu_core -GFE_WIDTH=2 -GBE_WIDTH=2 \
-		-Irtl $(CORE_RTL)
-	@$(TIMEOUT) 120 yosys -q -p \
-		'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); chparam -set FE_WIDTH 2 -set BE_WIDTH 2 rv32_cpu_core; hierarchy -check -top rv32_cpu_core; proc; memory; opt; check'
+	@for fe in 1 2 4; do for be in 1 2 4; do \
+		$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl -s rv32_cpu_core \
+			-P rv32_cpu_core.FE_WIDTH=$$fe -P rv32_cpu_core.BE_WIDTH=$$be \
+			-o build/core_lint_$${fe}x$$be.vvp $(CORE_RTL) || exit 1; \
+		$(TIMEOUT) 60 verilator --lint-only --language 1364-2005 -Wall \
+			--top-module rv32_cpu_core -GFE_WIDTH=$$fe -GBE_WIDTH=$$be \
+			-Irtl $(CORE_RTL) || exit 1; \
+		$(TIMEOUT) 120 yosys -q -p 'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); chparam -set FE_WIDTH '"$$fe"' -set BE_WIDTH '"$$be"' rv32_cpu_core; hierarchy -check -top rv32_cpu_core; proc; memory; opt; select -assert-none t:$$dlatch; check' || exit 1; \
+		echo "PASS core lint FE=$$fe BE=$$be"; \
+	done; done
 
 core-unit:
-	@mkdir -p build
-	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
-		-P rv32_cpu_core.FE_WIDTH=2 -P rv32_cpu_core.BE_WIDTH=2 \
-		-s rv32_cpu_core -o build/rv32_cpu_core_dual.vvp $(CORE_RTL)
-	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_dual.vvp
-	@$(TIMEOUT) 120 verilator --binary --timing --assert \
-		--language 1364-2005 -Wall -Wno-fatal \
-		--top-module rv32_cpu_core_dual_issue_tb \
-		--Mdir build/rv32_cpu_core_dual_issue_tb_obj \
-		-o rv32_cpu_core_dual_issue_tb -Irtl \
-		$(CORE_RTL) tb/rv32_cpu_core_dual_issue_tb.v
-	@$(TIMEOUT) 30 build/rv32_cpu_core_dual_issue_tb_obj/rv32_cpu_core_dual_issue_tb
-	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
-		-P rv32_cpu_core.FE_WIDTH=2 -P rv32_cpu_core.BE_WIDTH=1 \
-		-s rv32_cpu_core -o build/rv32_cpu_core_bad_mixed_width.vvp $(CORE_RTL)
-	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_bad_mixed_width.vvp 2>&1 | \
-		grep -q '^ERROR rv32_cpu_core unsupported width configuration'
-	@$(TIMEOUT) 60 iverilog -g2005 -Wall -I rtl \
-		-P rv32_cpu_core.FE_WIDTH=4 -P rv32_cpu_core.BE_WIDTH=4 \
-		-s rv32_cpu_core -o build/rv32_cpu_core_bad_four_width.vvp $(CORE_RTL)
-	@$(TIMEOUT) 30 vvp -N build/rv32_cpu_core_bad_four_width.vvp 2>&1 | \
-		grep -q '^ERROR rv32_cpu_core unsupported width configuration'
-	@echo "PASS core width configuration checks"
+	@mkdir -p build/core-vectors
+	@for seed in 0x2401 0x2402 0x2403; do \
+		$(TIMEOUT) 30 $(PYTHON) tools/generate_core_vectors.py \
+			--out build/core-vectors/$$seed --seed $$seed || exit 1; \
+	done
+	@for fe in 1 2 4; do for be in 1 2 4; do \
+		$(TIMEOUT) 180 verilator --binary --timing --trace --assert \
+			--language 1364-2005 -Wall -Wno-fatal -DRV32_TEST_WATCHDOG \
+			--top-module rv32_cpu_core_width_tb -GFE_WIDTH=$$fe -GBE_WIDTH=$$be \
+			--Mdir build/core_tb_$${fe}x$$be -o core_tb -Irtl \
+			-j $(JOBS) $(CORE_RTL) tb/rv32_cpu_core_width_tb.v || exit 1; \
+		for seed in 0x2401 0x2402 0x2403; do \
+			$(TIMEOUT) 30 build/core_tb_$${fe}x$$be/core_tb \
+				+PROGRAM=build/core-vectors/$$seed.words +TRACE=build/core-vectors/$$seed.trace \
+				+EXPECTED=$$(cat build/core-vectors/$$seed.result) +SEED=$$((seed)) || exit 1; \
+		done; \
+	done; done
+	@$(TIMEOUT) 30 $(PYTHON) tools/test_core_watchdog.py build/core_tb_1x1/core_tb
+	@for parameter in FE_WIDTH BE_WIDTH; do \
+		$(TIMEOUT) 60 iverilog -g2005 -I rtl -s rv32_cpu_core \
+			-P rv32_cpu_core.$$parameter=3 -o build/core_bad_$$parameter.vvp $(CORE_RTL) || exit 1; \
+		$(TIMEOUT) 30 vvp -N build/core_bad_$$parameter.vvp 2>&1 | \
+			grep -q '^ERROR rv32_cpu_core unsupported width configuration' || exit 1; \
+	done
+	@$(TIMEOUT) 30 $(PYTHON) tools/generate_writeback_vectors.py build/writeback_vectors_4x7.txt --width 4 --sources 7
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl -s rv32_completion_writeback_network_tb \
+		-P rv32_completion_writeback_network_tb.BE_WIDTH=4 \
+		-P rv32_completion_writeback_network_tb.SOURCE_COUNT=7 \
+		-o build/writeback_4x7.vvp rtl/rv32_completion_writeback_network.v tb/rv32_completion_writeback_network_tb.v
+	@$(TIMEOUT) 30 vvp -N build/writeback_4x7.vvp +VECTOR_FILE=build/writeback_vectors_4x7.txt
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl -s rv32_completion_writeback_integration_tb \
+		-P rv32_completion_writeback_integration_tb.BE_WIDTH=4 \
+		-P rv32_completion_writeback_integration_tb.SOURCE_COUNT=7 \
+		-o build/writeback_integration_4x7.vvp rtl/rv32_completion_writeback_network.v \
+			rtl/rv32_reorder_buffer.v rtl/rv32_physical_register_file.v tb/rv32_completion_writeback_integration_tb.v
+	@$(TIMEOUT) 30 vvp -N build/writeback_integration_4x7.vvp
 
 memory-lint:
 	@mkdir -p build

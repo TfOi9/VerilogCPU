@@ -3,8 +3,8 @@
 
 module rv32_completion_writeback_integration_tb;
 
-    localparam BE_WIDTH = 2;
-    localparam SOURCE_COUNT = 4;
+    parameter BE_WIDTH = 2;
+    parameter SOURCE_COUNT = 4;
     localparam PHYS_REGS = 64;
     localparam PHYS_REG_ADDR_WIDTH = 6;
     localparam ROB_ENTRIES = 16;
@@ -294,6 +294,14 @@ module rv32_completion_writeback_integration_tb;
         end
     endtask
 
+    reg [ROB_TAG_WIDTH-1:0] collision_tags [0:6];
+    reg [6:0] collision_writebacks;
+    integer collision_batch;
+    integer collision_lane;
+    integer collision_index;
+    integer collision_cycles;
+    integer collision_retired;
+
     initial begin
         clk_i = 1'b0;
         reset_i = 1'b0;
@@ -395,6 +403,76 @@ module rv32_completion_writeback_integration_tb;
             (writeback_value[31:0] == 32'h77778888), 17);
         clock_edge;
         check(prf_read_data[31:0] == 32'h77778888, 18);
+
+        if (BE_WIDTH == 4 && SOURCE_COUNT == 7) begin
+            clear_sources;
+            clear_allocation;
+            reset_i = 1'b1;
+            clock_edge;
+            reset_i = 1'b0;
+            commit_ready_i = 0;
+            for (collision_batch = 0; collision_batch < 2;
+                    collision_batch = collision_batch + 1) begin
+                clear_allocation;
+                alloc_fire_i = 1'b1;
+                for (collision_lane = 0; collision_lane < BE_WIDTH;
+                        collision_lane = collision_lane + 1) begin
+                    collision_index = collision_batch*BE_WIDTH + collision_lane;
+                    if (collision_index < 7) begin
+                        alloc_valid_i[collision_lane] = 1'b1;
+                        alloc_op_i[collision_lane*`RV32_OP_WIDTH +: `RV32_OP_WIDTH] = `RV32_OP_ADD;
+                        alloc_writes_rd_i[collision_lane] = 1'b1;
+                        alloc_rd_i[collision_lane*5 +: 5] = collision_index + 1;
+                        alloc_new_phys_i[collision_lane*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH] = 40 + collision_index;
+                    end
+                end
+                #1;
+                for (collision_lane = 0; collision_lane < BE_WIDTH;
+                        collision_lane = collision_lane + 1) begin
+                    collision_index = collision_batch*BE_WIDTH + collision_lane;
+                    if (collision_index < 7)
+                        collision_tags[collision_index] = alloc_tag_o[collision_lane*ROB_TAG_WIDTH +: ROB_TAG_WIDTH];
+                end
+                clock_edge;
+            end
+            clear_allocation;
+            for (collision_index = 0; collision_index < 7;
+                    collision_index = collision_index + 1) begin
+                source_valid_i[collision_index] = 1'b1;
+                source_rob_tag_i[collision_index*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] = collision_tags[collision_index];
+                source_value_i[collision_index*32 +: 32] = 32'habc0 + collision_index;
+            end
+            #1;
+            check(source_ready_o == 7'h7f, 19);
+            clock_edge;
+            clear_sources;
+            collision_writebacks = 0;
+            collision_retired = 0;
+            commit_ready_i = {BE_WIDTH{1'b1}};
+            for (collision_cycles = 0; collision_cycles < 8;
+                    collision_cycles = collision_cycles + 1) begin
+                for (collision_lane = 0; collision_lane < BE_WIDTH;
+                        collision_lane = collision_lane + 1) begin
+                    if (writeback_valid[collision_lane]) begin
+                        collision_index = writeback_phys[collision_lane*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH] - 40;
+                        check(collision_index >= 0 && collision_index < 7, 20);
+                        check(!collision_writebacks[collision_index], 21);
+                        check(writeback_value[collision_lane*32 +: 32] == 32'habc0 + collision_index, 22);
+                        collision_writebacks[collision_index] = 1'b1;
+                    end
+                    if (commit_fire_o[collision_lane])
+                        collision_retired = collision_retired + 1;
+                end
+                clock_edge;
+            end
+            check(collision_writebacks == 7'h7f && collision_retired == 7 && occupancy_o == 0, 23);
+            for (collision_index = 0; collision_index < 7;
+                    collision_index = collision_index + 1) begin
+                prf_read_addr[PHYS_REG_ADDR_WIDTH-1:0] = 40 + collision_index;
+                #1;
+                check(prf_read_data[31:0] == 32'habc0 + collision_index, 24);
+            end
+        end
 
         if (error_count != 0) begin
             $display("FAIL rv32_completion_writeback_integration tests=%0d errors=%0d",

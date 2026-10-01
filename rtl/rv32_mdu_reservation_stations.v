@@ -337,8 +337,6 @@ module rv32_mdu_reservation_station_core #(
         request_rob_tag_reg = {ROB_TAG_WIDTH{1'b0}};
         request_slot_valid_reg = 1'b0;
         request_slot_reg = {RS_INDEX_WIDTH{1'b0}};
-        issue_remove_mask_reg = {RS_ENTRIES{1'b0}};
-        issue_count = 0;
         selection_winner_slot = 0;
         selection_winner_distance = ROB_ENTRIES;
         selection_candidate_distance = ROB_ENTRIES;
@@ -383,11 +381,16 @@ module rv32_mdu_reservation_station_core #(
                 request_lhs_reg = effective_lhs_value[request_slot_reg];
                 request_rhs_reg = effective_rhs_value[request_slot_reg];
                 request_rob_tag_reg = entry_rob_tag[request_slot_reg];
-                if (request_ready_i) begin
-                    issue_remove_mask_reg[request_slot_reg] = 1'b1;
-                    issue_count = 1;
-                end
             end
+        end
+    end
+
+    always @* begin
+        issue_remove_mask_reg = {RS_ENTRIES{1'b0}};
+        issue_count = 0;
+        if (request_valid_reg && request_ready_i) begin
+            issue_remove_mask_reg[request_slot_reg] = 1'b1;
+            issue_count = 1;
         end
     end
 
@@ -742,6 +745,10 @@ module rv32_multiply_reservation_station #(
     input  wire [ROB_INDEX_WIDTH-1:0]                       rob_head_index_i,
     input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
     input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
+    input  wire                                             issue_grant_i,
+    output wire                                             issue_valid_o,
+    output wire                                             issue_ready_o,
+    output wire [ROB_TAG_WIDTH-1:0]                         issue_rob_tag_o,
     output wire                                             response_valid_o,
     input  wire                                             response_ready_i,
     output wire [31:0]                                      response_value_o,
@@ -750,6 +757,7 @@ module rv32_multiply_reservation_station #(
 
     wire request_valid;
     wire request_ready;
+    wire unit_request_ready;
     wire [`RV32_OP_WIDTH-1:0] request_op;
     wire [31:0] request_lhs;
     wire [31:0] request_rhs;
@@ -757,6 +765,11 @@ module rv32_multiply_reservation_station #(
     wire unit_response_valid;
     wire [31:0] unit_response_value;
     wire [ROB_TAG_WIDTH-1:0] unit_response_rob_tag;
+
+    assign issue_valid_o = request_valid;
+    assign issue_ready_o = unit_request_ready;
+    assign issue_rob_tag_o = request_rob_tag;
+    assign request_ready = issue_grant_i && unit_request_ready;
 
     assign response_valid_o = !recover_i && unit_response_valid;
     assign response_value_o = (!recover_i && unit_response_valid) ?
@@ -811,8 +824,8 @@ module rv32_multiply_reservation_station #(
         .clk_i(clk_i),
         .reset_i(reset_i),
         .flush_i(flush_i),
-        .request_valid_i(request_valid),
-        .request_ready_o(request_ready),
+        .request_valid_i(request_valid && issue_grant_i),
+        .request_ready_o(unit_request_ready),
         .request_op_i(request_op),
         .request_lhs_i(request_lhs),
         .request_rhs_i(request_rhs),
@@ -857,6 +870,10 @@ module rv32_divide_reservation_station #(
     input  wire [ROB_INDEX_WIDTH-1:0]                       rob_head_index_i,
     input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
     input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
+    input  wire                                             issue_grant_i,
+    output wire                                             issue_valid_o,
+    output wire                                             issue_ready_o,
+    output wire [ROB_TAG_WIDTH-1:0]                         issue_rob_tag_o,
     output wire                                             response_valid_o,
     input  wire                                             response_ready_i,
     output wire [31:0]                                      response_value_o,
@@ -865,6 +882,7 @@ module rv32_divide_reservation_station #(
 
     wire request_valid;
     wire request_ready;
+    wire unit_request_ready;
     wire [`RV32_OP_WIDTH-1:0] request_op;
     wire [31:0] request_lhs;
     wire [31:0] request_rhs;
@@ -872,6 +890,11 @@ module rv32_divide_reservation_station #(
     wire unit_response_valid;
     wire [31:0] unit_response_value;
     wire [ROB_TAG_WIDTH-1:0] unit_response_rob_tag;
+
+    assign issue_valid_o = request_valid;
+    assign issue_ready_o = unit_request_ready;
+    assign issue_rob_tag_o = request_rob_tag;
+    assign request_ready = issue_grant_i && unit_request_ready;
 
     assign response_valid_o = !recover_i && unit_response_valid;
     assign response_value_o = (!recover_i && unit_response_valid) ?
@@ -926,8 +949,8 @@ module rv32_divide_reservation_station #(
         .clk_i(clk_i),
         .reset_i(reset_i),
         .flush_i(flush_i),
-        .request_valid_i(request_valid),
-        .request_ready_o(request_ready),
+        .request_valid_i(request_valid && issue_grant_i),
+        .request_ready_o(unit_request_ready),
         .request_op_i(request_op),
         .request_lhs_i(request_lhs),
         .request_rhs_i(request_rhs),

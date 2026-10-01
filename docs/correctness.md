@@ -57,3 +57,7 @@ make test TESTCASES=../RISC-V-CPU-2026-Testcases \
 `qsort`、`superloop` 和 `tak` 超时。这些测试在提高周期上限后均返回正确
 结果；其中 `pi` 本身包含 3117658 条动态指令，因此单发射核心不可能在
 1000000 周期内完成。该现象是周期预算不足，不是错误结果或处理器活锁。
+
+## 独立宽度回归
+
+第 24 项已在全部 9 种 FE/BE 宽度组合下完成官方 correctness 回归，并增加向量程序、退休差分和 watchdog 验证，结果见 [widths.md](widths.md)。`test`、`test-dual` 和 `test-configured` 均使用逐例 1800 秒墙钟上限，默认周期上限仍为 30000000。

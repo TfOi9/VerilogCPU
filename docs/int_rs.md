@@ -39,3 +39,5 @@
 decode/rename/dispatch 流水把 rename 给出的源物理编号和 ready、PRF 读值、ROB allocation tag、PC、立即数和操作码送入 dispatch 端。ROB 的 `head_index_o` 连接年龄基准，rollback 端直接连接选择性恢复接口。整数 ALU 连接 issue 端，后续完成网络把仅由 ROB 接受的写寄存器结果广播到本模块。
 
 仿真协议检查拒绝非法参数、容量不足时强制 dispatch、非法操作码或物理编号、重复物理写回、重复 issue 选择、无效锁和 occupancy 不一致。单元测试覆盖定向边界，并使用独立 Python 模型在 4 项单发射、8 项双发射和 16 项四发射配置下进行固定 seed 的逐周期随机差分。
+
+统一发射仲裁接入后，候选选择及 payload 与握手移除逻辑使用分离的组合块。候选 valid/tag 不依赖 `issue_ready_i`；ready 只决定实际移除和同周期可复用槽位，避免与跨类别仲裁形成组合反馈。

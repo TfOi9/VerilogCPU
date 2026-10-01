@@ -16,5 +16,6 @@
 ../rtl/rv32_l1_instruction_cache.v
 ../rtl/rv32_l1_data_cache.v
 ../rtl/rv32_l1_cache_axi_bridge.v
+../rtl/rv32_issue_arbiter.v
 ../rtl/rv32_cpu_core.v
 ../rtl/student_top.v

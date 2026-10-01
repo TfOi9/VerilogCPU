@@ -33,3 +33,7 @@ dispatch 接口使用稀疏 valid 掩码，lane 0 位于压平总线最低位。
 `MUL_RS_ENTRIES` 和 `DIV_RS_ENTRIES` 必须为不小于 `BE_WIDTH` 的 2 次幂，index width 必须与容量匹配。`BE_WIDTH` 只允许 1、2 或 4；物理寄存器和 ROB 参数沿用其他后端组件的约束。
 
 单元测试覆盖稀疏分配、广播旁路、ROB 环回年龄、满站同周期复用、乘法连续发射、除法 busy、请求和响应回压、rollback、恢复保持、全局 flush，以及乘除结果同时有效时的无损消费。固定 seed 的 Python 向量覆盖全部八条 RV32M 指令、边界输入和随机输入，并在多组宽度与容量配置下核对结果和 ROB tag。
+
+## 统一发射授权
+
+乘除法包装层新增 `issue_valid_o`、`issue_ready_o`、`issue_rob_tag_o` 候选输出和 `issue_grant_i` 输入，接入核心的统一发射仲裁器。候选 ready 表示执行单元自身可接收；只有 grant、valid、ready 同时成立才启动执行并移除保留站项。未获授权时，原有 request 锁定机制保持候选。单元测试把授权连续关闭 40 周期，检查队列项、tag 和执行单元均未提前消费，再分别核对乘除结果。

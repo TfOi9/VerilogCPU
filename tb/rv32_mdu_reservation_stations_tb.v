@@ -16,6 +16,14 @@ module rv32_mdu_reservation_stations_tb;
     reg reset_i;
     reg flush_i;
     reg recover_i;
+    reg mul_issue_grant;
+    reg div_issue_grant;
+    wire mul_issue_valid;
+    wire div_issue_valid;
+    wire mul_issue_ready;
+    wire div_issue_ready;
+    wire [ROB_TAG_WIDTH-1:0] mul_issue_tag;
+    wire [ROB_TAG_WIDTH-1:0] div_issue_tag;
 
     reg [BE_WIDTH-1:0] mul_dispatch_valid_i;
     reg mul_dispatch_fire_i;
@@ -110,6 +118,8 @@ module rv32_mdu_reservation_stations_tb;
         .rob_head_index_i(rob_head_index_i),
         .rollback_valid_i(rollback_valid_i),
         .rollback_tag_i(rollback_tag_i),
+        .issue_grant_i(mul_issue_grant), .issue_valid_o(mul_issue_valid),
+        .issue_ready_o(mul_issue_ready), .issue_rob_tag_o(mul_issue_tag),
         .response_valid_o(mul_response_valid_o),
         .response_ready_i(mul_response_ready_i),
         .response_value_o(mul_response_value_o),
@@ -148,6 +158,8 @@ module rv32_mdu_reservation_stations_tb;
         .rob_head_index_i(rob_head_index_i),
         .rollback_valid_i(rollback_valid_i),
         .rollback_tag_i(rollback_tag_i),
+        .issue_grant_i(div_issue_grant), .issue_valid_o(div_issue_valid),
+        .issue_ready_o(div_issue_ready), .issue_rob_tag_o(div_issue_tag),
         .response_valid_o(div_response_valid_o),
         .response_ready_i(div_response_ready_i),
         .response_value_o(div_response_value_o),
@@ -560,6 +572,32 @@ module rv32_mdu_reservation_stations_tb;
         end
     endtask
 
+    task test_issue_grant;
+        integer stall_cycle;
+        begin
+            reset_dut;
+            mul_issue_grant = 1'b0;
+            div_issue_grant = 1'b0;
+            dispatch_mul(0, `RV32_OP_MUL, 9, 7, 24, 1, 1, 0, 0);
+            dispatch_div(0, `RV32_OP_DIVU, 90, 3, 25, 1, 1, 0, 0);
+            for (stall_cycle = 0; stall_cycle < 40; stall_cycle = stall_cycle + 1) begin
+                clock_edge;
+                check(mul_occupancy_o == 1 && div_occupancy_o == 1, 70);
+                check(mul_issue_valid && div_issue_valid && mul_issue_ready && div_issue_ready, 71);
+                check(mul_issue_tag == 24 && div_issue_tag == 25, 72);
+                check(!mul_response_valid_o && !div_response_valid_o, 73);
+            end
+            mul_issue_grant = 1'b1;
+            div_issue_grant = 1'b1;
+            clock_edge;
+            check(mul_occupancy_o == 0 && div_occupancy_o == 0, 74);
+            wait_mul_response(24, 63, 75);
+            consume_mul;
+            wait_div_response(25, 30, 78);
+            consume_div;
+        end
+    endtask
+
     task run_vectors;
         begin
             reset_dut;
@@ -630,6 +668,8 @@ module rv32_mdu_reservation_stations_tb;
 
     initial begin
         clk_i = 1'b0;
+        mul_issue_grant = 1'b1;
+        div_issue_grant = 1'b1;
         reset_i = 1'b0;
         test_count = 0;
         vector_count = 0;
@@ -644,6 +684,7 @@ module rv32_mdu_reservation_stations_tb;
         end
 
         clear_inputs;
+        test_issue_grant;
         test_oldest_and_reuse;
         test_recovery_and_flush;
         test_completion_collision;

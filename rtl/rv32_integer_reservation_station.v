@@ -114,6 +114,7 @@ module rv32_integer_reservation_station #(
     integer selection_winner_distance;
     integer selection_candidate_distance;
     integer issue_count;
+    integer fire_port_index;
     integer dispatch_lane_index;
     integer allocation_entry_index;
     integer allocation_winner_slot;
@@ -373,10 +374,7 @@ module rv32_integer_reservation_station #(
         issue_pc_reg = {(BE_WIDTH*32){1'b0}};
         issue_immediate_reg = {(BE_WIDTH*32){1'b0}};
         issue_rob_tag_reg = {(BE_WIDTH*ROB_TAG_WIDTH){1'b0}};
-        issue_fire_reg = {BE_WIDTH{1'b0}};
         issue_reserved_mask_reg = {INT_RS_ENTRIES{1'b0}};
-        issue_remove_mask_reg = {INT_RS_ENTRIES{1'b0}};
-        issue_count = 0;
         selection_winner_slot = 0;
         selection_winner_distance = ROB_ENTRIES;
         selection_candidate_distance = ROB_ENTRIES;
@@ -466,14 +464,20 @@ module rv32_integer_reservation_station #(
                         ROB_TAG_WIDTH] =
                         entry_rob_tag[
                             issue_slot_reg[selection_port_index]];
-                    issue_fire_reg[selection_port_index] =
-                        issue_ready_i[selection_port_index];
-                    if (issue_ready_i[selection_port_index]) begin
-                        issue_remove_mask_reg[
-                            issue_slot_reg[selection_port_index]] = 1'b1;
-                        issue_count = issue_count + 1;
-                    end
                 end
+            end
+        end
+    end
+
+    always @* begin
+        issue_fire_reg = issue_valid_reg & issue_ready_i;
+        issue_remove_mask_reg = {INT_RS_ENTRIES{1'b0}};
+        issue_count = 0;
+        for (fire_port_index = 0; fire_port_index < BE_WIDTH;
+                fire_port_index = fire_port_index + 1) begin
+            if (issue_fire_reg[fire_port_index]) begin
+                issue_remove_mask_reg[issue_slot_reg[fire_port_index]] = 1'b1;
+                issue_count = issue_count + 1;
             end
         end
     end

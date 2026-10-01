@@ -36,7 +36,7 @@ LOAD/STORE 保留站设计见 [memory_rs.md](memory_rs.md)。
 
 I/D Cache 行接口仲裁与 AXI4-Lite 转换设计见 [cache_axi_bridge.md](cache_axi_bridge.md)。
 
-官方单发射乱序核心与 `student_top` 接线见 [cpu_core.md](cpu_core.md)。
+参数化多发射乱序核心与 `student_top` 接线见 [cpu_core.md](cpu_core.md)。
 
 官方 RV32IM 正确性回归配置与结果见 [correctness.md](correctness.md)。
 
@@ -47,3 +47,7 @@ Bimodal 与 BTB 分支预测器设计见 [predictor.md](predictor.md)。
 Decode、Rename 与 Dispatch 流水线设计见 [dispatch.md](dispatch.md)。
 
 完成仲裁与物理寄存器写回网络设计见 [writeback.md](writeback.md)。
+
+统一发射仲裁器设计见 [issue.md](issue.md)。
+
+第 24 项的全部宽度组合验收及复现命令见 [widths.md](widths.md)。

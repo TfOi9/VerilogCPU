@@ -28,10 +28,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    if args.fe_width not in (1, 2) or args.be_width not in (1, 2):
-        raise ValueError("configured build widths must be 1 or 2")
-    if args.fe_width != args.be_width:
-        raise ValueError("configured build requires matching FE/BE widths")
+    if args.fe_width not in (1, 2, 4) or args.be_width not in (1, 2, 4):
+        raise ValueError("configured build widths must be 1, 2, or 4")
     if args.jobs < 1:
         raise ValueError("jobs must be positive")
 
@@ -72,6 +70,7 @@ def main():
     command = [
         verilator,
         "--cc", "--exe", "--build", "--trace", "--assert",
+        "-DRV32_TEST_WATCHDOG",
         "-Wall", "-Wno-fatal", "--top-module", "student_top",
         "--Mdir", str(objects), "-o", str(binary),
         "-j", str(args.jobs), "-MAKEFLAGS", make_flags,

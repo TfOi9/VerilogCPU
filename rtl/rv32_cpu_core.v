@@ -54,6 +54,21 @@ module rv32_cpu_core #(
     /* verilator lint_off UNUSEDSIGNAL */
     localparam COMPLETION_SOURCES = BE_WIDTH + 3;
 
+    localparam ISSUE_CANDIDATES = BE_WIDTH + 4;
+    wire [ISSUE_CANDIDATES-1:0] issue_candidate_valid;
+    wire [ISSUE_CANDIDATES-1:0] issue_candidate_ready;
+    wire [(ISSUE_CANDIDATES*ROB_TAG_WIDTH)-1:0] issue_candidate_tag;
+    wire [ISSUE_CANDIDATES-1:0] issue_grant;
+    wire [BE_WIDTH-1:0] alu_request_ready;
+    wire mul_issue_valid;
+    wire mul_issue_ready;
+    wire [ROB_TAG_WIDTH-1:0] mul_issue_tag;
+    wire div_issue_valid;
+    wire div_issue_ready;
+    wire [ROB_TAG_WIDTH-1:0] div_issue_tag;
+    wire lsq_load_address_ready;
+    wire lsq_store_address_ready;
+
     wire recover_busy;
     wire recover_redirect_valid;
     wire [31:0] recover_redirect_pc;
@@ -259,13 +274,53 @@ module rv32_cpu_core #(
     assign lsq_completion_ready = source_ready[BE_WIDTH+2];
 
     initial begin
-        if (!((FE_WIDTH == 1 && BE_WIDTH == 1) ||
-                (FE_WIDTH == 2 && BE_WIDTH == 2))) begin
+        if ((FE_WIDTH != 1 && FE_WIDTH != 2 && FE_WIDTH != 4) ||
+                (BE_WIDTH != 1 && BE_WIDTH != 2 && BE_WIDTH != 4)) begin
             $display("ERROR rv32_cpu_core unsupported width configuration FE_WIDTH=%0d BE_WIDTH=%0d",
                 FE_WIDTH, BE_WIDTH);
             $finish(1);
         end
     end
+
+`ifndef SYNTHESIS
+    /* verilator lint_off BLKSEQ */
+    integer issue_check_lane;
+    integer issue_check_count;
+    always @(posedge clk_i) begin
+        if (!reset_i) begin
+            issue_check_count = 0;
+            for (issue_check_lane = 0; issue_check_lane < BE_WIDTH;
+                    issue_check_lane = issue_check_lane + 1)
+                if (int_issue_valid[issue_check_lane] && int_issue_ready[issue_check_lane])
+                    issue_check_count = issue_check_count + 1;
+            if (mul_issue_valid && mul_issue_ready && issue_grant[BE_WIDTH])
+                issue_check_count = issue_check_count + 1;
+            if (div_issue_valid && div_issue_ready && issue_grant[BE_WIDTH+1])
+                issue_check_count = issue_check_count + 1;
+            if (load_address_valid && load_address_ready)
+                issue_check_count = issue_check_count + 1;
+            if (store_address_valid && store_address_ready)
+                issue_check_count = issue_check_count + 1;
+            if (issue_check_count > BE_WIDTH || (pipeline_hold && issue_check_count != 0)) begin
+                $display("ERROR rv32_cpu_core issue limit count=%0d width=%0d", issue_check_count, BE_WIDTH);
+                $stop;
+            end
+        end
+    end
+    /* verilator lint_on BLKSEQ */
+`ifdef RV32_TEST_WATCHDOG
+    integer no_retirement_cycles;
+    always @(posedge clk_i) begin
+        if (reset_i || (|commit_fire))
+            no_retirement_cycles <= 0;
+        else if (no_retirement_cycles >= 99999) begin
+            $display("ERROR rv32_cpu_core no retirement for 100000 cycles");
+            $stop;
+        end else
+            no_retirement_cycles <= no_retirement_cycles + 1;
+    end
+`endif
+`endif
 
     always @(posedge clk_i) begin
         if (reset_i)
@@ -497,14 +552,34 @@ module rv32_cpu_core #(
         .issue_rob_tag_o(int_issue_rob_tag)
     );
 
+    assign issue_candidate_valid = {store_address_valid,
+        load_address_valid, div_issue_valid, mul_issue_valid, int_issue_valid};
+    assign issue_candidate_ready = {2'b11, div_issue_ready,
+        mul_issue_ready, alu_request_ready};
+    assign issue_candidate_tag = {store_address_rob_tag,
+        load_address_rob_tag, div_issue_tag, mul_issue_tag, int_issue_rob_tag};
+    assign int_issue_ready = alu_request_ready & issue_grant[BE_WIDTH-1:0];
+    assign load_address_ready = lsq_load_address_ready && issue_grant[BE_WIDTH+2];
+    assign store_address_ready = lsq_store_address_ready && issue_grant[BE_WIDTH+3];
+
+    rv32_issue_arbiter #(
+        .BE_WIDTH(BE_WIDTH), .ROB_ENTRIES(ROB_ENTRIES),
+        .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH), .ROB_TAG_WIDTH(ROB_TAG_WIDTH)
+    ) issue_arbiter (
+        .hold_i(reset_i || pipeline_hold), .rob_head_index_i(rob_head_index),
+        .candidate_valid_i(issue_candidate_valid),
+        .candidate_ready_i(issue_candidate_ready),
+        .candidate_tag_i(issue_candidate_tag), .grant_o(issue_grant)
+    );
+
     genvar alu_lane;
     generate
         for (alu_lane = 0; alu_lane < BE_WIDTH;
                 alu_lane = alu_lane + 1) begin : generate_alu
             rv32i_alu #(.ROB_TAG_WIDTH(ROB_TAG_WIDTH)) alu (
                 .clk_i(clk_i), .reset_i(reset_i), .flush_i(1'b0),
-                .request_valid_i(int_issue_valid[alu_lane]),
-                .request_ready_o(int_issue_ready[alu_lane]),
+                .request_valid_i(int_issue_valid[alu_lane] && issue_grant[alu_lane]),
+                .request_ready_o(alu_request_ready[alu_lane]),
                 .request_op_i(int_issue_op[
                     alu_lane*`RV32_OP_WIDTH +: `RV32_OP_WIDTH]),
                 .request_lhs_i(int_issue_lhs[alu_lane*32 +: 32]),
@@ -554,6 +629,8 @@ module rv32_cpu_core #(
         .broadcast_value_i(writeback_value),
         .rob_head_index_i(rob_head_index),
         .rollback_valid_i(rollback_valid), .rollback_tag_i(rollback_tag),
+        .issue_grant_i(issue_grant[BE_WIDTH]), .issue_valid_o(mul_issue_valid),
+        .issue_ready_o(mul_issue_ready), .issue_rob_tag_o(mul_issue_tag),
         .response_valid_o(mul_response_valid),
         .response_ready_i(mul_response_ready),
         .response_value_o(mul_response_value),
@@ -584,6 +661,8 @@ module rv32_cpu_core #(
         .broadcast_value_i(writeback_value),
         .rob_head_index_i(rob_head_index),
         .rollback_valid_i(rollback_valid), .rollback_tag_i(rollback_tag),
+        .issue_grant_i(issue_grant[BE_WIDTH+1]), .issue_valid_o(div_issue_valid),
+        .issue_ready_o(div_issue_ready), .issue_rob_tag_o(div_issue_tag),
         .response_valid_o(div_response_valid),
         .response_ready_i(div_response_ready),
         .response_value_o(div_response_value),
@@ -673,13 +752,13 @@ module rv32_cpu_core #(
         .alloc_unsigned_i(lsq_alloc_unsigned),
         .alloc_ready_o(lsq_alloc_ready), .alloc_lsq_tag_o(lsq_alloc_tag),
         .occupancy_o(lsq_occupancy),
-        .load_address_valid_i(load_address_valid),
-        .load_address_ready_o(load_address_ready),
+        .load_address_valid_i(load_address_valid && issue_grant[BE_WIDTH+2]),
+        .load_address_ready_o(lsq_load_address_ready),
         .load_address_rob_tag_i(load_address_rob_tag),
         .load_address_lsq_tag_i(load_address_lsq_tag),
         .load_address_i(load_address),
-        .store_address_valid_i(store_address_valid),
-        .store_address_ready_o(store_address_ready),
+        .store_address_valid_i(store_address_valid && issue_grant[BE_WIDTH+3]),
+        .store_address_ready_o(lsq_store_address_ready),
         .store_address_rob_tag_i(store_address_rob_tag),
         .store_address_lsq_tag_i(store_address_lsq_tag),
         .store_address_i(store_address),
