@@ -57,3 +57,5 @@ Decode、Rename 与 Dispatch 流水线设计见 [dispatch.md](dispatch.md)。
 第 26 项的官方 ASAP7 综合、FakeRAM 面积与 OpenSTA 时序流程见 [synthesis.md](synthesis.md)。
 
 第 27 项的全部性能测试、单参数敏感度、面积与频率门槛及 Pareto 对比见 [performance.md](performance.md)。
+
+总线流水化的正式实现、协议验证、完整回归及优化前后 IPC/频率/面积对比见 [bus_pipeline_performance.md](bus_pipeline_performance.md)。

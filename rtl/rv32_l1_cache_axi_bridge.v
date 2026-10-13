@@ -147,44 +147,56 @@ module rv32_cache_axi4_lite_adapter (
     input  wire bvalid_i,
     output wire bready_o
 );
-    localparam STATE_IDLE = 3'd0;
-    localparam STATE_READ_ADDRESS = 3'd1;
-    localparam STATE_READ_DATA = 3'd2;
-    localparam STATE_WRITE_SEND = 3'd3;
-    localparam STATE_WRITE_RESPONSE = 3'd4;
-    localparam STATE_RESPONSE = 3'd5;
+    localparam STATE_IDLE = 2'd0;
+    localparam STATE_READ = 2'd1;
+    localparam STATE_WRITE = 2'd2;
+    localparam STATE_RESPONSE = 2'd3;
 
-    reg [2:0] state;
+    reg [1:0] state;
     reg [31:0] line_address;
     reg [127:0] line_write_data;
     reg [15:0] line_write_mask;
     reg [127:0] line_read_data;
-    reg [127:0] response_read_data;
     reg response_error;
-    reg [1:0] word_index;
     reg word_only;
-    reg aw_done;
-    reg w_done;
+    reg [2:0] ar_count;
+    reg [2:0] r_count;
+    reg [2:0] aw_count;
+    reg [2:0] w_count;
+    reg [2:0] b_count;
 
+    wire [2:0] word_count;
+    wire ar_fire;
+    wire r_fire;
     wire aw_fire;
     wire w_fire;
+    wire b_fire;
 
+    assign word_count = word_only ? 3'd1 : 3'd4;
     assign request_ready_o = !reset_i && (state == STATE_IDLE);
     assign response_valid_o = !reset_i && (state == STATE_RESPONSE);
-    assign response_read_data_o = response_read_data;
+    assign response_read_data_o = response_error ? 128'd0 : line_read_data;
     assign response_error_o = response_error;
 
-    assign araddr_o = line_address + {28'd0, word_index, 2'b00};
-    assign arvalid_o = !reset_i && (state == STATE_READ_ADDRESS);
-    assign rready_o = !reset_i && (state == STATE_READ_DATA);
-    assign awaddr_o = line_address + {28'd0, word_index, 2'b00};
-    assign awvalid_o = !reset_i && (state == STATE_WRITE_SEND) && !aw_done;
-    assign wdata_o = line_write_data[word_index*32 +: 32];
-    assign wstrb_o = line_write_mask[word_index*4 +: 4];
-    assign wvalid_o = !reset_i && (state == STATE_WRITE_SEND) && !w_done;
-    assign bready_o = !reset_i && (state == STATE_WRITE_RESPONSE);
+    assign araddr_o = line_address + {28'd0, ar_count[1:0], 2'b00};
+    assign arvalid_o = !reset_i && (state == STATE_READ) &&
+        (ar_count < word_count);
+    assign rready_o = !reset_i && (state == STATE_READ) &&
+        (r_count < ar_count);
+    assign awaddr_o = line_address + {28'd0, aw_count[1:0], 2'b00};
+    assign awvalid_o = !reset_i && (state == STATE_WRITE) &&
+        (aw_count < word_count);
+    assign wdata_o = line_write_data[w_count[1:0]*32 +: 32];
+    assign wstrb_o = line_write_mask[w_count[1:0]*4 +: 4];
+    assign wvalid_o = !reset_i && (state == STATE_WRITE) &&
+        (w_count < word_count);
+    assign bready_o = !reset_i && (state == STATE_WRITE) &&
+        (b_count < aw_count) && (b_count < w_count);
+    assign ar_fire = arvalid_o && arready_i;
+    assign r_fire = rvalid_i && rready_o;
     assign aw_fire = awvalid_o && awready_i;
     assign w_fire = wvalid_o && wready_i;
+    assign b_fire = bvalid_i && bready_o;
 
     always @(posedge clk_i) begin
         if (reset_i) begin
@@ -193,12 +205,13 @@ module rv32_cache_axi4_lite_adapter (
             line_write_data <= 128'd0;
             line_write_mask <= 16'd0;
             line_read_data <= 128'd0;
-            response_read_data <= 128'd0;
             response_error <= 1'b0;
-            word_index <= 2'd0;
             word_only <= 1'b0;
-            aw_done <= 1'b0;
-            w_done <= 1'b0;
+            ar_count <= 3'd0;
+            r_count <= 3'd0;
+            aw_count <= 3'd0;
+            w_count <= 3'd0;
+            b_count <= 3'd0;
         end else begin
             case (state)
                 STATE_IDLE: begin
@@ -209,64 +222,47 @@ module rv32_cache_axi4_lite_adapter (
                         line_write_data <= request_write_data_i;
                         line_write_mask <= request_byte_enable_i;
                         line_read_data <= 128'd0;
-                        response_read_data <= 128'd0;
                         response_error <= 1'b0;
-                        word_index <= 2'd0;
                         word_only <= request_word_i;
-                        aw_done <= 1'b0;
-                        w_done <= 1'b0;
+                        ar_count <= 3'd0;
+                        r_count <= 3'd0;
+                        aw_count <= 3'd0;
+                        w_count <= 3'd0;
+                        b_count <= 3'd0;
                         if (request_write_i)
-                            state <= STATE_WRITE_SEND;
+                            state <= STATE_WRITE;
                         else
-                            state <= STATE_READ_ADDRESS;
+                            state <= STATE_READ;
                     end
                 end
-                STATE_READ_ADDRESS: begin
-                    if (arvalid_o && arready_i)
-                        state <= STATE_READ_DATA;
-                end
-                STATE_READ_DATA: begin
-                    if (rvalid_i && rready_o) begin
-                        if (rresp_i != 2'b00) begin
-                            response_read_data <= 128'd0;
+                STATE_READ: begin
+                    if (ar_fire)
+                        ar_count <= ar_count + 1'b1;
+                    if (r_fire) begin
+                        r_count <= r_count + 1'b1;
+                        if (rresp_i != 2'b00)
                             response_error <= 1'b1;
+                        if (word_only)
+                            line_read_data <= {rdata_i, 96'd0};
+                        else
+                            line_read_data[r_count[1:0]*32 +: 32] <= rdata_i;
+                        // Drain the complete line, including after an error.
+                        if (r_count + 3'd1 == word_count)
                             state <= STATE_RESPONSE;
-                        end else if (word_only || word_index == 2'd3) begin
-                            response_read_data <= {rdata_i,
-                                line_read_data[95:0]};
-                            response_error <= 1'b0;
-                            state <= STATE_RESPONSE;
-                        end else begin
-                            line_read_data[word_index*32 +: 32] <= rdata_i;
-                            word_index <= word_index + 1'b1;
-                            state <= STATE_READ_ADDRESS;
-                        end
                     end
                 end
-                STATE_WRITE_SEND: begin
+                STATE_WRITE: begin
                     if (aw_fire)
-                        aw_done <= 1'b1;
+                        aw_count <= aw_count + 1'b1;
                     if (w_fire)
-                        w_done <= 1'b1;
-                    if ((aw_done || aw_fire) && (w_done || w_fire))
-                        state <= STATE_WRITE_RESPONSE;
-                end
-                STATE_WRITE_RESPONSE: begin
-                    if (bvalid_i && bready_o) begin
-                        if (bresp_i != 2'b00) begin
-                            response_read_data <= 128'd0;
+                        w_count <= w_count + 1'b1;
+                    if (b_fire) begin
+                        b_count <= b_count + 1'b1;
+                        if (bresp_i != 2'b00)
                             response_error <= 1'b1;
+                        // Keep AW/W independent and retire every response.
+                        if (b_count + 3'd1 == word_count)
                             state <= STATE_RESPONSE;
-                        end else if (word_only || word_index == 2'd3) begin
-                            response_read_data <= 128'd0;
-                            response_error <= 1'b0;
-                            state <= STATE_RESPONSE;
-                        end else begin
-                            word_index <= word_index + 1'b1;
-                            aw_done <= 1'b0;
-                            w_done <= 1'b0;
-                            state <= STATE_WRITE_SEND;
-                        end
                     end
                 end
                 STATE_RESPONSE: begin

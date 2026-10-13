@@ -95,7 +95,7 @@ module rv32_l1_cache_axi_bridge_tb;
         input [8*96-1:0] message;
         begin
             $display("FAIL %0s at %0t", message, $time);
-            $finish(1);
+            $stop;
         end
     endtask
 
@@ -117,9 +117,9 @@ module rv32_l1_cache_axi_bridge_tb;
                     (write_beat_count % 2));
                 wready = !w_seen && ((cycles % 2) !=
                     (write_beat_count % 2));
-                if (awvalid && awaddr !== expected_address)
+                if (!aw_seen && awvalid && awaddr !== expected_address)
                     fail("AXI AW address changed under backpressure");
-                if (wvalid && (wdata !== expected_data ||
+                if (!w_seen && wvalid && (wdata !== expected_data ||
                         wstrb !== expected_strobe))
                     fail("AXI W payload changed under backpressure");
                 @(posedge clk);
@@ -336,6 +336,8 @@ module rv32_l1_cache_axi_bridge_tb;
         @(negedge clk);
         i_request_valid = 1'b0;
         send_read_beat(32'h00000400, 32'hbad0bad0, 2'b11);
+        for (beat = 1; beat < 4; beat = beat + 1)
+            send_read_beat(32'h00000400 + beat * 4, 32'h12345678, 2'b00);
         wait_i_response;
         if (!i_response_error || i_response_read_data !== 128'd0)
             fail("AXI read error did not propagate to I-cache");
@@ -355,6 +357,9 @@ module rv32_l1_cache_axi_bridge_tb;
         @(negedge clk);
         d_request_valid = 1'b0;
         send_write_beat(32'h00000500, 32'h76543210, 4'hf, 2'b10);
+        send_write_beat(32'h00000504, 32'hfedcba98, 4'hf, 2'b00);
+        send_write_beat(32'h00000508, 32'h89abcdef, 4'hf, 2'b00);
+        send_write_beat(32'h0000050c, 32'h01234567, 4'hf, 2'b00);
         wait_d_response;
         if (!d_response_error || i_response_valid)
             fail("AXI write error did not route to D-cache");
@@ -402,7 +407,6 @@ module rv32_l1_cache_axi_bridge_tb;
 
     initial begin
         #100000;
-        $display("FAIL bridge testbench watchdog");
-        $finish(1);
+        fail("bridge testbench watchdog");
     end
 endmodule

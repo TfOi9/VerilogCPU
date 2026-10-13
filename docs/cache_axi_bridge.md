@@ -8,16 +8,24 @@
 
 ## AXI4-Lite 转换
 
-adapter 在接收行请求时锁存地址、写数据和 16 位 byte enable。地址按 16 字节对齐，四个 AXI beat 的地址依次为行基址加 0、4、8、12。读事务逐个执行 AR 握手及对应 R 握手，并按低地址字在低位的顺序组装 128 位行数据。
+adapter 在接收行请求时锁存地址、写数据和 16 位 byte enable。地址按 16 字节对齐，四个 AXI beat 的地址依次为行基址加 0、4、8、12。内部状态为 IDLE、READ、WRITE、RESPONSE。每次仍只处理一个行事务，但允许行内最多四个字请求在途。
 
-写事务逐 beat 发出 AW 和 W。两通道的 valid/ready 独立跟踪：任一通道先握手后，其地址或数据保持不变，另一通道仍可等待。每个 WSTRB 对应 cache byte enable 的四位切片；该 beat 的 AW 与 W 均握手后，adapter 等待 B 响应，再开始下一 beat。一次只存在一个未完成 AXI beat。
+读通路用 `ar_count` 和 `r_count` 分别记录已接受地址和已回收响应。AR 无需等待上一字的 R，即可发出下一字；只有存在已接受但未回收的地址时才拉高 RREADY。按 AXI4-Lite 响应顺序，把第 n 个 R 写入整行第 n 个字。最后一个 R 握手后才生成 Cache 响应。
 
-单 beat 模式保留原始的 4 字节对齐地址，只执行 `word_index=0`。MMIO 的写数据和 WSTRB 位于输入总线低位，因此 `0x80000000` 结束 Store 不会产生地址 `+4/+8/+12` 的多余事务。
+写通路用 `aw_count`、`w_count`、`b_count` 独立记录地址、数据和响应。AW 可以领先 W 四拍，W 也可以领先 AW 四拍；各自只有握手才推进索引，因此未握手的 VALID 和负载保持稳定。每个 WSTRB 对应 cache byte enable 的四位切片。只有同时存在已接受 AW 和 W、且尚未消费 B 的写事务时才拉高 BREADY；B 的回收可与后续 AW/W 握手重叠。最后一个 B 握手后才生成 Cache 响应。
 
-首个非 OKAY 的 RRESP 或 BRESP 结束当前行事务，并向原 Cache 返回错误。读错误的整行数据清零；写错误不继续发送后续 beat，已成功完成的前序 beat 不回滚。成功写响应的读数据为零。Cache 响应自身受 ready/valid 背压约束。
+MMIO 的字数限制为 1，保留原始的 4 字节对齐地址。写数据和 WSTRB 位于输入总线低位，因此 `0x80000000` 结束 Store 恰好产生一次 AW、一次 W 和一次 B，不产生地址 `+4/+8/+12` 的额外写入。独立 AW/W 背压、B 等待及上游响应背压期间，仲裁器始终保持 MMIO 的归属。ROB 头部约束仍由核心和 LSQ 保证。
+
+## 错误与复位
+
+任意非 OKAY 的 RRESP 或 BRESP 都置位粘滞错误标志。即使首字报错，也继续完成本行四字的请求和响应，全部回收后只向原发起方返回一次错误；不会提前转交总线，也不会撤销已被背压挂住的 VALID 或丢下未配对的 AW/W。错误读数据整行清零，所有写响应的读数据也为零；响应 VALID、错误和数据在上游握手前保持不变。
+
+完整收尾针对 Cache 的普通内存行，不承诺错误写入的事务原子性：部分或全部字可能已经产生副作用，桥接层不回滚。MMIO 不使用四字行模式，因此错误收尾不会导致额外 MMIO 写入。
+
+复位立即抑制所有握手输出，并在时钟边沿清空状态和计数。系统必须同时复位 AXI 从设备，取消旧请求及响应；本接口没有 transaction ID，不能在只复位桥接层、保留旧从设备响应的情况下区分新旧事务。
 
 ## 接线与验证
 
-I-Cache 的 `memory_request_*` / `memory_response_*` 接到顶层 `i_*` 端口，D-Cache 对应信号接到 `d_*` 端口，LSQ 的 MMIO Store 接到 `m_*` 端口；`ar*`、`r*`、`aw*`、`w*`、`b*` 直接连接官方 AXI4-Lite RAM。复位需同时作用于 Cache、桥接层和存储器。桥接层串行处理事务，不提供 burst，也不允许多笔 AXI outstanding 请求。
+I-Cache 的 `memory_request_*` / `memory_response_*` 接到顶层 `i_*` 端口，D-Cache 对应信号接到 `d_*` 端口，LSQ 的 MMIO Store 接到 `m_*` 端口；`ar*`、`r*`、`aw*`、`w*`、`b*` 直接连接官方 AXI4-Lite RAM。接口不增加 AXI burst 或 ID，依赖从设备在各响应通道内保持请求顺序；下游只接受单个在途请求时也能通过 READY 背压正常工作。
 
-`make cache-bridge-lint` 检查 Verilog 2005 语法、层次及综合结构。`make cache-bridge-unit` 测试三方优先级、四拍 Cache 事务、单拍 MMIO、字节掩码、AW/W 分离握手、响应背压以及 AXI 错误回传。
+`make cache-bridge-lint` 检查 Verilog 2005 语法、层次及综合结构。`make cache-bridge-unit` 包含原有仲裁测试和八个种子的并发协议测试：四字在途、AW/W 双向领先、请求/响应重叠、每个字的错误、错误发生时仍有请求未发送、错误后的下一事务、字节掩码、MMIO 不同字地址与全部 16 种 WSTRB、I/D/MMIO 响应隔离、其他客户端 READY 已拉高时的响应背压，以及共享复位。覆盖计数未达到要求时测试失败。

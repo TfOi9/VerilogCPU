@@ -1,5 +1,7 @@
 # 第 27 项：参数化性能、面积与频率
 
+本文保留总线流水化前的第 27 项测量快照。当前实现与新结果见 [bus_pipeline_performance.md](bus_pipeline_performance.md)。旧版性能、参数矩阵和综合报告已保存在 `build/bus-pipeline/baseline/`；默认 `reports/` 报告更新为流水化版本，以下历史表格不代表当前 RTL。
+
 ## 测量结构与口径
 
 `tools/run_performance.py` 读取官方 filelist，为每个配置重新构建 `student_top`

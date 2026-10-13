@@ -1093,6 +1093,14 @@ cache-bridge-unit:
 		-o build/rv32_l1_cache_axi_bridge_tb.vvp \
 		rtl/rv32_l1_cache_axi_bridge.v tb/rv32_l1_cache_axi_bridge_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32_l1_cache_axi_bridge_tb.vvp
+	@for seed in 1 7 42 101 1729 65537 1234567 2147483647; do \
+		$(TIMEOUT) 30 iverilog -g2005 -Wall \
+			-s rv32_l1_cache_axi_pipeline_tb \
+			-P rv32_l1_cache_axi_pipeline_tb.SEED=$$seed \
+			-o build/rv32_l1_cache_axi_pipeline_tb_$$seed.vvp \
+			rtl/rv32_l1_cache_axi_bridge.v tb/rv32_l1_cache_axi_pipeline_tb.v || exit 1; \
+		$(TIMEOUT) 30 vvp -N build/rv32_l1_cache_axi_pipeline_tb_$$seed.vvp || exit 1; \
+	done
 
 predictor-lint:
 	@mkdir -p build
