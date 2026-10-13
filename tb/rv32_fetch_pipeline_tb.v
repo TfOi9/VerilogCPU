@@ -428,6 +428,51 @@ module rv32_fetch_pipeline_tb;
         wait_internal_flush;
         consume_count((FE_WIDTH == 1) ? 1 : 2);
 
+        for (lane = 0; lane < FE_WIDTH; lane = lane + 1) begin
+            pulse_redirect(32'h00000800);
+            accept_request(32'h00000800);
+            line_value = sequential_line(12'h0d0);
+            line_value[lane*32 +: 32] = jal_instruction(21'd2);
+            send_response(32'h00000800, line_value, 1'b0);
+            check(fetch_occupancy_o == FE_WIDTH,
+                "unaligned prediction truncated bundle");
+            check(fetch_predicted_next_pc_o[lane*32 +: 32] ==
+                    32'h00000804 + lane*4,
+                "unaligned prediction did not fall through");
+            check(!icache_flush_o,
+                "unaligned prediction flushed valid requests");
+            consume_count(FE_WIDTH);
+            accept_request(32'h00000800 + FE_WIDTH*4);
+        end
+
+        pulse_redirect(32'h00000840);
+        accept_request(32'h00000840);
+        line_value = sequential_line(12'h0e0);
+        line_value[0 +: 32] = branch_instruction(13'd2);
+        send_response(32'h00000840, line_value, 1'b0);
+        check(fetch_occupancy_o == FE_WIDTH,
+            "unaligned taken branch truncated bundle");
+        check(fetch_predicted_next_pc_o[0 +: 32] == 32'h00000844,
+            "unaligned taken branch did not fall through");
+        check(!icache_flush_o, "unaligned taken branch flushed requests");
+        consume_count(FE_WIDTH);
+
+        if (FE_WIDTH > 1) begin
+            pulse_redirect(32'h00000880);
+            accept_request(32'h00000880);
+            line_value = sequential_line(12'h0f0);
+            line_value[0 +: 32] = jal_instruction(21'd2);
+            line_value[32 +: 32] = jal_instruction(21'h01c);
+            send_response(32'h00000880, line_value, 1'b0);
+            check(fetch_occupancy_o == 2,
+                "unaligned prediction hid later aligned control");
+            check(fetch_predicted_next_pc_o[32 +: 32] == 32'h000008a0,
+                "later aligned control target mismatch");
+            wait_internal_flush;
+            consume_count(2);
+            accept_request(32'h000008a0);
+        end
+
         pulse_redirect(32'h00000200);
         fill_iterations = 8 / FE_WIDTH;
         request_pc_value = 32'h00000200;

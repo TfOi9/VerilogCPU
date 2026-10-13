@@ -116,7 +116,7 @@ def generate(seed):
     words += [immediate(rd, 3, rd) for rd in range(4, 8)]
     words += [immediate(4, 4, 3), register(8, 4, 5)]
     words += [register(3, 1, 2, 5, 1), branch(3, 3, 24), branch(3, 3, 16),
-              store(0, 31, 0), store(1, 30, 0), register(21, 1, 2, 0, 1),
+              store(0, 31, 0), store(1, 30, 0), 0x0020006f,
               register(22, 1, 2, 4, 1)]
     target = (len(words) + 3) * 4
     words += [immediate(29, 0, target), immediate(28, 29, 0, opcode=0x67), store(0, 31, 0)]

@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix matrix-lint matrix-functional matrix-unit perf synth synth-matrix synth-unit synth-setup report image image-test
+.PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix matrix-lint matrix-functional matrix-unit perf perf-unit synth synth-matrix synth-unit synth-setup report image image-test
 
 PYTHON ?= $(shell command -v /opt/homebrew/bin/python3 2>/dev/null || command -v python3)
 TIMEOUT ?= timeout
@@ -35,6 +35,14 @@ YOSYS ?= $(abspath .deps/yosys/bin/yosys)
 ABC ?= $(abspath .deps/yosys/bin/yosys-abc)
 STA ?= .deps/opensta/bin/sta
 ASAP7_LIB ?= .deps/asap7/lib
+PERF_CONFIG_JOBS ?= 2
+PERF_BUILD_TIMEOUT ?= 600
+PERF_CASE_TIMEOUT ?= 1800
+PERF_REPORT ?= reports/performance.json
+PERF_BUILD_ROOT ?= build/performance
+SYNTH_REPORT ?= reports/synthesis-matrix.json
+MATRIX_REPORT ?= reports/matrix.json
+REPORT_OUT ?= reports/performance-comparison
 
 CORE_RTL := \
 	rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
@@ -814,9 +822,21 @@ synth-unit:
 synth-setup:
 	@$(PYTHON) tools/setup_synthesis.py --jobs $(JOBS)
 
-perf report:
-	@echo "Target '$@' is reserved for a later implementation stage." >&2
-	@exit 2
+perf-unit:
+	@$(TIMEOUT) 120 $(PYTHON) tools/test_performance.py
+
+perf: perf-unit
+	@$(PYTHON) tools/run_performance.py --framework "$(CPU2026_DIR)" \
+		--testcases "$(TESTCASES)" --filelist "$(FILELIST)" --jobs "$(JOBS)" \
+		--config-jobs "$(PERF_CONFIG_JOBS)" --appimage "$(APPIMAGE)" \
+		--max-cycles "$(MAX_CYCLES)" --latency "$(LATENCY)" \
+		--build-timeout "$(PERF_BUILD_TIMEOUT)" --case-timeout "$(PERF_CASE_TIMEOUT)" \
+		--build-root "$(PERF_BUILD_ROOT)" --report "$(PERF_REPORT)"
+
+report: perf-unit
+	@$(TIMEOUT) 120 $(PYTHON) tools/report_performance.py \
+		--performance "$(PERF_REPORT)" --synthesis "$(SYNTH_REPORT)" \
+		--matrix "$(MATRIX_REPORT)" --out "$(REPORT_OUT)"
 
 issue-lint:
 	@mkdir -p build
@@ -873,6 +893,17 @@ core-unit:
 		done; \
 	done; done
 	@$(TIMEOUT) 30 $(PYTHON) tools/test_core_watchdog.py build/core_tb_1x1/core_tb
+	@for fe in 1 2 4; do for be in 1 2 4; do \
+		$(TIMEOUT) 180 verilator --binary --timing --assert \
+			--language 1364-2005 -Wall -Wno-fatal \
+			--top-module rv32_cpu_core_alignment_tb -GFE_WIDTH=$$fe -GBE_WIDTH=$$be \
+			--Mdir build/alignment_$${fe}x$$be -o alignment_tb -Irtl \
+			-j $(JOBS) $(CORE_RTL) tb/rv32_cpu_core_alignment_tb.v || exit 1; \
+		for case_id in 0 1 2 3 4; do \
+			$(TIMEOUT) 30 build/alignment_$${fe}x$$be/alignment_tb \
+				+CASE=$$case_id || exit 1; \
+		done; \
+	done; done
 	@for parameter in FE_WIDTH BE_WIDTH; do \
 		$(TIMEOUT) 60 iverilog -g2005 -I rtl -s rv32_cpu_core \
 			-P rv32_cpu_core.$$parameter=3 -o build/core_bad_$$parameter.vvp $(CORE_RTL) || exit 1; \

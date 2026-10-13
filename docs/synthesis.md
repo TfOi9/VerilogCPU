@@ -1,5 +1,8 @@
 # 第 26 项 ASAP7 综合与时序评估
 
+本文记录第 26 项的初始综合快照。第 27 项修复控制流未对齐问题后，
+已重跑全部代表配置的 `opt`；最终 IPC、面积和频率见 [performance.md](performance.md)。
+
 ## 结构与接线
 
 综合顶层为 `student_top`，包含取指、乱序核心、L1 I/D Cache 和共享

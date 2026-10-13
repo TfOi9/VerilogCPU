@@ -84,6 +84,7 @@ module rv32_cpu_core_width_tb;
     reg discarded_data_response_seen;
     reg stale_mdu_seen;
     reg partial_dispatch_seen;
+    reg misaligned_exception_seen;
     integer exit_count;
 
     assign i_ready = !i_pending && !i_response_valid && random_state[1];
@@ -247,13 +248,17 @@ module rv32_cpu_core_width_tb;
             if (commits == BE_WIDTH) full_commit_seen = 1'b1;
             if (branch_completions >= 2) multiple_branches_seen = 1'b1;
             if (dut.recover_redirect_valid) recovery_seen = 1'b1;
+            if ((dut.alu_response_exception_valid &
+                    dut.alu_response_valid & dut.alu_response_ready) != 0)
+                misaligned_exception_seen = 1'b1;
             if (dut.dispatch_fire && dut.dispatch_valid != {BE_WIDTH{1'b1}})
                 partial_dispatch_seen = 1'b1;
             if (exit_retired) begin
                 if (exit_count != 1 || !$feof(trace_file))
                     fail("exit count or missing retirements");
                 if (!full_issue_seen || !full_writeback_seen || !full_commit_seen ||
-                        !recovery_seen || (BE_WIDTH > 1 && !partial_dispatch_seen))
+                        !recovery_seen || !misaligned_exception_seen ||
+                        (BE_WIDTH > 1 && !partial_dispatch_seen))
                     fail("missing width or recovery coverage");
                 if (BE_WIDTH >= 2 && !multiple_branches_seen)
                     fail("missing concurrent branch completion");
@@ -299,6 +304,7 @@ module rv32_cpu_core_width_tb;
         discarded_data_response_seen = 0;
         stale_mdu_seen = 0;
         partial_dispatch_seen = 0;
+        misaligned_exception_seen = 0;
         seed = 1;
         if (!$value$plusargs("PROGRAM=%s", program_path) ||
                 !$value$plusargs("TRACE=%s", trace_path) ||

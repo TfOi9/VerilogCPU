@@ -188,6 +188,7 @@ module rv32_cpu_core #(
     wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] alu_response_rob_tag;
     wire [BE_WIDTH-1:0] alu_response_control_valid;
     wire [BE_WIDTH-1:0] alu_response_control_taken;
+    wire [BE_WIDTH-1:0] alu_response_exception_valid;
     wire [(BE_WIDTH*32)-1:0] alu_response_next_pc;
 
     wire mul_response_valid;
@@ -274,15 +275,16 @@ module rv32_cpu_core #(
         mul_response_rob_tag, alu_response_rob_tag};
     assign source_value = {lsq_completion_value, div_response_value,
         mul_response_value, alu_response_value};
-    assign source_control_valid = {3'b000, alu_response_control_valid};
+    assign source_control_valid = {3'b000,
+        alu_response_control_valid & ~alu_response_exception_valid};
     assign source_control_taken = {3'b000, alu_response_control_taken};
     assign source_next_pc = {96'd0, alu_response_next_pc};
     assign source_exception_valid = {lsq_completion_exception_valid,
-        {(BE_WIDTH+2){1'b0}}};
+        2'b00, alu_response_exception_valid};
     assign source_exception_cause = {lsq_completion_exception_cause,
-        {(4*(BE_WIDTH+2)){1'b0}}};
+        8'd0, {BE_WIDTH{`RV32_EXCEPTION_INSTRUCTION_ADDRESS_MISALIGNED}}};
     assign source_exception_tval = {lsq_completion_exception_tval,
-        {(32*(BE_WIDTH+2)){1'b0}}};
+        64'd0, alu_response_next_pc};
     assign alu_response_ready = source_ready[BE_WIDTH-1:0];
     assign mul_response_ready = source_ready[BE_WIDTH];
     assign div_response_ready = source_ready[BE_WIDTH+1];
@@ -591,6 +593,9 @@ module rv32_cpu_core #(
     generate
         for (alu_lane = 0; alu_lane < BE_WIDTH;
                 alu_lane = alu_lane + 1) begin : generate_alu
+            assign alu_response_exception_valid[alu_lane] =
+                alu_response_control_valid[alu_lane] &&
+                (alu_response_next_pc[alu_lane*32 +: 2] != 2'b00);
             rv32i_alu #(.ROB_TAG_WIDTH(ROB_TAG_WIDTH)) alu (
                 .clk_i(clk_i), .reset_i(reset_i), .flush_i(1'b0),
                 .request_valid_i(int_issue_valid[alu_lane] && issue_grant[alu_lane]),

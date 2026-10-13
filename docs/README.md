@@ -55,3 +55,5 @@ Decode、Rename 与 Dispatch 流水线设计见 [dispatch.md](dispatch.md)。
 第 25 项的物理寄存器、ROB 容量与独立宽度矩阵见 [parameter_matrix.md](parameter_matrix.md)。
 
 第 26 项的官方 ASAP7 综合、FakeRAM 面积与 OpenSTA 时序流程见 [synthesis.md](synthesis.md)。
+
+第 27 项的全部性能测试、单参数敏感度、面积与频率门槛及 Pareto 对比见 [performance.md](performance.md)。

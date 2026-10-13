@@ -326,13 +326,17 @@ module rv32_fetch_pipeline #(
             enqueue_instruction[enqueue_lane_index] =
                 candidate_instruction[enqueue_lane_index*32 +: 32];
             enqueue_predicted_next_pc[enqueue_lane_index] =
-                prediction_valid[enqueue_lane_index] ?
+                (prediction_valid[enqueue_lane_index] &&
+                    (prediction_next_pc[enqueue_lane_index*32 +: 2] ==
+                        2'b00)) ?
                     prediction_next_pc[enqueue_lane_index*32 +: 32] :
                     candidate_pc[enqueue_lane_index*32 +: 32] + 32'd4;
             enqueue_error[enqueue_lane_index] = 1'b0;
 
             if (!redirect_found && candidate_valid[enqueue_lane_index] &&
-                    prediction_taken[enqueue_lane_index]) begin
+                    prediction_taken[enqueue_lane_index] &&
+                    (prediction_next_pc[enqueue_lane_index*32 +: 2] ==
+                        2'b00)) begin
                 redirect_found = 1'b1;
                 predicted_redirect = 1'b1;
                 predicted_redirect_pc =

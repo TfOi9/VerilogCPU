@@ -14,6 +14,8 @@ I-Cache 每次返回包含响应 PC 的 128-bit line。流水线从 `PC[3:2]` �
 
 流水线按 lane 顺序选择第一个预测 taken 的控制流指令，只将该 lane 及其之前的连续前缀写入 Fetch Queue，并把下一请求 PC 改为预测目标。已经进入 I-Cache 的更年轻顺序请求通过 `icache_flush_o` 清除。预测不跳的条件分支和 BTB miss 的 JALR 不截断 bundle，之后若执行结果不符，由 ROB 的外部 redirect 恢复。
 
+预测目标必须按 4 字节对齐。不对齐的预测保存 `PC+4`，继续顺序取指，不截断 bundle，也不冲刷请求；同一 bundle 中更年轻的对齐预测仍可生效。旧分支恢复以前，错误路径可能取到数据并将其译码成控制流指令，因此预测值不能直接触发取指地址断言。外部 ROB redirect 的对齐约束保持有效。
+
 预测器训练端直接接收 `BE_WIDTH` 路提交信息，统计端口原样导出。取指冲刷不会清空 BHT、BTB 或统计；只有 reset 会重置预测器状态。
 
 ## Fetch Queue 与回压
