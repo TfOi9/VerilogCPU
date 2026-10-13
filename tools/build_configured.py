@@ -17,6 +17,8 @@ def parse_args():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--fe-width", type=int, required=True)
     parser.add_argument("--be-width", type=int, required=True)
+    parser.add_argument("--phys-regs", type=int, default=64)
+    parser.add_argument("--rob-entries", type=int, default=32)
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--appimage", default="")
     parser.add_argument("--verilator")
@@ -32,6 +34,10 @@ def main():
         raise ValueError("configured build widths must be 1, 2, or 4")
     if args.jobs < 1:
         raise ValueError("jobs must be positive")
+    if args.phys_regs < 33:
+        raise ValueError("physical register count must be at least 33")
+    if args.rob_entries < max(2, args.be_width) or args.rob_entries & (args.rob_entries - 1):
+        raise ValueError("ROB entries must be a power of two at least max(2, BE_WIDTH)")
 
     framework = args.framework.resolve()
     scripts = framework / "scripts"
@@ -77,6 +83,8 @@ def main():
         "-CFLAGS", "-std=c++17",
         "-GFE_WIDTH={}".format(args.fe_width),
         "-GBE_WIDTH={}".format(args.be_width),
+        "-GPHYS_REGS={}".format(args.phys_regs),
+        "-GROB_ENTRIES={}".format(args.rob_entries),
     ]
     command.extend(str(path) for path in with_ram_source(sources))
     command.append(str(scripts / "sim.cpp"))

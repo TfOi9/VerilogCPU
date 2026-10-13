@@ -4,10 +4,10 @@ module student_top #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
     parameter PHYS_REGS = 64,
-    parameter PHYS_REG_ADDR_WIDTH = 6,
+    parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
-    parameter ROB_INDEX_WIDTH = 5,
-    parameter ROB_TAG_WIDTH = 7,
+    parameter ROB_INDEX_WIDTH = address_width_for_count(ROB_ENTRIES),
+    parameter ROB_TAG_WIDTH = ROB_INDEX_WIDTH + 2,
     parameter integer ICACHE_SIZE_BYTES = 1024,
     parameter integer ICACHE_NUM_SETS = 64,
     parameter integer ICACHE_NUM_WAYS = 1,
@@ -35,6 +35,21 @@ module student_top #(
     input  wire bvalid,
     output wire bready
 );
+    function integer address_width_for_count;
+        input integer count;
+        integer remaining;
+        begin
+            remaining = count - 1;
+            address_width_for_count = 0;
+            while (remaining > 0) begin
+                address_width_for_count = address_width_for_count + 1;
+                remaining = remaining >> 1;
+            end
+            if (address_width_for_count < 1)
+                address_width_for_count = 1;
+        end
+    endfunction
+
     wire icache_flush;
     wire core_i_request_valid;
     wire core_i_request_ready;

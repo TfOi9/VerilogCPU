@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix perf synth report image image-test
+.PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix matrix-lint matrix-functional matrix-unit perf synth report image image-test
 
 PYTHON ?= $(shell command -v /opt/homebrew/bin/python3 2>/dev/null || command -v python3)
 TIMEOUT ?= timeout
@@ -16,7 +16,10 @@ OFFICIAL_BUILD ?= build/official
 DUAL_BUILD ?= build/official-dual
 FE_WIDTH ?= 1
 BE_WIDTH ?= 1
-CONFIGURED_BUILD ?= build/official-$(FE_WIDTH)x$(BE_WIDTH)
+PHYS_REGS ?= 64
+ROB_ENTRIES ?= 32
+CONFIG_SUFFIX := $(if $(filter 64-32,$(PHYS_REGS)-$(ROB_ENTRIES)),,-p$(PHYS_REGS)-r$(ROB_ENTRIES))
+CONFIGURED_BUILD ?= build/official-$(FE_WIDTH)x$(BE_WIDTH)$(CONFIG_SUFFIX)
 FILELIST ?= verilog/filelist.f
 JOBS ?= 4
 APPIMAGE ?=
@@ -696,21 +699,24 @@ build-configured:
 	@$(TIMEOUT) 300 $(PYTHON) tools/build_configured.py \
 		--framework $(CPU2026_DIR) --filelist $(FILELIST) \
 		--out $(CONFIGURED_BUILD) --fe-width $(FE_WIDTH) --be-width $(BE_WIDTH) \
+		--phys-regs $(PHYS_REGS) --rob-entries $(ROB_ENTRIES) \
 		--jobs $(JOBS) --appimage "$(APPIMAGE)"
 
 smoke-configured: build-configured
 	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
 		--testcases "$(TESTCASES)" --filelist $(FILELIST) --mode smoke \
 		--fe-width $(FE_WIDTH) --be-width $(BE_WIDTH) --sim $(CONFIGURED_BUILD)/sim \
+		--phys-regs $(PHYS_REGS) --rob-entries $(ROB_ENTRIES) \
 		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) \
-		--report reports/smoke-$(FE_WIDTH)x$(BE_WIDTH).json
+		--report reports/smoke-$(FE_WIDTH)x$(BE_WIDTH)$(CONFIG_SUFFIX).json
 
 test-configured: build-configured
 	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
 		--testcases "$(TESTCASES)" --filelist $(FILELIST) --mode test \
 		--fe-width $(FE_WIDTH) --be-width $(BE_WIDTH) --sim $(CONFIGURED_BUILD)/sim \
+		--phys-regs $(PHYS_REGS) --rob-entries $(ROB_ENTRIES) \
 		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) \
-		--report reports/correctness-$(FE_WIDTH)x$(BE_WIDTH).json $(if $(Case),--case "$(Case)",)
+		--report reports/correctness-$(FE_WIDTH)x$(BE_WIDTH)$(CONFIG_SUFFIX).json $(if $(Case),--case "$(Case)",)
 
 regression-widths: lint unit
 	@$(PYTHON) tools/run_width_regression.py --framework $(CPU2026_DIR) \
@@ -765,7 +771,17 @@ test-dual: build-dual
 
 regression: unit smoke test smoke-dual test-dual
 
-matrix perf synth report:
+matrix matrix-lint matrix-functional: matrix-unit
+	@$(PYTHON) tools/run_parameter_matrix.py --framework $(CPU2026_DIR) \
+		--testcases "$(TESTCASES)" --filelist $(FILELIST) --jobs $(JOBS) \
+		--max-cycles $(MAX_CYCLES) --latency $(LATENCY) --appimage "$(APPIMAGE)" \
+		--phase $(if $(filter matrix-lint,$@),lint,$(if $(filter matrix-functional,$@),functional,all)) \
+		--report reports/$@.json
+
+matrix-unit:
+	@$(TIMEOUT) 30 $(PYTHON) tools/test_parameter_matrix.py
+
+perf synth report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
 	@exit 2
 

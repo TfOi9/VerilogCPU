@@ -51,3 +51,5 @@ Decode、Rename 与 Dispatch 流水线设计见 [dispatch.md](dispatch.md)。
 统一发射仲裁器设计见 [issue.md](issue.md)。
 
 第 24 项的全部宽度组合验收及复现命令见 [widths.md](widths.md)。
+
+第 25 项的物理寄存器、ROB 容量与独立宽度矩阵见 [parameter_matrix.md](parameter_matrix.md)。

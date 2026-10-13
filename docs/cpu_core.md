@@ -30,6 +30,8 @@ Store 只有位于 ROB 头部时才能由 LSQ 发出。LSQ 等待 D-Cache 或 AX
 
 `make build-configured FE_WIDTH=4 BE_WIDTH=2` 将产物写入 `build/official-4x2`。`smoke-configured` 和 `test-configured` 使用相同参数及隔离目录；`regression-widths` 对全部 9 种组合执行静态检查、组件测试、退休差分及官方功能回归。已有单、双发射入口继续保留。
 
+`student_top` 与核心的默认物理地址、ROB 索引和 tag 位宽随 `PHYS_REGS`、`ROB_ENTRIES` 计算，后续子模块接收同一套位宽。`build-configured`、`smoke-configured`、`test-configured` 支持这两个容量变量；非默认容量的产物增加 `-pPHYS-rROB` 后缀。第 25 项完整容量/宽度检查与代表配置回归见 [parameter_matrix.md](parameter_matrix.md)。
+
 FE 大于 BE 时，dispatch 仅消费最多 BE 条连续前缀，其余指令留在 Fetch Queue；FE 小于 BE 时，本周期最多消费 FE 条，后端仍可从已有队列发射或退休最多 BE 条。lane 0 始终代表输出中的最老项。
 
 测试构建定义 `RV32_TEST_WATCHDOG`，连续 100000 周期无退休时立即失败。该计数器不会因分支恢复被重置，只在复位或真实退休时清零，并通过 `SYNTHESIS` 排除于综合。测试不增加顶层端口。

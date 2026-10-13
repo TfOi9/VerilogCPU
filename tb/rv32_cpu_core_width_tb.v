@@ -3,6 +3,24 @@
 module rv32_cpu_core_width_tb;
     parameter FE_WIDTH = 4;
     parameter BE_WIDTH = 4;
+    parameter PHYS_REGS = 64;
+    parameter ROB_ENTRIES = 32;
+    localparam ROB_INDEX_WIDTH = address_width_for_count(ROB_ENTRIES);
+    localparam ROB_TAG_WIDTH = ROB_INDEX_WIDTH + 2;
+    function integer address_width_for_count;
+        input integer count;
+        integer remaining;
+        begin
+            remaining = count - 1;
+            address_width_for_count = 0;
+            while (remaining > 0) begin
+                address_width_for_count = address_width_for_count + 1;
+                remaining = remaining >> 1;
+            end
+            if (address_width_for_count < 1)
+                address_width_for_count = 1;
+        end
+    endfunction
     reg clk;
     reg reset;
     wire i_flush;
@@ -71,7 +89,8 @@ module rv32_cpu_core_width_tb;
     assign i_ready = !i_pending && !i_response_valid && random_state[1];
     assign d_ready = !d_pending && !d_response_valid && random_state[2];
 
-    rv32_cpu_core #(.FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH)) dut (
+    rv32_cpu_core #(.FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .PHYS_REGS(PHYS_REGS), .ROB_ENTRIES(ROB_ENTRIES)) dut (
         .clk_i(clk), .reset_i(reset), .icache_flush_o(i_flush),
         .icache_request_valid_o(i_valid), .icache_request_ready_i(i_ready),
         .icache_request_pc_o(i_pc), .icache_response_valid_i(i_response_valid),
@@ -90,8 +109,8 @@ module rv32_cpu_core_width_tb;
     task fail;
         input [511:0] message;
         begin
-            $display("FAIL core FE=%0d BE=%0d seed=%0d cycle=%0d retired=%0d %0s",
-                FE_WIDTH, BE_WIDTH, seed, cycles, retired, message);
+            $display("FAIL core FE=%0d BE=%0d PHYS=%0d ROB=%0d seed=%0d cycle=%0d retired=%0d %0s",
+                FE_WIDTH, BE_WIDTH, PHYS_REGS, ROB_ENTRIES, seed, cycles, retired, message);
             $stop;
         end
     endtask
@@ -138,7 +157,7 @@ module rv32_cpu_core_width_tb;
                 d_pending <= 1'b1;
                 d_delay <= 32 + {27'd0, random_state[9:5]};
                 if (d_write && (!dut.commit_valid[0] ||
-                        dut.lsq.request_rob_tag != dut.commit_tag[6:0]))
+                        dut.lsq.request_rob_tag != dut.commit_tag[ROB_TAG_WIDTH-1:0]))
                     fail("store escaped ROB head");
                 if (d_mmio) begin
                     if (!d_write || d_address != 32'h80000000 ||
@@ -172,12 +191,12 @@ module rv32_cpu_core_width_tb;
             end
 
             if (dut.div_response_valid && dut.div_response_ready &&
-                    (!dut.rob.entry_busy[dut.div_response_rob_tag[4:0]] ||
-                     dut.rob.entry_generation[dut.div_response_rob_tag[4:0]] != dut.div_response_rob_tag[6:5]))
+                    (!dut.rob.entry_busy[dut.div_response_rob_tag[ROB_INDEX_WIDTH-1:0]] ||
+                     dut.rob.entry_generation[dut.div_response_rob_tag[ROB_INDEX_WIDTH-1:0]] != dut.div_response_rob_tag[ROB_TAG_WIDTH-1:ROB_INDEX_WIDTH]))
                 stale_mdu_seen = 1'b1;
             if (dut.mul_response_valid && dut.mul_response_ready &&
-                    (!dut.rob.entry_busy[dut.mul_response_rob_tag[4:0]] ||
-                     dut.rob.entry_generation[dut.mul_response_rob_tag[4:0]] != dut.mul_response_rob_tag[6:5]))
+                    (!dut.rob.entry_busy[dut.mul_response_rob_tag[ROB_INDEX_WIDTH-1:0]] ||
+                     dut.rob.entry_generation[dut.mul_response_rob_tag[ROB_INDEX_WIDTH-1:0]] != dut.mul_response_rob_tag[ROB_TAG_WIDTH-1:ROB_INDEX_WIDTH]))
                 stale_mdu_seen = 1'b1;
             integer_issues = 0;
             writebacks = 0;
@@ -241,8 +260,8 @@ module rv32_cpu_core_width_tb;
                 if (FE_WIDTH == 4 && BE_WIDTH == 4 &&
                         (!discarded_data_response_seen || !stale_mdu_seen))
                     fail("missing discarded data or stale MDU response");
-                $display("PASS core FE=%0d BE=%0d seed=%0d cycles=%0d retired=%0d max_sources=%0d late_response=%0d discarded_data=%0d stale_mdu=%0d",
-                    FE_WIDTH, BE_WIDTH, seed, cycles, retired, maximum_sources,
+                $display("PASS core FE=%0d BE=%0d PHYS=%0d ROB=%0d seed=%0d cycles=%0d retired=%0d max_sources=%0d late_response=%0d discarded_data=%0d stale_mdu=%0d",
+                    FE_WIDTH, BE_WIDTH, PHYS_REGS, ROB_ENTRIES, seed, cycles, retired, maximum_sources,
                     late_response_seen, discarded_data_response_seen, stale_mdu_seen);
                 $fclose(trace_file);
                 $finish;

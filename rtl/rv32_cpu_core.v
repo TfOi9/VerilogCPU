@@ -5,10 +5,10 @@ module rv32_cpu_core #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
     parameter PHYS_REGS = 64,
-    parameter PHYS_REG_ADDR_WIDTH = 6,
+    parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
-    parameter ROB_INDEX_WIDTH = 5,
-    parameter ROB_TAG_WIDTH = 7,
+    parameter ROB_INDEX_WIDTH = address_width_for_count(ROB_ENTRIES),
+    parameter ROB_TAG_WIDTH = ROB_INDEX_WIDTH + 2,
     parameter INT_RS_ENTRIES = 8,
     parameter INT_RS_INDEX_WIDTH = 3,
     parameter MUL_RS_ENTRIES = 4,
@@ -50,6 +50,21 @@ module rv32_cpu_core #(
     input  wire [31:0] dcache_response_read_data_i,
     input  wire dcache_response_error_i
 );
+    function integer address_width_for_count;
+        input integer count;
+        integer remaining;
+        begin
+            remaining = count - 1;
+            address_width_for_count = 0;
+            while (remaining > 0) begin
+                address_width_for_count = address_width_for_count + 1;
+                remaining = remaining >> 1;
+            end
+            if (address_width_for_count < 1)
+                address_width_for_count = 1;
+        end
+    endfunction
+
     /* verilator lint_off PINCONNECTEMPTY */
     /* verilator lint_off UNUSEDSIGNAL */
     localparam COMPLETION_SOURCES = BE_WIDTH + 3;
