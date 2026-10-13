@@ -3,7 +3,10 @@ set -u
 
 repo_dir=$(cd "$(dirname "$0")/.." && pwd)
 sora_dir=${SORA_DIR:-"$repo_dir/../SORA"}
-asap7_dir=${ASAP7_DIR:-"$repo_dir/third_party/asap7"}
+asap7_dir=${ASAP7_LIB:-"$repo_dir/.deps/asap7/lib"}
+sta_path=${STA:-"$repo_dir/.deps/opensta/bin/sta"}
+yosys_path=${YOSYS:-"$repo_dir/.deps/yosys/bin/yosys"}
+abc_path=${ABC:-"$repo_dir/.deps/yosys/bin/yosys-abc"}
 failed=0
 
 pass() {
@@ -42,7 +45,9 @@ check_command riscv-gcc riscv64-elf-gcc
 check_command riscv-objdump riscv64-elf-objdump
 check_command iverilog iverilog
 check_command verilator verilator
-check_command yosys yosys
+check_command yosys "$yosys_path"
+check_command abc "$abc_path"
+check_command opensta "$sta_path"
 check_command gtkwave gtkwave
 check_command timeout timeout
 check_command archive 7z
@@ -73,10 +78,10 @@ else
     fail sora "reference repository is unavailable: $sora_dir"
 fi
 
-if [[ -d "$asap7_dir" ]]; then
-    pass asap7 "PDK directory: $asap7_dir"
+if [[ -d "$asap7_dir" && $(find "$asap7_dir" -maxdepth 1 -name '*.lib' | wc -l) -eq 5 ]]; then
+    pass asap7 "five RVT TT Liberty libraries: $asap7_dir"
 else
-    warn asap7 "PDK directory is not present yet: $asap7_dir"
+    fail asap7 "five Liberty libraries are required: $asap7_dir (run make synth-setup)"
 fi
 
 if [[ "$failed" -ne 0 ]]; then

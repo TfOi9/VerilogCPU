@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "framework_dockerfile": "../RISC-V-CPU-2026/Dockerfile",
+  "asap7_commit": "f970bd3c3292b79ae4d022a3ec80533534614066",
+  "opensta_commit": "f89887b59600cd3a2a10c3de31bda4235d904cdf",
+  "cudd_commit": "f54f533303640afd5dbe47a05ebeabb3066f2a25",
+  "archives": [
+    {
+      "name": "asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.7z",
+      "sha256": "d8ec2c98f0709817cf9bf08ac6bd3363ba086789bdbeb9d1036b3e5b2ea56041"
+    },
+    {
+      "name": "asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib.7z",
+      "sha256": "3803bb90380bc39445db17d2f60a2c53bd4baf63ddffbc742ab7ae651dc649e0"
+    },
+    {
+      "name": "asap7sc7p5t_OA_RVT_TT_nldm_211120.lib.7z",
+      "sha256": "6a5204f97ffc242e999bafedf5de95dc06a49624928f98dbb7b415c9e492e689"
+    },
+    {
+      "name": "asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib.7z",
+      "sha256": "e2895b3b0b32e4d0aa10e04c465b6297eec5a8eb3615058edc8595faeb094138"
+    },
+    {
+      "name": "asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib.7z",
+      "sha256": "78c5e55ec239efe080458532f9f55dff5457c3ce4144d8c9f2bac1a484b634c4"
+    },
+    {
+      "name": "cudd.tar.gz",
+      "sha256": "dbe6b90f8745bf1f755953b76f1c639e07f7ee079f4abf18c871ae878f47431d"
+    },
+    {
+      "name": "opensta.tar.gz",
+      "sha256": "547546ac36a748295105586413279b96114aa0bfb164db8075dad9cdb8979fba"
+    },
+    {
+      "name": "yosys.tar.gz",
+      "sha256": "72d4335dcee9a5416ac2e03b175606e95361056248ffaa73f48fcc98693dbbe8"
+    },
+    {
+      "name": "abc.tar.gz",
+      "sha256": "ad4d7cdae84fad530bb0df99df80f66bbaeec3263153e4950c43a3a5b90cdbd2"
+    },
+    {
+      "name": "cxxopts.tar.gz",
+      "sha256": "6a198fdd59e95fe8d4e4ba2a5583e72e610e725192e9ccc2a06a23dfc8243a13"
+    }
+  ],
+  "libraries": [
+    {
+      "name": "asap7sc7p5t_AO_RVT_TT_nldm_211120.lib",
+      "sha256": "b1ece108c0a2acd8d01c05cee6daee2834425037b1d9aad625d6f1dd640f1940"
+    },
+    {
+      "name": "asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib",
+      "sha256": "a4ceb32e418e1aac8667e28fbd8e9e46baf520180be4db075598a4d7c681a56e"
+    },
+    {
+      "name": "asap7sc7p5t_OA_RVT_TT_nldm_211120.lib",
+      "sha256": "6529c6c72465cd133dfbfb03952327ab2774bb6aa4be866d78fd7bc6c58c9f6f"
+    },
+    {
+      "name": "asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib",
+      "sha256": "57a0b403485b99ebd676942af4673ac086b86c7c75fbdc3e5c0038501dd22ba3"
+    },
+    {
+      "name": "asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib",
+      "sha256": "fa92e6ab1481810602811b1eea54bc016a341f11fb5188d7512c026599adf038"
+    }
+  ],
+  "yosys_commit": "70a11c6bf0e8dd669f56c7da3587f78b405138e2",
+  "abc_commit": "8e401543d3ecf65e3a3631c7a271793a4d356cb0",
+  "cxxopts_commit": "4bf61f08697b110d9e3991864650a405b3dd515d"
+}

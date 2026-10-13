@@ -411,8 +411,16 @@ module rv32_load_store_queue #(
                                 forwarding_mask[i][byte_index] = 1'b1;
                                 byte_offset = byte_address[1:0] -
                                     address[j][1:0];
-                                forwarding_value[i][byte_index*8 +: 8] =
-                                    store_data[j] >> (byte_offset*8);
+                                case (byte_offset)
+                                    2'd0: forwarding_value[i][byte_index*8 +: 8] =
+                                        store_data[j][7:0];
+                                    2'd1: forwarding_value[i][byte_index*8 +: 8] =
+                                        store_data[j][15:8];
+                                    2'd2: forwarding_value[i][byte_index*8 +: 8] =
+                                        store_data[j][23:16];
+                                    default: forwarding_value[i][byte_index*8 +: 8] =
+                                        store_data[j][31:24];
+                                endcase
                             end
                         end
                         if (forwarding_mask[i][byte_index] &&

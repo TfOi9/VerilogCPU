@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
-.PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix matrix-lint matrix-functional matrix-unit perf synth report image image-test
+.PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix matrix-lint matrix-functional matrix-unit perf synth synth-matrix synth-unit synth-setup report image image-test
 
 PYTHON ?= $(shell command -v /opt/homebrew/bin/python3 2>/dev/null || command -v python3)
 TIMEOUT ?= timeout
@@ -26,6 +26,15 @@ APPIMAGE ?=
 MAX_CYCLES ?= 30000000
 LATENCY ?= 10
 Case ?=
+MODE ?= opt
+CLOCK_PERIOD_NS ?= 2.0
+SYNTH_OUT ?= build/synth
+SYNTH_JOBS ?= 2
+SYNTH_TIMEOUT ?= 1800
+YOSYS ?= $(abspath .deps/yosys/bin/yosys)
+ABC ?= $(abspath .deps/yosys/bin/yosys-abc)
+STA ?= .deps/opensta/bin/sta
+ASAP7_LIB ?= .deps/asap7/lib
 
 CORE_RTL := \
 	rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
@@ -781,7 +790,31 @@ matrix matrix-lint matrix-functional: matrix-unit
 matrix-unit:
 	@$(TIMEOUT) 30 $(PYTHON) tools/test_parameter_matrix.py
 
-perf synth report:
+synth:
+	@$(PYTHON) tools/run_synthesis.py --framework "$(CPU2026_DIR)" \
+		--filelist "$(FILELIST)" --out "$(SYNTH_OUT)" --mode "$(MODE)" \
+		--fe-width $(FE_WIDTH) --be-width $(BE_WIDTH) \
+		--phys-regs $(PHYS_REGS) --rob-entries $(ROB_ENTRIES) \
+		--clock-period $(CLOCK_PERIOD_NS) --timeout $(SYNTH_TIMEOUT) \
+		--yosys "$(YOSYS)" --abc "$(ABC)" --sta "$(abspath $(STA))" \
+		--asap7-lib "$(ASAP7_LIB)" --appimage "$(APPIMAGE)" \
+		--report reports/synthesis-$(FE_WIDTH)x$(BE_WIDTH)-p$(PHYS_REGS)-r$(ROB_ENTRIES)-$(MODE).json
+
+synth-matrix: synth-unit
+	@$(PYTHON) tools/run_synthesis.py --framework "$(CPU2026_DIR)" \
+		--filelist "$(FILELIST)" --out "$(SYNTH_OUT)" --mode both --matrix \
+		--jobs $(SYNTH_JOBS) --clock-period $(CLOCK_PERIOD_NS) \
+		--timeout $(SYNTH_TIMEOUT) --yosys "$(YOSYS)" --abc "$(ABC)" \
+		--sta "$(abspath $(STA))" --asap7-lib "$(ASAP7_LIB)" \
+		--appimage "$(APPIMAGE)" --report reports/synthesis-matrix.json
+
+synth-unit:
+	@$(TIMEOUT) 30 $(PYTHON) tools/test_synthesis.py
+
+synth-setup:
+	@$(PYTHON) tools/setup_synthesis.py --jobs $(JOBS)
+
+perf report:
 	@echo "Target '$@' is reserved for a later implementation stage." >&2
 	@exit 2
 
