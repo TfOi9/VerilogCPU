@@ -151,8 +151,8 @@ module student_top #(
         end
     end
 
-    assign core_d_response_rob_tag = mmio_response_valid ? mmio_response_rob_tag : dcache_response_rob_tag;
-    assign core_d_response_id = mmio_response_valid ? mmio_response_id : dcache_response_id;
+    assign core_d_response_rob_tag = lsu_mmio_inflight ? mmio_response_rob_tag : dcache_response_rob_tag;
+    assign core_d_response_id = lsu_mmio_inflight ? mmio_response_id : dcache_response_id;
     always @(posedge clock) begin
         if (reset) begin mmio_response_id <= 0; mmio_response_rob_tag <= 0; end
         else if (mmio_request_valid && mmio_request_ready) begin
