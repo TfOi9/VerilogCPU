@@ -77,6 +77,18 @@ module rv32_load_store_queue_tb;
     reg [LSQ_TAG_WIDTH-1:0] second_tag;
     reg [LSQ_TAG_WIDTH-1:0] third_tag;
     reg [LSQ_TAG_WIDTH-1:0] filled_tags [0:LSQ_ENTRIES-1];
+    integer store_size;
+    integer load_size;
+    integer store_offset;
+    integer load_offset;
+    integer word_case;
+    integer wrap_case;
+    integer ready_case;
+    integer store_start;
+    integer load_start;
+    integer head;
+    reg overlap;
+    reg [31:0] expected_load;
 
     rv32_load_store_queue #(
         .POSTED_STORES(POSTED_STORES), .LOAD_FALLTHROUGH(LOAD_FALLTHROUGH),
@@ -345,8 +357,181 @@ module rv32_load_store_queue_tb;
         end
     endtask
 
+    function [1:0] width_code;
+        input integer bytes;
+        begin
+            case (bytes)
+                1: width_code = `RV32_MEMORY_BYTE;
+                2: width_code = `RV32_MEMORY_HALF;
+                default: width_code = `RV32_MEMORY_WORD;
+            endcase
+        end
+    endfunction
+
+    function [31:0] reference_value;
+        input [31:0] word_value;
+        input integer offset;
+        input integer bytes;
+        reg [31:0] shifted;
+        begin
+            shifted = word_value >> (offset*8);
+            case (bytes)
+                1: reference_value = {{24{shifted[7]}}, shifted[7:0]};
+                2: reference_value = {{16{shifted[15]}}, shifted[15:0]};
+                default: reference_value = shifted;
+            endcase
+        end
+    endfunction
+
+    task check_disjoint_stores;
+        begin
+            for (wrap_case = 0; wrap_case < 2; wrap_case = wrap_case + 1)
+            for (ready_case = 0; ready_case < 2; ready_case = ready_case + 1)
+            for (store_size = 1; store_size <= 4; store_size = store_size*2)
+            for (load_size = 1; load_size <= 4; load_size = load_size*2)
+            for (store_offset = 0; store_offset < 4; store_offset = store_offset + store_size)
+            for (load_offset = 0; load_offset < 4; load_offset = load_offset + load_size)
+            for (word_case = 0; word_case < 4; word_case = word_case + 1) begin
+                reset_case();
+                head = wrap_case == 0 ? 0 : ROB_ENTRIES-1;
+                rob_head_index_i = head;
+                store_start = 256 + store_offset;
+                case (word_case)
+                    0: load_start = 256 + load_offset;
+                    1: load_start = 260 + load_offset;
+                    2: load_start = 252 + load_offset;
+                    default: load_start = 32'h01000100 + load_offset;
+                endcase
+                overlap = load_start < store_start + store_size &&
+                    store_start < load_start + load_size;
+                allocate_one(1, tag(head), width_code(store_size), 0, first_tag);
+                allocate_one(0, tag(head+1), width_code(load_size), 0, second_tag);
+                store_address(tag(head), first_tag, store_start);
+                if (ready_case != 0) begin
+                    store_data(tag(head), first_tag, 32'hb1837fa5);
+                    expect_completion(tag(head), 0, 0, 0);
+                end
+                load_address(tag(head+1), second_tag, load_start);
+                check(cache_request_valid_o == !overlap, "known disjoint store skips bubble");
+                if (!overlap) begin
+                    repeat (3) begin
+                        tick();
+                        check(cache_request_valid_o && !cache_request_write_o &&
+                            cache_request_address_o == (load_start & 32'hfffffffc),
+                            "disjoint request stable under stall");
+                    end
+                    expect_request(0, load_start & 32'hfffffffc, 0);
+                    send_response(32'h817f23e5, 0);
+                    expected_load = reference_value(32'h817f23e5, load_offset, load_size);
+                    expect_completion(tag(head+1), expected_load, 0, 0);
+                end else begin
+                    repeat (3) begin
+                        tick();
+                        check(!cache_request_valid_o, "overlap never reads stale RAM");
+                    end
+                    if (ready_case != 0 && load_start >= store_start &&
+                            load_start + load_size <= store_start + store_size) begin
+                        expected_load = reference_value(32'hb1837fa5,
+                            load_start-store_start, load_size);
+                        expect_completion(tag(head+1), expected_load, 0, 0);
+                    end else
+                        check(!completion_valid_o, "partial or unready overlap waits");
+                end
+            end
+
+            reset_case();
+            allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+            allocate_one(1, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+            allocate_one(0, tag(2), `RV32_MEMORY_WORD, 0, third_tag);
+            store_address(tag(0), first_tag, 32'h100);
+            load_address(tag(2), third_tag, 32'h104);
+            repeat (3) begin
+                check(!cache_request_valid_o, "every older address must be known");
+                tick();
+            end
+            store_address(tag(1), second_tag, 32'h108);
+            expect_request(0, 32'h104, 0);
+            send_response(32'h12345678, 0);
+            expect_completion(tag(2), 32'h12345678, 0, 0);
+
+            reset_case();
+            allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+            allocate_one(1, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+            allocate_one(0, tag(2), `RV32_MEMORY_WORD, 0, third_tag);
+            store_address(tag(0), first_tag, 32'h100);
+            store_address(tag(1), second_tag, 32'h108);
+            load_address(tag(2), third_tag, 32'h104);
+            check(cache_request_valid_o, "multiple disjoint stores skip bubble");
+            expect_request(0, 32'h104, 0);
+            send_response(32'h12345678, 0);
+            expect_completion(tag(2), 32'h12345678, 0, 0);
+
+            reset_case();
+            allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+            allocate_one(1, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+            allocate_one(0, tag(2), `RV32_MEMORY_WORD, 0, third_tag);
+            store_address(tag(0), first_tag, 32'h104);
+            store_address(tag(1), second_tag, 32'h108);
+            load_address(tag(2), third_tag, 32'h104);
+            repeat (3) begin
+                check(!cache_request_valid_o, "one older overlap blocks shortcut");
+                tick();
+            end
+            store_data(tag(0), first_tag, 32'h87654321);
+            expect_completion(tag(0), 0, 0, 0);
+            expect_completion(tag(2), 32'h87654321, 0, 0);
+
+            reset_case();
+            allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+            allocate_one(0, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+            load_address_valid_i = 1;
+            load_address_rob_tag_i = tag(1);
+            load_address_lsq_tag_i = second_tag;
+            load_address_i = 32'h104;
+            store_address_valid_i = 1;
+            store_address_rob_tag_i = tag(0);
+            store_address_lsq_tag_i = first_tag;
+            store_address_i = 32'h100;
+            #1;
+            check(store_address_ready_o && !load_address_ready_o,
+                "older store wins simultaneous AGU");
+            tick();
+            store_address_valid_i = 0;
+            #1; check(load_address_ready_o, "load retries after store address");
+            tick(); load_address_valid_i = 0;
+            check(cache_request_valid_o, "registered store address permits shortcut");
+            expect_request(0, 32'h104, 0);
+            send_response(32'h12345678, 0);
+            expect_completion(tag(1), 32'h12345678, 0, 0);
+
+            reset_case();
+            allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+            allocate_one(0, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+            store_address(tag(0), first_tag, 32'h101);
+            load_address(tag(1), second_tag, 32'h108);
+            check(!cache_request_valid_o, "faulting older store keeps conservative path");
+
+            reset_case();
+            allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+            allocate_one(0, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+            store_address(tag(0), first_tag, 32'h100);
+            load_address(tag(1), second_tag, 32'h105);
+            check(!cache_request_valid_o, "disjoint faulting load cannot issue");
+            expect_completion(tag(1), 0, 1, 4'd4);
+
+            reset_case();
+            allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+            allocate_one(0, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+            store_address(tag(0), first_tag, 32'h80000000);
+            load_address(tag(1), second_tag, 32'h100);
+            check(!cache_request_valid_o, "MMIO store keeps conservative path");
+            reset_case();
+        end
+    endtask
+
     initial begin
         clk_i = 0; checks = 0;
+        check_disjoint_stores();
         reset_case();
 
         allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);

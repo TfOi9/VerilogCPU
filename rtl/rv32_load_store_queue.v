@@ -193,7 +193,9 @@ module rv32_load_store_queue #(
     reg incoming_load_blocked;
     integer incoming_store_index;
     integer incoming_load_index;
-    reg [LSQ_ENTRIES-1:0] no_older_store;
+    reg [LSQ_ENTRIES-1:0] older_store_mask [0:LSQ_ENTRIES-1];
+    reg [LSQ_ENTRIES-1:0] incoming_store_conflict;
+    wire [3:0] incoming_byte_mask = access_mask(width[load_slot], load_address_i[1:0]);
     wire incoming_load_request = load_address_valid_i && load_address_ready_o &&
         !incoming_load_blocked && !address_fault(load_address_i, width[load_slot], 1'b0);
     integer source_candidate;
@@ -242,6 +244,19 @@ module rv32_load_store_queue #(
                 `RV32_MEMORY_HALF: size_bytes = 2;
                 `RV32_MEMORY_WORD: size_bytes = 4;
                 default: size_bytes = 0;
+            endcase
+        end
+    endfunction
+
+    function [3:0] access_mask;
+        input [`RV32_MEMORY_WIDTH-1:0] code;
+        input [1:0] offset;
+        begin
+            case (code)
+                `RV32_MEMORY_BYTE: access_mask = 4'b0001 << offset;
+                `RV32_MEMORY_HALF: access_mask = 4'b0011 << offset;
+                `RV32_MEMORY_WORD: access_mask = 4'b1111;
+                default: access_mask = 4'b0000;
             endcase
         end
     endfunction
@@ -609,17 +624,27 @@ module rv32_load_store_queue #(
     end
 
     always @* begin
-        no_older_store = {LSQ_ENTRIES{1'b1}};
+        incoming_store_conflict = 0;
+        for (incoming_store_index = 0; incoming_store_index < LSQ_ENTRIES;
+                incoming_store_index = incoming_store_index + 1) begin
+            incoming_store_conflict[incoming_store_index] =
+                !address_valid[incoming_store_index] || fault_valid[incoming_store_index] ||
+                is_mmio_store(address[incoming_store_index], width[incoming_store_index]) ||
+                (load_address_i[31:2] == address[incoming_store_index][31:2] &&
+                    (incoming_byte_mask & access_mask(width[incoming_store_index],
+                        address[incoming_store_index][1:0])) != 0);
+        end
         for (incoming_load_index = 0; incoming_load_index < LSQ_ENTRIES;
                 incoming_load_index = incoming_load_index + 1) begin
+            older_store_mask[incoming_load_index] = 0;
             for (incoming_store_index = 0; incoming_store_index < LSQ_ENTRIES;
                     incoming_store_index = incoming_store_index + 1) begin
                 if (busy[incoming_store_index] && is_store[incoming_store_index] &&
                         entry_distance[incoming_store_index] < entry_distance[incoming_load_index])
-                    no_older_store[incoming_load_index] = 1'b0;
+                    older_store_mask[incoming_load_index][incoming_store_index] = 1'b1;
             end
         end
-        incoming_load_blocked = !no_older_store[load_slot];
+        incoming_load_blocked = |(older_store_mask[load_slot] & incoming_store_conflict);
     end
 
     always @* begin

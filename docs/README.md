@@ -73,3 +73,5 @@ Load 多笔在途、Store 同拍提交与提前取指预测的正式实现及部
 返回标签选择的结构见 [response-ownership.md](response-ownership.md)，完整正确性与新版官方PPA验收见 [return-tag-validation-20261014.md](return-tag-validation-20261014.md)。
 
 返回标签与Load地址接收捷径的分步验收、官方IPC/面积/频率对照和复现证据见 [load-path-optimization-20261014.md](load-path-optimization-20261014.md)。
+
+较老Store地址已知且不重叠时的Load省拍、独立字节区间测试和最新官方对照见 [load-nonoverlap-optimization-20261014.md](load-nonoverlap-optimization-20261014.md)。
