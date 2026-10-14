@@ -190,6 +190,12 @@ module rv32_load_store_queue #(
     reg [LSQ_INDEX_WIDTH-1:0] inflight_slot;
     reg [LSQ_INDEX_WIDTH-1:0] commit_slot;
     reg [LSQ_INDEX_WIDTH-1:0] sequential_commit_slot;
+    reg incoming_load_blocked;
+    integer incoming_store_index;
+    integer incoming_load_index;
+    reg [LSQ_ENTRIES-1:0] no_older_store;
+    wire incoming_load_request = load_address_valid_i && load_address_ready_o &&
+        !incoming_load_blocked && !address_fault(load_address_i, width[load_slot], 1'b0);
     integer source_candidate;
     integer request_candidate;
     integer store_request_candidate;
@@ -603,6 +609,20 @@ module rv32_load_store_queue #(
     end
 
     always @* begin
+        no_older_store = {LSQ_ENTRIES{1'b1}};
+        for (incoming_load_index = 0; incoming_load_index < LSQ_ENTRIES;
+                incoming_load_index = incoming_load_index + 1) begin
+            for (incoming_store_index = 0; incoming_store_index < LSQ_ENTRIES;
+                    incoming_store_index = incoming_store_index + 1) begin
+                if (busy[incoming_store_index] && is_store[incoming_store_index] &&
+                        entry_distance[incoming_store_index] < entry_distance[incoming_load_index])
+                    no_older_store[incoming_load_index] = 1'b0;
+            end
+        end
+        incoming_load_blocked = !no_older_store[load_slot];
+    end
+
+    always @* begin
         store_request_candidate = -1;
         store_request_prefix = 1'b1;
         store_request_slot = 0;
@@ -869,6 +889,17 @@ module rv32_load_store_queue #(
                         request_byte_enable <= 0;
                         request_mmio <= 1'b0;
                         started[request_candidate] <= 1'b1;
+                    end else if (incoming_load_request) begin
+                        request_valid <= 1'b1;
+                        request_id <= free_pending_slot;
+                        request_write <= 1'b0;
+                        request_rob_tag <= load_address_rob_tag_i;
+                        request_lsq_tag <= load_address_lsq_tag_i;
+                        request_address <= {load_address_i[31:2], 2'b00};
+                        request_write_data <= 0;
+                        request_byte_enable <= 0;
+                        request_mmio <= 1'b0;
+                        started[load_slot] <= 1'b1;
                     end
                 end
 

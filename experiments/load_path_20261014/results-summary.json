@@ -1,0 +1,197 @@
+{
+  "completed": true,
+  "passed": true,
+  "framework_revision": "302f0cf3cccdaa5de084a2120e0d950c663e4cf5",
+  "baseline": {
+    "ipc_geomean": 0.6816313861902019,
+    "area_um2": 27066.72956100066,
+    "fmax_mhz": 293.4097421203438,
+    "minimum_period_ns": 3.408203125,
+    "abc_constraints": {
+      "driving_cell": "INVx1_ASAP7_75t_R",
+      "output_load_ff": 5.0
+    },
+    "report": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/report.json",
+    "critical_path": {
+      "arrival_ns": 3.3529999999999998,
+      "combinational_stages": 101,
+      "buffers_inverters": 12,
+      "max_path_fanout": 10,
+      "startpoint": {
+        "pin": "_409239_/QN",
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+      },
+      "endpoint": {
+        "pin": "_396548_/D",
+        "src": null
+      }
+    }
+  },
+  "stages": {
+    "owner": {
+      "ipc_geomean": 0.6816313861902019,
+      "area_um2": 26929.94000100108,
+      "fmax_mhz": 302.6899201891812,
+      "validation": {
+        "official_programs": 25,
+        "matrix_static_checks": 324,
+        "matrix_retirement_traces": 27,
+        "matrix_programs": 243,
+        "hum_tests": 28,
+        "deep_unit_configurations": 17,
+        "response_boundary_checks": 7168,
+        "unit_and_lint_exit_code": 0
+      }
+    },
+    "load": {
+      "ipc_geomean": 0.6863106683607078,
+      "area_um2": 26997.328761001507,
+      "fmax_mhz": 312.958435207824,
+      "validation": {
+        "official_programs": 25,
+        "matrix_static_checks": 324,
+        "matrix_retirement_traces": 27,
+        "matrix_programs": 243,
+        "hum_tests": 28,
+        "deep_unit_configurations": 17,
+        "response_boundary_checks": 7168,
+        "unit_and_lint_exit_code": 0
+      }
+    }
+  },
+  "load_change_percent": {
+    "ipc_geomean": 0.6864827919176975,
+    "area_um2": 0.25023731949616046,
+    "fmax_mhz": 3.3924205378973227
+  },
+  "ipc_gain_remaining_percent": 60.058709654598566,
+  "screened_candidates": {
+    "older": {
+      "ipc_geomean": 0.6863106683607078,
+      "cycles": {
+        "perf_median": 14004,
+        "perf_multiply": 21818,
+        "perf_qsort": 226716,
+        "perf_rsort": 206328,
+        "perf_towers": 7963,
+        "perf_vvadd": 8312
+      },
+      "area_um2": 26829.454640999877,
+      "fmax_mhz": 307.5075075075075
+    },
+    "any": {
+      "ipc_geomean": 0.6854799431035956,
+      "cycles": {
+        "perf_median": 14004,
+        "perf_multiply": 21818,
+        "perf_qsort": 226839,
+        "perf_rsort": 206321,
+        "perf_towers": 8017,
+        "perf_vvadd": 8312
+      }
+    },
+    "precomputed": {
+      "ipc_geomean": 0.6863106683607078,
+      "cycles": {
+        "perf_median": 14004,
+        "perf_multiply": 21818,
+        "perf_qsort": 226716,
+        "perf_rsort": 206328,
+        "perf_towers": 7963,
+        "perf_vvadd": 8312
+      },
+      "area_um2": 26997.328761001507,
+      "fmax_mhz": 312.958435207824
+    }
+  },
+  "probes": {
+    "owner": [
+      {
+        "probe": "alu-chain",
+        "cycles": 13224,
+        "ipc": 0.9988656987295825
+      },
+      {
+        "probe": "alu-four-chains",
+        "cycles": 7285,
+        "ipc": 1.8135895676046672
+      },
+      {
+        "probe": "load-chain",
+        "cycles": 76886,
+        "ipc": 0.17181281377624014
+      },
+      {
+        "probe": "load-independent",
+        "cycles": 13234,
+        "ipc": 0.9981109264016926
+      },
+      {
+        "probe": "hot-store",
+        "cycles": 25945,
+        "ipc": 0.5091154365002891
+      }
+    ],
+    "load": [
+      {
+        "probe": "alu-chain",
+        "cycles": 13224,
+        "ipc": 0.9988656987295825
+      },
+      {
+        "probe": "alu-four-chains",
+        "cycles": 7285,
+        "ipc": 1.8135895676046672
+      },
+      {
+        "probe": "load-chain",
+        "cycles": 64158,
+        "ipc": 0.2058979394619533
+      },
+      {
+        "probe": "load-independent",
+        "cycles": 13232,
+        "ipc": 0.9982617896009673
+      },
+      {
+        "probe": "hot-store",
+        "cycles": 25945,
+        "ipc": 0.5091154365002891
+      }
+    ]
+  },
+  "qualification": "Both steps qualified; IPC tier-three target remains unmet",
+  "evidence_sha256": {
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/load_path_20261014/owner-results.json": "22f3141f9db529aed57d9922e7dab59999f313ebcda0a5db2d79c445b6a38a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/load_path_20261014/load-results.json": "ddf48458634f8306e72035da748d8ea4b6750b5eb909627b9de76a73a80ad6b3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/tier3_20261014/results-summary.json": "23d97cf68c7451a69aaa8fff3bc2800f21e74aa35f9d9dc44096a33578b255cc",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/report.json": "ab3792fb8de8ec5e74750ca5b28b45e154dceed7da140aa1b0a03740b8a0a870",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-older-screen/results.json": "0b83f97a7ef0402e6e63ea88572ffdf06a9be7bf47da5c47002f3719a55dee94",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-any-screen/results.json": "6e0d7c765f5350b941257388ae0cf1cb2e76dc29843ec4ce4f413fe156d3b6c6",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-precomputed-screen/results.json": "437118dcac9e083029ebef2a9b752918b7035620859e6426c3319ad2f88cb6fa",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-older/ppa-results.json": "91b471360a98ff2636c53b3486a89c0b90de337a3eae7d4f0f5c78496ce156d6",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-precomputed/ppa-results.json": "4bc295603afee677b3452e62b31e0874160ab7890dfedba7df56be11bbf003ae",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/owner-probes/results.json": "83e65bfe3e2ba3e8cff93769a01d8be3082b183594397dada8aee3a90edde028",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/owner-probes/alu-chain.log": "dafca8359b80637661f63d7297cedc31bcf463a3a6bab373d381c0f696cbd932",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/owner-probes/alu-four-chains.log": "fea7c10da13a9d74b358bcdc5dcd619a3f1bd64ca02f943766bdd352531304ac",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/owner-probes/load-chain.log": "4b3903b603afdc4ba6a62a233976ea4648660360450a2aa2809d3863d97e73f9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/owner-probes/load-independent.log": "5320c1cf22b0328b930d17e16663db188d25ea99be4445283f22ccdb137ff893",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/owner-probes/hot-store.log": "242aee83fe27fcbc25633eb324aa4cf72102254150b4ac2e7122cb2672135cb7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-probes/results.json": "8d8d8a5750415a7475d50903dd362bd9220367476ab4c86ecc1b5279b5a41f24",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-probes/alu-chain.log": "979996caefa2eb7e12099fe7421ea13a096262a5c6989ee4b47b59c232641d91",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-probes/alu-four-chains.log": "6b1414fdee3686ef80dd9d5ef63f7dd095541f38680fca4faa8454e112617ece",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-probes/load-chain.log": "d8abe699048bf3dfb685c01e189681e0b0fd578001389f5695389aea5363d658",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-probes/load-independent.log": "73c8bdbed77db9aa41d80767f8d5e4af565f74c8b8bf282ec3afa0e4a5cb61fb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-probes/hot-store.log": "e6efe701927db6e53eb1ff5e7281002594a22f9d61647ccbe3019fc6ad020c59",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/response-mux/results.json": "d65258b32b0a9a3c7d82260e21e3ac525ba00f686aefda729815585ecc192c9a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/owner/snapshot.json": "d2dd107f2673c5b977de97b1ed2330473a5d8fed1f06ac3aa9eecdef8f9a084e",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-precomputed/snapshot.json": "ce69866bbb8f1e606611193ca815f6f1aaf47566719a4cecc2f3c0280eca6d56",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/load-address-unit-results.json": "af3a628c70296de47c1b5bda87ba274803d03f944db70610120f04aa74cb9bd9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/old-path-unit-1-run.log": "85b4cf62fb77cd29922c86746bf87c84e088997f365003c1462d1c540dff9209",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/old-path-unit-2-run.log": "c20e5b1739cdc1f7833ad1333d66d6f6ba929ace3db298905bb428ff3d131f4b",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/old-path-unit-4-run.log": "6ba7225d56d547c3655073cc25068ba033c3a2eafd202652a943fc60d00d3f67",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/precomputed-unit-1-run.log": "6812ca8894b430309350e2446a7ebd2653e0b9b32dcaeac61d59020c6f8e0fc1",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/precomputed-unit-2-run.log": "b660f244ba7f8a1d04353253a7449671d579f6c099aaffa1209dd9ed79a9fa08",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-path-20261014/precomputed-unit-4-run.log": "c5384cdb43da1fd37915caf5f86ed7377335209263b5cab01ea2f7ce0a75ea9b"
+  }
+}

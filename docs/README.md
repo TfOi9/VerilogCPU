@@ -71,3 +71,5 @@ Load 多笔在途、Store 同拍提交与提前取指预测的正式实现及部
 缓存并行化后的当前瓶颈、上游综合框架更新和最高档优化方案见 [tier3-performance-investigation-20261014.md](tier3-performance-investigation-20261014.md)。
 
 返回标签选择的结构见 [response-ownership.md](response-ownership.md)，完整正确性与新版官方PPA验收见 [return-tag-validation-20261014.md](return-tag-validation-20261014.md)。
+
+返回标签与Load地址接收捷径的分步验收、官方IPC/面积/频率对照和复现证据见 [load-path-optimization-20261014.md](load-path-optimization-20261014.md)。

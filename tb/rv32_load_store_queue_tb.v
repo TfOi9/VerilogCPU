@@ -349,6 +349,69 @@ module rv32_load_store_queue_tb;
         clk_i = 0; checks = 0;
         reset_case();
 
+        allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        allocate_one(1, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+        load_address(tag(0), first_tag, 32'h100);
+        check(cache_request_valid_o, "incoming load skips address bubble");
+        check(cache_request_address_o == 32'h100, "incoming load address");
+        repeat (3) begin
+            tick();
+            check(cache_request_valid_o && cache_request_address_o == 32'h100,
+                "incoming request stable under stall");
+        end
+        expect_request(0, 32'h100, 0);
+        send_response(32'h12345678, 0);
+        expect_completion(tag(0), 32'h12345678, 0, 0);
+
+        reset_case();
+        rob_head_index_i = 31;
+        allocate_one(1, tag(31), `RV32_MEMORY_WORD, 0, first_tag);
+        allocate_one(0, tag(32), `RV32_MEMORY_WORD, 0, second_tag);
+        load_address(tag(32), second_tag, 32'h100);
+        repeat (3) begin
+            check(!cache_request_valid_o, "older store blocks across ROB wrap");
+            tick();
+        end
+        store_address(tag(31), first_tag, 32'h100);
+        store_data(tag(31), first_tag, 32'h12345678);
+        expect_completion(tag(31), 0, 0, 0);
+        expect_completion(tag(32), 32'h12345678, 0, 0);
+        check(!cache_request_valid_o, "wrapped older store forwards");
+
+        reset_case();
+        allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        recover_i = 1;
+        rollback_valid_i[0] = 1;
+        rollback_rob_tag_i[0 +: ROB_TAG_WIDTH] = tag(0);
+        rollback_lsq_tag_i[0 +: LSQ_TAG_WIDTH] = first_tag;
+        load_address_valid_i = 1;
+        load_address_rob_tag_i = tag(0);
+        load_address_lsq_tag_i = first_tag;
+        load_address_i = 32'h100;
+        #1; check(!load_address_ready_o && !cache_request_valid_o,
+            "recovery suppresses incoming request");
+        tick();
+        recover_i = 0;
+        rollback_valid_i = 0;
+        load_address_valid_i = 0;
+        allocate_one(0, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+        load_address_valid_i = 1;
+        load_address_rob_tag_i = tag(1);
+        #1; check(!load_address_ready_o, "stale LSQ generation rejected");
+        tick();
+        check(!cache_request_valid_o, "stale address cannot launch request");
+        load_address_lsq_tag_i = second_tag;
+        load_address_rob_tag_i = tag(0);
+        #1; check(!load_address_ready_o, "stale ROB identity rejected");
+        tick();
+        load_address_valid_i = 0;
+        load_address(tag(1), second_tag, 32'h104);
+        check(cache_request_valid_o, "reused slot takes incoming request");
+        expect_request(0, 32'h104, 0);
+        send_response(32'hfedcba98, 0);
+        expect_completion(tag(1), 32'hfedcba98, 0, 0);
+
+        reset_case();
         allocate_one(0, tag(0), `RV32_MEMORY_BYTE, 0, first_tag);
         load_address(tag(0), first_tag, 32'h101);
         expect_request(0, 32'h100, 0);

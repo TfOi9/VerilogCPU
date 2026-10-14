@@ -65,7 +65,8 @@ def main():
     retirement = [c for c in checks if c['stage'].startswith('retirement-')]
     assert len(static) == 324 and len(retirement) == 27
     functional = [r for c in matrix['functional'] for r in c['results']]
-    assert len(matrix['functional']) == 9 and all(r['passed'] for r in functional)
+    assert matrix['all_performance'] and len(matrix['functional']) == 9
+    assert len(functional) == 243 and all(r['passed'] for r in functional)
     for c in checks:
         evidence[c['log']] = digest(Path(c['log']))
     hum = read(OUT/(stage+'-hum/results.json'))
@@ -75,7 +76,9 @@ def main():
     deep = read(OUT/(stage+'-deep.json'))
     assert deep['completed'] and deep['passed'] and deep['sources_unchanged']
     collect(deep)
-    boundary = read(ROOT/'build/response-owner-unit/results.json')
+    boundary_archive = OUT/(stage+'-response-owner-unit-archive')
+    shutil.copytree(ROOT/'build/response-owner-unit', boundary_archive, dirs_exist_ok=True)
+    boundary = read(boundary_archive/'results.json')
     assert boundary['passed'] and sum(t['checks'] for t in boundary['tests']) == 7168
     collect(boundary)
     gates = read(OUT/(stage+'-gates.json'))
