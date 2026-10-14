@@ -306,6 +306,8 @@ module rv32_dispatch_integration_tb;
     rv32_load_store_queue #(
         .BE_WIDTH(BE_WIDTH)
     ) lsq (
+        .cache_request_rob_tag_o(), .cache_response_rob_tag_i(0),
+        .cache_request_id_o(), .cache_response_id_i(2'd0),
         .clk_i(clk), .reset_i(reset), .flush_i(1'b0),
         .recover_i(recover_busy),
         .alloc_valid_i(lsq_alloc_valid),

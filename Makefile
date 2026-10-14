@@ -1341,3 +1341,8 @@ dispatch-unit:
 		build/rv32_decode_rename_dispatch_protocol.vvp 2>&1 | \
 		grep -q '^ERROR rv32_decode_rename_dispatch non-prefix fetch valid'
 	@echo "PASS dispatch rejected protocol violations"
+
+.PHONY: hum-unit
+HUM_OUT ?= build/hum-unit
+hum-unit:
+	@$(TIMEOUT) 1200 $(PYTHON) tools/test_hum.py --out $(HUM_OUT)

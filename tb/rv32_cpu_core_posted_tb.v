@@ -95,6 +95,8 @@ module rv32_cpu_core_posted_tb;
     rv32_cpu_core #(.FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH),
         .RECOVERY_WIDTH(RECOVERY_WIDTH), .POSTED_STORES(1), .RESULT_FALLTHROUGH(RESULT_FALLTHROUGH),
         .PHYS_REGS(PHYS_REGS), .ROB_ENTRIES(ROB_ENTRIES)) dut (
+        .dcache_request_rob_tag_o(), .dcache_response_rob_tag_i(0),
+        .dcache_request_id_o(), .dcache_response_id_i(2'd0),
         .clk_i(clk), .reset_i(reset), .icache_flush_o(i_flush),
         .icache_request_valid_o(i_valid), .icache_request_ready_i(i_ready),
         .icache_request_pc_o(i_pc), .icache_response_valid_i(i_response_valid),

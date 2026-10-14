@@ -7,6 +7,10 @@ module student_top #(
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
     parameter STORE_HINTS = 16,
+    parameter NONBLOCKING_DCACHE = 1,
+    parameter FAST_MEMORY_RETURNS = NONBLOCKING_DCACHE,
+    parameter PARALLEL_BRIDGE = NONBLOCKING_DCACHE,
+    parameter HIT_UNDER_MISS = NONBLOCKING_DCACHE,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
@@ -64,6 +68,15 @@ module student_top #(
     wire [127:0] core_i_response_line;
     wire core_i_response_error;
 
+    wire [ROB_TAG_WIDTH-1:0] core_d_request_rob_tag;
+    wire [ROB_TAG_WIDTH-1:0] core_d_response_rob_tag;
+    wire [ROB_TAG_WIDTH-1:0] dcache_response_rob_tag;
+    reg [ROB_TAG_WIDTH-1:0] mmio_response_rob_tag;
+    wire [1:0] core_d_request_id;
+    wire [1:0] core_d_response_id;
+    wire [1:0] dcache_response_id;
+    reg [1:0] mmio_response_id;
+    wire d_memory_response_write;
     wire core_d_request_valid;
     wire core_d_request_ready;
     wire core_d_request_write;
@@ -138,8 +151,18 @@ module student_top #(
         end
     end
 
+    assign core_d_response_rob_tag = mmio_response_valid ? mmio_response_rob_tag : dcache_response_rob_tag;
+    assign core_d_response_id = mmio_response_valid ? mmio_response_id : dcache_response_id;
+    always @(posedge clock) begin
+        if (reset) begin mmio_response_id <= 0; mmio_response_rob_tag <= 0; end
+        else if (mmio_request_valid && mmio_request_ready) begin
+            mmio_response_id <= core_d_request_id;
+            mmio_response_rob_tag <= core_d_request_rob_tag;
+        end
+    end
+
     rv32_cpu_core #(
-        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH), .POSTED_STORES(POSTED_STORES),
+        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH), .OUT_OF_ORDER_MEMORY(NONBLOCKING_DCACHE), .ECHO_MEMORY_ROB_TAG(NONBLOCKING_DCACHE), .FAST_MEMORY_RETURNS(FAST_MEMORY_RETURNS), .POSTED_STORES(POSTED_STORES),
         .RESULT_FALLTHROUGH(RESULT_FALLTHROUGH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
@@ -157,6 +180,10 @@ module student_top #(
         .icache_response_error_i(core_i_response_error),
         .dcache_request_valid_o(core_d_request_valid),
         .dcache_request_ready_i(core_d_request_ready),
+        .dcache_request_id_o(core_d_request_id),
+        .dcache_response_id_i(core_d_response_id),
+        .dcache_request_rob_tag_o(core_d_request_rob_tag),
+        .dcache_response_rob_tag_i(core_d_response_rob_tag),
         .dcache_request_irrevocable_i(!core_d_request_mmio && dcache_request_irrevocable),
         .dcache_request_write_o(core_d_request_write),
         .dcache_request_address_o(core_d_request_address),
@@ -193,15 +220,18 @@ module student_top #(
     );
 
     rv32_l1_data_cache #(
+        .ROB_TAG_WIDTH(ROB_TAG_WIDTH),
         .CACHE_SIZE_BYTES(DCACHE_SIZE_BYTES),
         .NUM_SETS(DCACHE_NUM_SETS), .NUM_WAYS(DCACHE_NUM_WAYS),
-        .STORE_HINTS(STORE_HINTS)
+        .STORE_HINTS(STORE_HINTS), .NONBLOCKING(NONBLOCKING_DCACHE), .HIT_UNDER_MISS(HIT_UNDER_MISS)
     ) dcache (
         .clk_i(clock), .reset_i(reset),
         .request_valid_i(dcache_request_valid),
         .request_ready_o(dcache_request_ready),
         .request_irrevocable_o(dcache_request_irrevocable),
         .request_write_i(core_d_request_write),
+        .request_id_i(core_d_request_id), .response_id_o(dcache_response_id),
+        .request_rob_tag_i(core_d_request_rob_tag), .response_rob_tag_o(dcache_response_rob_tag),
         .request_address_i(core_d_request_address),
         .request_write_data_i(core_d_request_write_data),
         .request_byte_enable_i(core_d_request_byte_enable),
@@ -219,10 +249,11 @@ module student_top #(
         .memory_response_ready_o(d_memory_response_ready),
         .memory_response_read_data_i(d_memory_response_read_data),
         .memory_response_error_i(d_memory_response_error),
+        .memory_response_write_i(d_memory_response_write),
         .hit_event_o(), .miss_event_o()
     );
 
-    rv32_l1_cache_axi_bridge bridge (
+    rv32_l1_cache_axi_bridge #(.PARALLEL(PARALLEL_BRIDGE)) bridge (
         .clk_i(clock), .reset_i(reset),
         .i_request_valid_i(i_memory_request_valid),
         .i_request_ready_o(i_memory_request_ready),
@@ -241,6 +272,7 @@ module student_top #(
         .d_response_ready_i(d_memory_response_ready),
         .d_response_read_data_o(d_memory_response_read_data),
         .d_response_error_o(d_memory_response_error),
+        .d_response_write_o(d_memory_response_write),
         .m_request_valid_i(mmio_request_valid),
         .m_request_ready_o(mmio_request_ready),
         .m_request_address_i(core_d_request_address),

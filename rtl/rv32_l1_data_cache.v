@@ -2,9 +2,13 @@
 
 module rv32_l1_data_cache #(
     parameter integer CACHE_SIZE_BYTES = 4096,
+    parameter integer ROB_TAG_WIDTH = 7,
     parameter integer NUM_SETS = 256,
     parameter integer NUM_WAYS = 1,
-    parameter integer STORE_HINTS = 4
+    parameter integer STORE_HINTS = 4,
+    parameter integer NONBLOCKING = 0,
+    parameter integer HIT_UNDER_MISS = NONBLOCKING,
+    parameter integer RESPONSE_QUEUE = NONBLOCKING
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -12,6 +16,10 @@ module rv32_l1_data_cache #(
     output wire request_ready_o,
     output wire request_irrevocable_o,
     input  wire request_write_i,
+    input wire [ROB_TAG_WIDTH-1:0] request_rob_tag_i,
+    output wire [ROB_TAG_WIDTH-1:0] response_rob_tag_o,
+    input wire [1:0] request_id_i,
+    output wire [1:0] response_id_o,
     input  wire [31:0] request_address_i,
     input  wire [31:0] request_write_data_i,
     input  wire [3:0] request_byte_enable_i,
@@ -29,6 +37,7 @@ module rv32_l1_data_cache #(
     output wire memory_response_ready_o,
     input  wire [127:0] memory_response_read_data_i,
     input  wire memory_response_error_i,
+    input wire memory_response_write_i,
     output reg hit_event_o,
     output reg miss_event_o
 );
@@ -85,6 +94,40 @@ module rv32_l1_data_cache #(
     integer hint_update;
     wire older_conflict;
 
+    reg [ROB_TAG_WIDTH-1:0] s0_rob_tag;
+    reg [ROB_TAG_WIDTH-1:0] s1_rob_tag;
+    reg [ROB_TAG_WIDTH-1:0] s2_rob_tag;
+    reg [ROB_TAG_WIDTH-1:0] r_rob_tag;
+    reg [ROB_TAG_WIDTH-1:0] skid_rob_tag;
+    reg [ROB_TAG_WIDTH-1:0] miss_rob_tag;
+    wire [ROB_TAG_WIDTH-1:0] response_packet_rob_tag;
+    reg miss_active;
+    reg [31:2] miss_address;
+    reg miss_write;
+    reg [31:0] miss_write_data;
+    reg [3:0] miss_byte_enable;
+    reg [1:0] miss_id;
+    reg wb_valid;
+    reg wb_sent;
+    reg wb_done;
+    reg wb_error;
+    reg read_sent;
+    reg read_done;
+    reg read_error;
+    reg [127:0] refill_line;
+    reg [1:0] s0_id;
+    reg [1:0] s1_id;
+    reg [1:0] s2_id;
+    reg [1:0] r_id;
+    wire pipeline_run;
+    wire s1_locked;
+    wire miss_complete_event;
+    wire miss_all_error;
+    wire [127:0] current_refill_line;
+    wire [31:2] refill_address;
+    wire refill_write;
+    wire [31:0] refill_write_data;
+    wire [3:0] refill_byte_enable;
     reg [2:0] mode;
     reg s0_valid;
     reg s0_irrevocable;
@@ -116,6 +159,14 @@ module rv32_l1_data_cache #(
     reg [WAY_WIDTH-1:0] s2_way;
     reg s2_hit;
 
+    reg skid_valid;
+    reg [31:0] skid_data;
+    reg skid_error;
+    reg [1:0] skid_id;
+    wire response_push;
+    wire [31:0] response_packet_data;
+    wire response_packet_error;
+    wire [1:0] response_packet_id;
     reg r_valid;
     reg [31:0] r_data;
     reg r_error;
@@ -180,23 +231,28 @@ module rv32_l1_data_cache #(
     assign s0_set = s0_address[4 +: INDEX_WIDTH];
     assign s1_set = s1_address[4 +: INDEX_WIDTH];
     assign s2_set = s2_address[4 +: INDEX_WIDTH];
-    assign r_ready = !r_valid || response_ready_i;
+    assign r_ready = NONBLOCKING != 0 && RESPONSE_QUEUE != 0 ?
+        !skid_valid : !r_valid || response_ready_i;
     assign s2_bad_address = s2_address[1:0] != 0 ||
         s2_address > 32'h0ffffffc;
     assign s2_miss = s2_valid && !s2_bad_address && !s2_hit;
+    assign pipeline_run = mode == RUN || (NONBLOCKING != 0 && HIT_UNDER_MISS != 0 &&
+        mode != DELIVER && mode != REPLAY);
+    assign s1_locked = NONBLOCKING != 0 && miss_active && s1_set == miss_index;
     assign s2_ready = !s2_valid ||
-        ((mode == RUN) && !s2_miss && r_ready);
-    assign s1_can_advance = !s1_valid || s2_ready;
+        (pipeline_run && !s2_miss && r_ready && !refill_install);
+    assign s1_can_advance = (!s1_valid || s2_ready) && !s1_locked;
     assign array_read_conflict = store_commit && s0_valid &&
         (s0_set != s2_set);
-    assign pipeline_read_accept = (mode == RUN) && !s2_miss &&
+    assign pipeline_read_accept = pipeline_run && !refill_install && !s2_miss &&
         s1_can_advance && s0_valid && !array_read_conflict;
     assign array_read_enable = !reset_i &&
-        ((mode == RUN) || ((mode == REPLAY) && s1_valid));
+        ((pipeline_run && !refill_install) || ((mode == REPLAY) && s1_valid));
     assign s0_ready = !s0_valid ||
         (s1_can_advance && !array_read_conflict);
-    assign request_ready_o = !reset_i && (mode == RUN) &&
-        !s2_miss && s0_ready;
+    assign request_ready_o = !reset_i && pipeline_run && !refill_install &&
+        !s2_miss && s0_ready && !(NONBLOCKING != 0 && miss_active &&
+            request_address_i[4 +: INDEX_WIDTH] == miss_index);
     // FIFO ownership protects an accepted hit from younger replacements.
     assign older_conflict =
         (s0_valid && s0_set == request_address_i[4 +: INDEX_WIDTH] &&
@@ -220,18 +276,35 @@ module rv32_l1_data_cache #(
         request_address_i[1:0] == 0 && request_address_i <= 32'h0ffffffc &&
         hint_match && !older_conflict;
 
+    assign response_push = r_ready &&
+        ((pipeline_run && !refill_install && s2_valid && !s2_miss) ||
+            (mode == DELIVER && (NONBLOCKING != 0 || s2_valid)));
+    assign response_packet_data = mode == DELIVER ? miss_data :
+        (s2_bad_address || s2_write ? 32'd0 : s2_line[s2_address[3:2]*32 +: 32]);
+    assign response_packet_error = mode == DELIVER ? miss_error : s2_bad_address;
+    assign response_packet_id = mode == DELIVER && NONBLOCKING != 0 ? miss_id : s2_id;
     assign response_valid_o = !reset_i && r_valid;
     assign response_read_data_o = r_data;
     assign response_error_o = r_error;
+    assign response_id_o = r_id;
+    assign response_rob_tag_o = r_rob_tag;
+    assign response_packet_rob_tag = mode == DELIVER && NONBLOCKING != 0 ?
+        miss_rob_tag : s2_rob_tag;
 
-    assign store_commit = (mode == RUN) && s2_valid &&
+    assign store_commit = pipeline_run && !refill_install && s2_valid &&
         !s2_bad_address && s2_hit && s2_write && r_ready;
     assign store_line = merge_word(s2_line, s2_address[3:2],
         s2_write_data, s2_byte_enable);
-    assign refill_result = s2_write ?
-        merge_word(memory_response_read_data_i, s2_address[3:2],
-            s2_write_data, s2_byte_enable) :
-        memory_response_read_data_i;
+    assign refill_address = NONBLOCKING != 0 ? miss_address : s2_address[31:2];
+    assign refill_write = NONBLOCKING != 0 ? miss_write : s2_write;
+    assign refill_write_data = NONBLOCKING != 0 ? miss_write_data : s2_write_data;
+    assign refill_byte_enable = NONBLOCKING != 0 ? miss_byte_enable : s2_byte_enable;
+    assign current_refill_line = NONBLOCKING != 0 ?
+        ((memory_response_fire && !memory_response_write_i) ?
+            memory_response_read_data_i : refill_line) : memory_response_read_data_i;
+    assign refill_result = refill_write ?
+        merge_word(current_refill_line, refill_address[3:2],
+            refill_write_data, refill_byte_enable) : current_refill_line;
 
     assign memory_request_valid_o = !reset_i &&
         ((mode == WRITEBACK_REQUEST) || (mode == REFILL_REQUEST));
@@ -242,12 +315,20 @@ module rv32_l1_data_cache #(
         victim_line : 128'd0;
     assign memory_request_byte_enable_o = mode == WRITEBACK_REQUEST ?
         16'hffff : 16'd0;
-    assign memory_response_ready_o = !reset_i &&
-        ((mode == WRITEBACK_WAIT) || (mode == REFILL_WAIT));
+    assign memory_response_ready_o = !reset_i && (NONBLOCKING != 0 ?
+        (miss_active && (memory_response_write_i ? wb_sent && !wb_done :
+            read_sent && !read_done)) :
+        ((mode == WRITEBACK_WAIT) || (mode == REFILL_WAIT)));
     assign memory_response_fire = memory_response_valid_i &&
         memory_response_ready_o;
-    assign refill_install = !reset_i && (mode == REFILL_WAIT) &&
-        memory_response_fire && !memory_response_error_i;
+    assign miss_complete_event = NONBLOCKING != 0 && mode == REFILL_WAIT &&
+        (read_done || (memory_response_fire && !memory_response_write_i)) &&
+        (!wb_valid || wb_done || (memory_response_fire && memory_response_write_i));
+    assign miss_all_error = read_error || wb_error ||
+        (memory_response_fire && memory_response_error_i);
+    assign refill_install = !reset_i && (NONBLOCKING != 0 ?
+        (miss_complete_event && !miss_all_error) :
+        ((mode == REFILL_WAIT) && memory_response_fire && !memory_response_error_i));
 
     always @* begin
         s1_hit = 1'b0;
@@ -357,11 +438,11 @@ module rv32_l1_data_cache #(
                 for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
                     if (hint_line[hint_update][INDEX_WIDTH-1:0] == s2_set)
                         hint_valid[hint_update] <= 1'b0;
-            if ((mode == RUN && s2_valid && !s2_bad_address && s2_hit && r_ready) ||
+            if ((pipeline_run && !refill_install && s2_valid && !s2_bad_address && s2_hit && r_ready) ||
                     refill_install) begin
                 if (!hint_update_match || refill_install) begin
                 hint_valid[hint_next] <= 1'b1;
-                hint_line[hint_next] <= s2_address[31:4];
+                hint_line[hint_next] <= refill_install ? refill_address[31:4] : s2_address[31:4];
                 hint_next <= hint_next == LAST_HINT ? {HINT_WIDTH{1'b0}} : hint_next + 1'b1;
                 end
             end
@@ -370,6 +451,30 @@ module rv32_l1_data_cache #(
 
     always @(posedge clk_i) begin
         if (reset_i) begin
+            s0_rob_tag <= 0;
+            s1_rob_tag <= 0;
+            s2_rob_tag <= 0;
+            r_rob_tag <= 0;
+            skid_rob_tag <= 0;
+            miss_rob_tag <= 0;
+            miss_active <= 1'b0;
+            miss_address <= 0;
+            miss_write <= 0;
+            miss_write_data <= 0;
+            miss_byte_enable <= 0;
+            miss_id <= 0;
+            wb_valid <= 0;
+            wb_sent <= 0;
+            wb_done <= 0;
+            wb_error <= 0;
+            read_sent <= 0;
+            read_done <= 0;
+            read_error <= 0;
+            refill_line <= 0;
+            s0_id <= 0;
+            s1_id <= 0;
+            s2_id <= 0;
+            r_id <= 0;
             mode <= RUN;
             s0_valid <= 1'b0;
             s0_irrevocable <= 1'b0;
@@ -377,6 +482,10 @@ module rv32_l1_data_cache #(
             s2_irrevocable <= 1'b0;
             s1_valid <= 1'b0;
             s2_valid <= 1'b0;
+            skid_valid <= 1'b0;
+            skid_data <= 0;
+            skid_error <= 0;
+            skid_id <= 0;
             r_valid <= 1'b0;
             s0_write <= 1'b0;
             s0_address <= 32'd0;
@@ -433,44 +542,77 @@ module rv32_l1_data_cache #(
                 line_dirty[s2_way][s2_set] <= 1'b1;
             if (refill_install) begin
                 line_valid[miss_way][miss_index] <= 1'b1;
-                line_dirty[miss_way][miss_index] <= s2_write;
+                line_dirty[miss_way][miss_index] <= refill_write;
                 if (miss_way == LAST_WAY_INDEX[WAY_WIDTH-1:0])
                     replacement_way[miss_index] <= {WAY_WIDTH{1'b0}};
                 else
                     replacement_way[miss_index] <= miss_way + 1'b1;
             end
 
+            if (NONBLOCKING != 0 && RESPONSE_QUEUE != 0) begin
+                if (r_valid && response_ready_i) begin
+                    r_valid <= skid_valid;
+                    if (skid_valid) begin
+                        r_data <= skid_data;
+                        r_error <= skid_error;
+                        r_id <= skid_id;
+                        r_rob_tag <= skid_rob_tag;
+                    end
+                    skid_valid <= 1'b0;
+                end
+                if (response_push) begin
+                    if (r_valid && !response_ready_i) begin
+                        skid_valid <= 1'b1;
+                        skid_data <= response_packet_data;
+                        skid_error <= response_packet_error;
+                        skid_id <= response_packet_id;
+                        skid_rob_tag <= response_packet_rob_tag;
+                    end else begin
+                        r_valid <= 1'b1;
+                        r_data <= response_packet_data;
+                        r_error <= response_packet_error;
+                        r_id <= response_packet_id;
+                        r_rob_tag <= response_packet_rob_tag;
+                    end
+                end
+            end else begin
             if (r_ready) begin
                 r_valid <= 1'b0;
-                if ((mode == RUN) && s2_valid && !s2_miss) begin
+                if (pipeline_run && !refill_install && s2_valid && !s2_miss) begin
                     r_valid <= 1'b1;
                     r_data <= s2_bad_address || s2_write ? 32'd0 :
                         s2_line[s2_address[3:2]*32 +: 32];
                     r_error <= s2_bad_address;
-                end else if ((mode == DELIVER) && s2_valid) begin
+                    r_id <= s2_id;
+                    r_rob_tag <= s2_rob_tag;
+                end else if ((mode == DELIVER) && (NONBLOCKING != 0 || s2_valid)) begin
                     r_valid <= 1'b1;
                     r_data <= miss_data;
                     r_error <= miss_error;
+                    r_id <= NONBLOCKING != 0 ? miss_id : s2_id;
+                    r_rob_tag <= response_packet_rob_tag;
                 end
             end
+            end
 
-            case (mode)
-                RUN: begin
-                    if (s2_miss) begin
-                        miss_index <= s2_set;
-                        miss_tag <= s2_address[31:INDEX_WIDTH+4];
-                        miss_way <= s2_way;
-                        miss_line_address <=
-                            {s2_address[31:4], 4'b0000};
-                        victim_address <=
-                            {s2_tag, s2_set, 4'b0000};
-                        victim_line <= s2_line;
-                        mode <= s2_line_valid && s2_line_dirty ?
-                            WRITEBACK_REQUEST : REFILL_REQUEST;
-                    end else begin
+            if (NONBLOCKING != 0 && memory_response_fire) begin
+                if (memory_response_write_i) begin
+                    wb_done <= 1'b1;
+                    wb_error <= memory_response_error_i;
+                    if (!memory_response_error_i && !refill_install)
+                        line_dirty[miss_way][miss_index] <= 1'b0;
+                end else begin
+                    read_done <= 1'b1;
+                    read_error <= memory_response_error_i;
+                    refill_line <= memory_response_read_data_i;
+                end
+            end
+            if (pipeline_run && !s2_miss && !refill_install) begin
                         if (s2_ready) begin
-                            s2_valid <= s1_valid;
-                            if (s1_valid) begin
+                            s2_valid <= s1_valid && !s1_locked;
+                            if (s1_valid && !s1_locked) begin
+                                s2_id <= s1_id;
+                                s2_rob_tag <= s1_rob_tag;
                                 s2_irrevocable <= s1_irrevocable;
                                 s2_write <= s1_write;
                                 s2_address <= s1_address;
@@ -493,6 +635,8 @@ module rv32_l1_data_cache #(
                             s1_valid <= s0_valid &&
                                 !array_read_conflict;
                             if (s0_valid && !array_read_conflict) begin
+                                s1_id <= s0_id;
+                                s1_rob_tag <= s0_rob_tag;
                                 s1_irrevocable <= s0_irrevocable;
                                 s1_address <= s0_address;
                                 s1_write <= s0_write;
@@ -523,6 +667,8 @@ module rv32_l1_data_cache #(
                         if (s0_ready) begin
                             s0_valid <= request_valid_i && request_ready_o;
                             if (request_valid_i && request_ready_o) begin
+                                s0_id <= request_id_i;
+                                s0_rob_tag <= request_rob_tag_i;
                                 s0_irrevocable <= request_irrevocable_o;
                                 s0_write <= request_write_i;
                                 s0_address <= request_address_i;
@@ -530,11 +676,43 @@ module rv32_l1_data_cache #(
                                 s0_byte_enable <= request_byte_enable_i;
                             end
                         end
+            end
+
+            case (mode)
+                RUN: begin
+                    if (s2_miss) begin
+                        miss_index <= s2_set;
+                        miss_tag <= s2_address[31:INDEX_WIDTH+4];
+                        miss_way <= s2_way;
+                        miss_line_address <=
+                            {s2_address[31:4], 4'b0000};
+                        victim_address <=
+                            {s2_tag, s2_set, 4'b0000};
+                        victim_line <= s2_line;
+                        mode <= s2_line_valid && s2_line_dirty ?
+                            WRITEBACK_REQUEST : REFILL_REQUEST;
+                        miss_active <= 1'b1;
+                        miss_address <= s2_address[31:2];
+                        miss_write <= s2_write;
+                        miss_write_data <= s2_write_data;
+                        miss_byte_enable <= s2_byte_enable;
+                        miss_id <= s2_id;
+                        miss_rob_tag <= s2_rob_tag;
+                        wb_valid <= s2_line_valid && s2_line_dirty;
+                        wb_sent <= 1'b0;
+                        wb_done <= 1'b0;
+                        wb_error <= 1'b0;
+                        read_sent <= 1'b0;
+                        read_done <= 1'b0;
+                        read_error <= 1'b0;
+                        if (NONBLOCKING != 0) s2_valid <= 1'b0;
                     end
                 end
                 WRITEBACK_REQUEST: begin
-                    if (memory_request_valid_o && memory_request_ready_i)
-                        mode <= WRITEBACK_WAIT;
+                    if (memory_request_valid_o && memory_request_ready_i) begin
+                        wb_sent <= 1'b1;
+                        mode <= NONBLOCKING != 0 ? REFILL_REQUEST : WRITEBACK_WAIT;
+                    end
                 end
                 WRITEBACK_WAIT: begin
                     if (memory_response_fire) begin
@@ -549,11 +727,20 @@ module rv32_l1_data_cache #(
                     end
                 end
                 REFILL_REQUEST: begin
-                    if (memory_request_valid_o && memory_request_ready_i)
+                    if (memory_request_valid_o && memory_request_ready_i) begin
+                        read_sent <= 1'b1;
                         mode <= REFILL_WAIT;
+                    end
                 end
                 REFILL_WAIT: begin
-                    if (memory_response_fire) begin
+                    if (NONBLOCKING != 0) begin
+                        if (miss_complete_event) begin
+                            miss_error <= miss_all_error;
+                            miss_data <= miss_all_error || miss_write ? 32'd0 :
+                                current_refill_line[miss_address[3:2]*32 +: 32];
+                            mode <= DELIVER;
+                        end
+                    end else if (memory_response_fire) begin
                         miss_error <= memory_response_error_i;
                         miss_data <= memory_response_error_i || s2_write ?
                             32'd0 : memory_response_read_data_i[
@@ -563,7 +750,8 @@ module rv32_l1_data_cache #(
                 end
                 DELIVER: begin
                     if (r_ready) begin
-                        s2_valid <= 1'b0;
+                        if (NONBLOCKING == 0) s2_valid <= 1'b0;
+                        miss_active <= 1'b0;
                         mode <= REPLAY;
                     end
                 end
@@ -592,7 +780,7 @@ module rv32_l1_data_cache #(
     end
 `ifndef SYNTHESIS
     always @(posedge clk_i) begin
-        if (!reset_i && mode == RUN && s2_valid && s2_irrevocable &&
+        if (!reset_i && pipeline_run && s2_valid && s2_irrevocable &&
                 (s2_bad_address || !s2_hit)) begin
             $display("ERROR rv32_l1_data_cache irrevocable store lost its line");
             $stop;

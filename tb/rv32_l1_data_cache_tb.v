@@ -62,6 +62,9 @@ module rv32_l1_data_cache_tb;
     reg held_error;
 
     rv32_l1_data_cache cache (
+        .request_rob_tag_i(0), .response_rob_tag_o(),
+        .request_id_i(2'd0), .response_id_o(),
+        .memory_response_write_i(1'b0),
         .clk_i(clk_i), .reset_i(reset_i),
         .request_valid_i(request_valid_i),
         .request_ready_o(request_ready_o),

@@ -13,6 +13,9 @@ module rv32_load_store_queue #(
     parameter ROB_TAG_WIDTH = 7,
     parameter MEMORY_BYTES = 268435456,
     parameter MAX_INFLIGHT = 4,
+    parameter TAGGED_RESPONSES = 0,
+    parameter ECHO_ROB_TAG = 0,
+    parameter FAST_RETURN = ECHO_ROB_TAG && TAGGED_RESPONSES,
     parameter POSTED_STORES = 0,
     parameter LOAD_FALLTHROUGH = 0
 ) (
@@ -65,6 +68,10 @@ module rv32_load_store_queue #(
     output reg [BE_WIDTH-1:0] commit_ready_o,
     output wire cache_request_valid_o,
     input  wire cache_request_ready_i,
+    output wire [((MAX_INFLIGHT > 1) ? index_width_for_count(MAX_INFLIGHT) : 1)-1:0] cache_request_id_o,
+    input wire [((MAX_INFLIGHT > 1) ? index_width_for_count(MAX_INFLIGHT) : 1)-1:0] cache_response_id_i,
+    output wire [ROB_TAG_WIDTH-1:0] cache_request_rob_tag_o,
+    input wire [ROB_TAG_WIDTH-1:0] cache_response_rob_tag_i,
     input  wire cache_request_irrevocable_i,
     output wire cache_request_write_o,
     output wire [31:0] cache_request_address_o,
@@ -125,6 +132,15 @@ module rv32_load_store_queue #(
     reg [INFLIGHT_INDEX_WIDTH-1:0] inflight_head;
     reg [INFLIGHT_INDEX_WIDTH-1:0] inflight_tail;
     reg [INFLIGHT_INDEX_WIDTH:0] inflight_count;
+    reg pending_valid [0:MAX_INFLIGHT-1];
+    reg [INFLIGHT_INDEX_WIDTH-1:0] request_id;
+    wire [INFLIGHT_INDEX_WIDTH-1:0] response_slot = TAGGED_RESPONSES != 0 ?
+        cache_response_id_i : inflight_head;
+    wire [INFLIGHT_INDEX_WIDTH-1:0] accepted_slot = TAGGED_RESPONSES != 0 ?
+        cache_request_id_o : inflight_tail;
+    integer free_pending_index;
+    reg free_pending_found;
+    reg [INFLIGHT_INDEX_WIDTH-1:0] free_pending_slot;
     reg pending_write [0:MAX_INFLIGHT-1];
     reg pending_posted [0:MAX_INFLIGHT-1];
     reg pending_mmio [0:MAX_INFLIGHT-1];
@@ -133,12 +149,22 @@ module rv32_load_store_queue #(
     reg [LSQ_TAG_WIDTH-1:0] pending_lsq_tag [0:MAX_INFLIGHT-1];
     reg [31:0] pending_address [0:MAX_INFLIGHT-1];
     wire inflight = inflight_count != 0;
-    wire inflight_write = pending_write[inflight_head];
-    wire inflight_mmio = pending_mmio[inflight_head];
-    wire inflight_discard = pending_discard[inflight_head];
-    wire [ROB_TAG_WIDTH-1:0] inflight_rob_tag = pending_rob_tag[inflight_head];
-    wire [LSQ_TAG_WIDTH-1:0] inflight_lsq_tag = pending_lsq_tag[inflight_head];
-    wire [31:0] inflight_address = pending_address[inflight_head];
+    wire inflight_write = pending_write[response_slot];
+    reg pending_mmio_any;
+    integer mmio_pending_index;
+    wire inflight_mmio = TAGGED_RESPONSES != 0 ? pending_mmio_any : pending_mmio[response_slot];
+    always @* begin
+        pending_mmio_any = 1'b0;
+        for (mmio_pending_index = 0; mmio_pending_index < MAX_INFLIGHT;
+                mmio_pending_index = mmio_pending_index + 1)
+            pending_mmio_any = pending_mmio_any ||
+                (pending_valid[mmio_pending_index] && pending_mmio[mmio_pending_index]);
+    end
+    wire inflight_discard = pending_discard[response_slot];
+    wire [ROB_TAG_WIDTH-1:0] inflight_rob_tag = ECHO_ROB_TAG != 0 ?
+        cache_response_rob_tag_i : pending_rob_tag[response_slot];
+    wire [LSQ_TAG_WIDTH-1:0] inflight_lsq_tag = pending_lsq_tag[response_slot];
+    wire [31:0] inflight_address = pending_address[response_slot];
     wire request_fire = cache_request_valid_o && cache_request_ready_i;
     wire response_fire = cache_response_valid_i && cache_response_ready_o;
     integer pending_index;
@@ -155,6 +181,9 @@ module rv32_load_store_queue #(
     reg store_match;
     reg data_match;
     reg inflight_match;
+    reg inflight_identity_match;
+    reg [1:0] pending_width [0:MAX_INFLIGHT-1];
+    reg pending_unsigned [0:MAX_INFLIGHT-1];
     reg [LSQ_INDEX_WIDTH-1:0] load_slot;
     reg [LSQ_INDEX_WIDTH-1:0] store_slot;
     reg [LSQ_INDEX_WIDTH-1:0] data_slot;
@@ -310,7 +339,26 @@ module rv32_load_store_queue #(
         cache_response_valid_i;
     assign response_value = cache_response_error_i ? 32'd0 :
         extend_value(cache_response_read_data_i >> (inflight_address[1:0]*8),
-            width[inflight_slot], load_unsigned[inflight_slot]);
+            FAST_RETURN != 0 ? pending_width[response_slot] : width[inflight_slot],
+            FAST_RETURN != 0 ? pending_unsigned[response_slot] : load_unsigned[inflight_slot]);
+
+    assign cache_request_rob_tag_o = ECHO_ROB_TAG != 0 ? request_rob_tag : 0;
+    assign cache_request_id_o = TAGGED_RESPONSES != 0 ?
+        ((inflight_count == MAX_INFLIGHT && response_fire) ? response_slot : request_id) : 0;
+    always @* begin
+        free_pending_found = 1'b0;
+        free_pending_slot = 0;
+        for (free_pending_index = 0; free_pending_index < MAX_INFLIGHT;
+                free_pending_index = free_pending_index + 1) begin
+            if ((!pending_valid[free_pending_index] ||
+                    (response_fire && response_slot == free_pending_index)) &&
+                    !(request_fire && accepted_slot == free_pending_index) &&
+                    !free_pending_found) begin
+                free_pending_found = 1'b1;
+                free_pending_slot = free_pending_index[INFLIGHT_INDEX_WIDTH-1:0];
+            end
+        end
+    end
 
     assign completion_valid_o = !reset_i && !flush_i && !recover_i &&
         (source_valid || response_bypass);
@@ -398,9 +446,11 @@ module rv32_load_store_queue #(
             is_store[data_slot] &&
             {generation[data_slot], data_slot} == store_data_lsq_tag_i &&
             rob_tag[data_slot] == store_data_rob_tag_i;
-        inflight_match = busy[inflight_slot] &&
+        inflight_identity_match = busy[inflight_slot] &&
             {generation[inflight_slot], inflight_slot} == inflight_lsq_tag &&
             rob_tag[inflight_slot] == inflight_rob_tag;
+        // Non-discarded requests retain their LSQ entry until this reply.
+        inflight_match = FAST_RETURN != 0 ? pending_valid[response_slot] : inflight_identity_match;
         load_address_ready_o = 1'b0;
         store_address_ready_o = 1'b0;
         if (!reset_i && !flush_i && !recover_i) begin
@@ -541,7 +591,7 @@ module rv32_load_store_queue #(
                                     request_rob_tag == commit_rob_tag_i[
                                         i*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]) ||
                                 (response_fire && inflight_write &&
-                                    !inflight_mmio && !inflight_discard &&
+                                    !pending_posted[response_slot] && !inflight_mmio && !inflight_discard &&
                                     inflight_match && !cache_response_error_i &&
                                     inflight_slot == commit_slot) ||
                                 (late_error[commit_slot] &&
@@ -596,6 +646,9 @@ module rv32_load_store_queue #(
             inflight_count <= 0;
             for (pending_index = 0; pending_index < MAX_INFLIGHT;
                     pending_index = pending_index + 1) begin
+                pending_valid[pending_index] <= 1'b0;
+                pending_width[pending_index] <= 0;
+                pending_unsigned[pending_index] <= 0;
                 pending_write[pending_index] <= 1'b0;
                 pending_posted[pending_index] <= 1'b0;
                 pending_mmio[pending_index] <= 1'b0;
@@ -605,6 +658,8 @@ module rv32_load_store_queue #(
                 pending_address[pending_index] <= 0;
             end
         end else begin
+            if (response_fire) pending_valid[response_slot] <= 1'b0;
+            if (request_fire) pending_valid[accepted_slot] <= 1'b1;
             case ({request_fire, response_fire})
                 2'b10: inflight_count <= inflight_count + 1'b1;
                 2'b01: inflight_count <= inflight_count - 1'b1;
@@ -613,14 +668,16 @@ module rv32_load_store_queue #(
             if (request_fire) begin
                 inflight_tail <= (MAX_INFLIGHT == 1) ? 0 :
                     inflight_tail + 1'b1;
-                pending_write[inflight_tail] <= request_write;
-                pending_posted[inflight_tail] <= POSTED_STORES != 0 &&
+                pending_width[accepted_slot] <= width[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
+                pending_unsigned[accepted_slot] <= load_unsigned[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
+                pending_write[accepted_slot] <= request_write;
+                pending_posted[accepted_slot] <= POSTED_STORES != 0 &&
                     request_write && !request_mmio && cache_request_irrevocable_i;
-                pending_mmio[inflight_tail] <= request_mmio;
-                pending_discard[inflight_tail] <= 1'b0;
-                pending_rob_tag[inflight_tail] <= request_rob_tag;
-                pending_lsq_tag[inflight_tail] <= request_lsq_tag;
-                pending_address[inflight_tail] <=
+                pending_mmio[accepted_slot] <= request_mmio;
+                pending_discard[accepted_slot] <= 1'b0;
+                pending_rob_tag[accepted_slot] <= request_rob_tag;
+                pending_lsq_tag[accepted_slot] <= request_lsq_tag;
+                pending_address[accepted_slot] <=
                     address[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
             end
             if (response_fire)
@@ -676,6 +733,7 @@ module rv32_load_store_queue #(
             source_exception_cause <= 0;
             source_exception_tval <= 0;
             request_valid <= 1'b0;
+            request_id <= 0;
             request_write <= 1'b0;
             request_rob_tag <= 0;
             request_lsq_tag <= 0;
@@ -723,13 +781,19 @@ module rv32_load_store_queue #(
                 end
                 if (request_fire)
                     request_valid <= 1'b0;
+                if (TAGGED_RESPONSES != 0 && request_valid &&
+                        inflight_count == MAX_INFLIGHT && response_fire && !request_fire)
+                    request_id <= response_slot;
                 if (cache_response_valid_i && cache_response_ready_o) begin
                     if (!inflight_discard && inflight_match) begin
                         if (inflight_write) begin
-                            if (cache_response_error_i)
-                                late_error[inflight_slot] <= 1'b1;
-                            else
-                                write_done[inflight_slot] <= 1'b1;
+                            // A retired write cannot authorize a reused slot.
+                            if (!pending_posted[response_slot]) begin
+                                if (cache_response_error_i)
+                                    late_error[inflight_slot] <= 1'b1;
+                                else
+                                    write_done[inflight_slot] <= 1'b1;
+                            end
                         end else begin
                             source_valid <= !(response_bypass && completion_ready_i);
                             if (response_bypass && completion_ready_i)
@@ -779,6 +843,7 @@ module rv32_load_store_queue #(
                         !(inflight && inflight_mmio)) begin
                     if (store_request_candidate >= 0) begin
                         request_valid <= 1'b1;
+                        request_id <= free_pending_slot;
                         request_write <= 1'b1;
                         request_rob_tag <= rob_tag[store_request_candidate];
                         request_lsq_tag <= {generation[store_request_candidate],
@@ -794,6 +859,7 @@ module rv32_load_store_queue #(
                         write_requested[store_request_candidate] <= 1'b1;
                     end else if (request_candidate >= 0) begin
                         request_valid <= 1'b1;
+                        request_id <= free_pending_slot;
                         request_write <= 1'b0;
                         request_rob_tag <= rob_tag[request_candidate];
                         request_lsq_tag <= {generation[request_candidate],
@@ -886,7 +952,24 @@ module rv32_load_store_queue #(
 
 `ifndef SYNTHESIS
     always @(posedge clk_i) begin
-        if (!reset_i && response_fire && pending_posted[inflight_head] &&
+        if (!reset_i && FAST_RETURN != 0 && cache_response_valid_i &&
+                pending_valid[response_slot] && !inflight_discard &&
+                !pending_posted[response_slot] && !inflight_identity_match) begin
+            $display("ERROR rv32_load_store_queue live response lost its LSQ entry");
+            $stop;
+        end
+        if (!reset_i && ECHO_ROB_TAG != 0 && cache_response_valid_i &&
+                pending_valid[response_slot] &&
+                cache_response_rob_tag_i != pending_rob_tag[response_slot]) begin
+            $display("ERROR rv32_load_store_queue response ROB tag mismatch");
+            $stop;
+        end
+        if (!reset_i && TAGGED_RESPONSES != 0 && cache_response_valid_i &&
+                !pending_valid[response_slot]) begin
+            $display("ERROR rv32_load_store_queue unknown response ID");
+            $stop;
+        end
+        if (!reset_i && response_fire && pending_posted[response_slot] &&
                 cache_response_error_i) begin
             $display("ERROR rv32_load_store_queue posted store returned an error");
             $stop;

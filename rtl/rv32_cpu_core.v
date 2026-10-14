@@ -24,6 +24,9 @@ module rv32_cpu_core #(
     parameter LSQ_INDEX_WIDTH = 3,
     parameter LSQ_TAG_WIDTH = 5,
     parameter POSTED_STORES = 0,
+    parameter OUT_OF_ORDER_MEMORY = 0,
+    parameter ECHO_MEMORY_ROB_TAG = 0,
+    parameter FAST_MEMORY_RETURNS = ECHO_MEMORY_ROB_TAG && OUT_OF_ORDER_MEMORY,
     parameter RESULT_FALLTHROUGH = 1,
     parameter FETCH_QUEUE_ENTRIES = 8,
     parameter FETCH_QUEUE_INDEX_WIDTH = 3
@@ -43,6 +46,10 @@ module rv32_cpu_core #(
 
     output wire dcache_request_valid_o,
     input  wire dcache_request_ready_i,
+    output wire [1:0] dcache_request_id_o,
+    input wire [1:0] dcache_response_id_i,
+    output wire [ROB_TAG_WIDTH-1:0] dcache_request_rob_tag_o,
+    input wire [ROB_TAG_WIDTH-1:0] dcache_response_rob_tag_i,
     input  wire dcache_request_irrevocable_i,
     output wire dcache_request_write_o,
     output wire [31:0] dcache_request_address_o,
@@ -771,7 +778,7 @@ module rv32_cpu_core #(
 
     rv32_load_store_queue #(
         .LSQ_ENTRIES(LSQ_ENTRIES), .LSQ_INDEX_WIDTH(LSQ_INDEX_WIDTH),
-        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .POSTED_STORES(POSTED_STORES), .LOAD_FALLTHROUGH(RESULT_FALLTHROUGH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
+        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .TAGGED_RESPONSES(OUT_OF_ORDER_MEMORY), .ECHO_ROB_TAG(ECHO_MEMORY_ROB_TAG), .FAST_RETURN(FAST_MEMORY_RETURNS), .POSTED_STORES(POSTED_STORES), .LOAD_FALLTHROUGH(RESULT_FALLTHROUGH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH)
     ) lsq (
@@ -815,6 +822,10 @@ module rv32_cpu_core #(
         .commit_fire_i(commit_fire), .commit_ready_o(lsq_commit_ready),
         .cache_request_valid_o(dcache_request_valid_o),
         .cache_request_ready_i(dcache_request_ready_i),
+        .cache_request_id_o(dcache_request_id_o),
+        .cache_response_id_i(dcache_response_id_i),
+        .cache_request_rob_tag_o(dcache_request_rob_tag_o),
+        .cache_response_rob_tag_i(dcache_response_rob_tag_i),
         .cache_request_irrevocable_i(dcache_request_irrevocable_i),
         .cache_request_write_o(dcache_request_write_o),
         .cache_request_address_o(dcache_request_address_o),

@@ -37,6 +37,8 @@ module rv32_cpu_core_dual_issue_tb;
     rv32_cpu_core #(
         .FE_WIDTH(2), .BE_WIDTH(2)
     ) dut (
+        .dcache_request_rob_tag_o(), .dcache_response_rob_tag_i(0),
+        .dcache_request_id_o(), .dcache_response_id_i(2'd0),
         .clk_i(clk), .reset_i(reset),
         .icache_flush_o(icache_flush),
         .icache_request_valid_o(icache_request_valid),

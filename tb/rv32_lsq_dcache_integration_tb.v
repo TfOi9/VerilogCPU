@@ -65,6 +65,8 @@ module rv32_lsq_dcache_integration_tb;
     reg [4:0] load_tag;
 
     rv32_load_store_queue lsq (
+        .cache_request_rob_tag_o(), .cache_response_rob_tag_i(0),
+        .cache_request_id_o(), .cache_response_id_i(2'd0),
         .clk_i(clk_i), .reset_i(reset_i), .flush_i(1'b0),
         .recover_i(1'b0),
         .alloc_valid_i(alloc_valid_i), .alloc_fire_i(alloc_fire_i),
@@ -123,6 +125,9 @@ module rv32_lsq_dcache_integration_tb;
     );
 
     rv32_l1_data_cache cache (
+        .request_rob_tag_i(0), .response_rob_tag_o(),
+        .request_id_i(2'd0), .response_id_o(),
+        .memory_response_write_i(1'b0),
         .clk_i(clk_i), .reset_i(reset_i),
         .request_valid_i(cache_request_valid),
         .request_ready_o(cache_request_ready),

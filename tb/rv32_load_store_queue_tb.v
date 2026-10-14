@@ -86,6 +86,8 @@ module rv32_load_store_queue_tb;
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH)
     ) dut (
+        .cache_request_rob_tag_o(), .cache_response_rob_tag_i(0),
+        .cache_request_id_o(), .cache_response_id_i(2'd0),
         .clk_i(clk_i),
         .reset_i(reset_i),
         .flush_i(flush_i),

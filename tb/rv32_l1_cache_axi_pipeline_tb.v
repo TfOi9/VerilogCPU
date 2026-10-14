@@ -48,6 +48,7 @@ module rv32_l1_cache_axi_pipeline_tb;
     wire bready;
 
     rv32_l1_cache_axi_bridge dut (
+        .d_response_write_o(),
         .clk_i(clk), .reset_i(reset),
         .i_request_valid_i(i_request_valid),
         .i_request_ready_o(i_request_ready),
