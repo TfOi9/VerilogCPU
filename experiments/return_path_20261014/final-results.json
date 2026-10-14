@@ -1,0 +1,1384 @@
+{
+  "completed": true,
+  "passed": true,
+  "stage": "final",
+  "measurement": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2",
+  "framework_revision": "302f0cf3cccdaa5de084a2120e0d950c663e4cf5",
+  "ipc_geomean": 0.6964709293260942,
+  "area_um2": 27035.28050099965,
+  "fmax_mhz": 313.72549019607845,
+  "minimum_period_ns": 3.1875,
+  "validation": {
+    "official_programs": 25,
+    "matrix_static_checks": 324,
+    "matrix_retirement_traces": 27,
+    "matrix_programs": 243,
+    "hum_tests": 28,
+    "deep_unit_configurations": 17,
+    "response_boundary_checks": 7168,
+    "unit_and_lint_exit_code": 0
+  },
+  "cases": [
+    {
+      "name": "correctness_add_to_100",
+      "cycles": 462,
+      "log_sha256": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+      "image_sha256": "24152a4791d002c691e1aa12cc811e391fb4015c9da27a1201d72eb3ac50a7d5",
+      "expected_sha256": "cae8934a441243980ca44aadcdf5e70da43aff4b901e7d53b6f17b479ec4986e"
+    },
+    {
+      "name": "correctness_array_test1",
+      "cycles": 678,
+      "log_sha256": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+      "image_sha256": "d381d0d150082d2188b9ff73abbac2da13ffddc8438a83e89a2ccb4a4b8ed43c",
+      "expected_sha256": "181210f8f9c779c26da1d9b2075bde0127302ee0e3fca38c9a83f5b1dd8e5d3b"
+    },
+    {
+      "name": "correctness_array_test2",
+      "cycles": 767,
+      "log_sha256": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+      "image_sha256": "9ff2cc83c0d1f73fcf55d598f950d286c57a4843455de8f20d65dd25d0ce3386",
+      "expected_sha256": "0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
+    },
+    {
+      "name": "correctness_basicopt1",
+      "cycles": 523578,
+      "log_sha256": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+      "image_sha256": "5e4c5b252f013d38c8489d904af8d671bb22f692ca337c144e6310aceacc8ac6",
+      "expected_sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
+    },
+    {
+      "name": "correctness_bulgarian",
+      "cycles": 237410,
+      "log_sha256": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+      "image_sha256": "9a07c05b0ae3202e94475a38f7140eb531a4d32b1b945aca05f2588e624b2024",
+      "expected_sha256": "d8a4344b811f6eda0a52f8a81366eff32fe57a10f597a33214cff788ff271efc"
+    },
+    {
+      "name": "correctness_expr",
+      "cycles": 737,
+      "log_sha256": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+      "image_sha256": "ee9a0e41ec4829a9794cf1a81d14c12565fab5e909811e8832e0710b27d01db2",
+      "expected_sha256": "748ea33db356501af68a9e37a1583cfa57192a894aab2a692c5475f031d1e81a"
+    },
+    {
+      "name": "correctness_gcd",
+      "cycles": 636,
+      "log_sha256": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+      "image_sha256": "2832face4ed1c64c2df75559c7004eaed97f094289017fe4538e6f553fd5f3bc",
+      "expected_sha256": "2093474895a9cef09980364d47d6a01723022d4a6617503302ea3f24274eb339"
+    },
+    {
+      "name": "correctness_hanoi",
+      "cycles": 6071,
+      "log_sha256": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+      "image_sha256": "03dfa3f2eeeb6f27d77b79c4a2d2cda6a8d7d2ac8644b3e55e95b378185b672c",
+      "expected_sha256": "58f324108d121cf6db3f474460cddae0deb18ed351e863a00cf32b39c20387cd"
+    },
+    {
+      "name": "correctness_lvalue2",
+      "cycles": 366,
+      "log_sha256": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+      "image_sha256": "57a0671f3d6a1120ce997ec6f75393dba3e3154fb0e0e55f5bf1cb3fb97f47b1",
+      "expected_sha256": "f0448ca7d8645d6c1d4902a2c058a37abfc44f1de59ab54163c80faaf72f6a4c"
+    },
+    {
+      "name": "correctness_magic",
+      "cycles": 613236,
+      "log_sha256": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+      "image_sha256": "f9ea5c54749673c9fcf01332e79dcf9c51105cd7700b5378f821d51d5e37dda5",
+      "expected_sha256": "e595be81bf15aa95763adb4fc0ba525bbed1971cf5fccdf3a946cd37025fb2c9"
+    },
+    {
+      "name": "correctness_manyarguments",
+      "cycles": 378,
+      "log_sha256": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+      "image_sha256": "cf9f63ef9174bbe8e1a60999ee14c8e301053caf5ddd18a0b28c82c87c3a78ad",
+      "expected_sha256": "673650f936cb3b0a2f93ce09d81be10748b1b203c19e8176b4eefc1964a0cf3a"
+    },
+    {
+      "name": "correctness_multiarray",
+      "cycles": 2445,
+      "log_sha256": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+      "image_sha256": "5095fa12e0a3523fe4e6ae844f8b947053eefbdde71e17d950092e974da41a3b",
+      "expected_sha256": "e623772cc677b6536e0545bc9870ad53a37b5cf0187fcc9851641b52344c7ee8"
+    },
+    {
+      "name": "correctness_naive",
+      "cycles": 354,
+      "log_sha256": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+      "image_sha256": "f273375cd8450b29b1ce8b556206d594a0db6ecf24946aca923ec55179d117e9",
+      "expected_sha256": "969eeff1eaac226a228cc61503effa46ea87d872ef3174365befc7c36ffa3c48"
+    },
+    {
+      "name": "correctness_pi",
+      "cycles": 19181081,
+      "log_sha256": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+      "image_sha256": "c045bbfa2b961a149ffee068e2e0bc9d2ac49b42562a8fb6f9c0247ac5ab611b",
+      "expected_sha256": "f7dbab4769334b25f2b4c0606fef276da29bc7477cc15f51f0967a6e477e7c94"
+    },
+    {
+      "name": "correctness_qsort",
+      "cycles": 1258060,
+      "log_sha256": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+      "image_sha256": "f9058b9186a38d3d05edf5b2664a224cf0b72aa3e2acafabf594ce15e53ab5f0",
+      "expected_sha256": "ce516e29a2ccfe4bab40e4e6adab7661cd695680482c00b1faa738fc0df62698"
+    },
+    {
+      "name": "correctness_queens",
+      "cycles": 387683,
+      "log_sha256": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+      "image_sha256": "0f3ba005f9593ec97f6c9ec020ebb5dac410bee65d266ae2d6fcb604ae06d60c",
+      "expected_sha256": "9efe5a55840d37eb5db13a22ccab7e8f9867c982d1f7d18313c63fa0aa1c801b"
+    },
+    {
+      "name": "correctness_statement_test",
+      "cycles": 1537,
+      "log_sha256": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+      "image_sha256": "4b859a528ad74856d9d674c05ccc58684a9691c0e654f27b798695e64be953bc",
+      "expected_sha256": "7ea9844ae84eccbf55e8330640865e36c43521e45a1baec24233327aab7e6595"
+    },
+    {
+      "name": "correctness_superloop",
+      "cycles": 488684,
+      "log_sha256": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+      "image_sha256": "652f925c742d2c30e676c0804fd427242d91d122e956742295149fb128b907b3",
+      "expected_sha256": "e726b440cc164001999e718b51780d80314709efe06e7857282377be9111127b"
+    },
+    {
+      "name": "correctness_tak",
+      "cycles": 1587942,
+      "log_sha256": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+      "image_sha256": "22195f73a3f82d5d317fa9119c105878c2be4d5e0c640028f6c3d5b577cfdfda",
+      "expected_sha256": "aaeeefc8f66b433fc4079c06b096c2d63fb9e012d5038eeb8d35cbb9d2110d84"
+    },
+    {
+      "name": "perf_median",
+      "cycles": 13473,
+      "log_sha256": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+      "image_sha256": "94b9f9dda2be384dd56d8871e5b1f156ac8aea739f20ab49c33357dc4f3be917",
+      "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "dynamic_instructions": 6961,
+      "ipc": 0.5166629555407111,
+      "metrics_sha256": "cea9403970ed3486e6f41c0695d68e135bcb97555e7d199cce3e8741b64ab508"
+    },
+    {
+      "name": "perf_multiply",
+      "cycles": 21605,
+      "log_sha256": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+      "image_sha256": "ffd81f8c9fb75737575528f87f8398980b8ba341e9b52d13a7e72d49a95cf9ce",
+      "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "dynamic_instructions": 21722,
+      "ipc": 1.0054154130988198,
+      "metrics_sha256": "d4931e6a1241cc62d226c154901ff403e0254a64b130622f6fbaafcc0977ef67"
+    },
+    {
+      "name": "perf_qsort",
+      "cycles": 221188,
+      "log_sha256": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+      "image_sha256": "724e77c16cc499a27b39a7ba2c6497e8f251e5b1f921c628152e38e64bc689df",
+      "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "dynamic_instructions": 139900,
+      "ipc": 0.6324936253322965,
+      "metrics_sha256": "a3d973d38d3b5f5e220b865c50035a82da9f943f7ac4042facc308a1f52567eb"
+    },
+    {
+      "name": "perf_rsort",
+      "cycles": 203504,
+      "log_sha256": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+      "image_sha256": "e51033effdebdbecbe9527384311c7e6c29ae9dc7779ee4122fd964d4f2b838f",
+      "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "dynamic_instructions": 195719,
+      "ipc": 0.961745223681107,
+      "metrics_sha256": "5cd55b6fa51ec8b3e2346dc6605e4a4d7d62f7e8aa024bfc45093a56488b7d7c"
+    },
+    {
+      "name": "perf_towers",
+      "cycles": 7882,
+      "log_sha256": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+      "image_sha256": "419ae4f1e80efd4b045afccffefa59cad6bf9395ebd54f947391f6f74f72063e",
+      "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "dynamic_instructions": 5278,
+      "ipc": 0.6696269982238011,
+      "metrics_sha256": "7f7e099f999b0b21a12ce16dc9f16c3cadcfa88c0339e5ef037b0844ec902f7d"
+    },
+    {
+      "name": "perf_vvadd",
+      "cycles": 8387,
+      "log_sha256": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+      "image_sha256": "cb55a0bbc86377fbd49a1de4fe0dbec250b40c74a407c303f6bba1b391caffae",
+      "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "dynamic_instructions": 4524,
+      "ipc": 0.5394062239179683,
+      "metrics_sha256": "2de758238dc05f6bbc2ebe12a2c8237128be1df911224147757b87f45d3633c7"
+    }
+  ],
+  "preserved_inputs": [
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32im_decoder.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32im_decoder.v",
+      "sha256": "3ce6671c29569caa6078ab0207a97af73ab4a7244cba962fd1d513c6cc093b84"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_branch_predictor.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_branch_predictor.v",
+      "sha256": "2a3f4bc299aaf69fcb76a8b13b0c8965e1f296c2c137f9ac5625c8f4a055a371"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_fetch_pipeline.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_fetch_pipeline.v",
+      "sha256": "998147ebdefe1975e67927f4c335cbffe75d8ceee7dc563fd4a9c1548e0e08fc"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_physical_register_file.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_physical_register_file.v",
+      "sha256": "54b5e2a06fe8a7dd4772166e21d776b2f48143c7f0a518f2e3fb1bd1bb24b8b5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_rename_unit.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_rename_unit.v",
+      "sha256": "83a3e861e89eb59d59ad7af707e56e72553e2aab640f93628336c4659c46c072"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_decode_rename_dispatch.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_decode_rename_dispatch.v",
+      "sha256": "df3a4a6d22c1854006eeeca365858cc7b7dd3840d95bb6f5a8ebe2f2f9ce2ab5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_reorder_buffer.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_reorder_buffer.v",
+      "sha256": "fccf91e5e7003c4c9d4b8f631bcdcb5cc4ce8e85d1afecd6999643f06e55bf54"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_integer_reservation_station.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_integer_reservation_station.v",
+      "sha256": "6485ce16127d8ecb238d4ce598b064930782ef8eefeb659bb554db61422d0ca4"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32i_alu.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32i_alu.v",
+      "sha256": "e7d2dec003603f806349a3f0ac07bd1b1fe126b29648a00ffce359f80d40d9fd"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32m_multiplier.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32m_multiplier.v",
+      "sha256": "c869c50e0339a87db83c536c2efe4bc0d4a2bd15b7e069053cf20f5663e42de4"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32m_divider.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32m_divider.v",
+      "sha256": "96bb78f8b6062d5ecfacc7faa979bdd9061b15fcb131b7a49a855988251909b0"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_mdu_reservation_stations.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_mdu_reservation_stations.v",
+      "sha256": "e701426dad6d37e1cb143c98d605e0d759930e0b77bd3812bb534b6f3d0be9aa"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_memory_reservation_station.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_memory_reservation_station.v",
+      "sha256": "970c4e15bc6f02bdc37f865d1380aeb88e5c4de342fb6c8314fb63b4fcccefda"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_load_store_queue.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_load_store_queue.v",
+      "sha256": "2f68ec50b36ef2f5eb111eb62beb0531f164193f0bd70415905bb409e49700b7"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_completion_writeback_network.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_completion_writeback_network.v",
+      "sha256": "3cb43793c0dda0dc9d065bc1368096f33e1603fb1d46bd1b6ac73c35ed616950"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_l1_instruction_cache.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_l1_instruction_cache.v",
+      "sha256": "4bd7d1e9c7d5ced546ef4373c04edd03faee6b68734fb13a2cee2a663c5cf9c0"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_l1_data_cache.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_l1_data_cache.v",
+      "sha256": "e79fdc049949ef8bb157fef92c9598fe95d94b11b2f78e8f60101f23e045d234"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_l1_cache_axi_bridge.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_l1_cache_axi_bridge.v",
+      "sha256": "bf9bef95fa164e7f9f019903681a0f34c5f6a5be883275be64ec47e7321b01a7"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_issue_arbiter.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_issue_arbiter.v",
+      "sha256": "c9ea9b77ba570e53c3e37c938d5321936729ffb01cb26ff7f4fd01dde73af7c1"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_cpu_core.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_cpu_core.v",
+      "sha256": "b8bc66c62f5f631221a2dff4de33546010eea3e8692307c207e83152be8fc240"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/student_top.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/student_top.v",
+      "sha256": "daf76538297592cddbd413f90ae9a32e6ee9969bf46ccf8b3f95518686eb22fa"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_ranked_select.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32_ranked_select.v",
+      "sha256": "5d431c0a9f2c2bba8bf5d921c785fd8c485f253ac43d51eafae2a3cdeee72f11"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32im_defs.vh",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/source/rtl/rv32im_defs.vh",
+      "sha256": "f53bfa40d9f8847dd83af31ba01553722820e7f238f04fb9eb4b6fdba4312432"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_cpu_core.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_cpu_core.v",
+      "sha256": "e3541987b0356d445c805ca6cf82ae610073dad2ec3e6857ae0f7cf2f105bc59"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32im_decoder.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32im_decoder.v",
+      "sha256": "3ce6671c29569caa6078ab0207a97af73ab4a7244cba962fd1d513c6cc093b84"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_issue_arbiter.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_issue_arbiter.v",
+      "sha256": "c9ea9b77ba570e53c3e37c938d5321936729ffb01cb26ff7f4fd01dde73af7c1"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_cache_axi_bridge.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_cache_axi_bridge.v",
+      "sha256": "bf9bef95fa164e7f9f019903681a0f34c5f6a5be883275be64ec47e7321b01a7"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32im_defs.vh",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32im_defs.vh",
+      "sha256": "f53bfa40d9f8847dd83af31ba01553722820e7f238f04fb9eb4b6fdba4312432"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32i_alu.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32i_alu.v",
+      "sha256": "e7d2dec003603f806349a3f0ac07bd1b1fe126b29648a00ffce359f80d40d9fd"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_load_store_queue.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_load_store_queue.v",
+      "sha256": "2f68ec50b36ef2f5eb111eb62beb0531f164193f0bd70415905bb409e49700b7"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_decode_rename_dispatch.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_decode_rename_dispatch.v",
+      "sha256": "62d8e3b0b202d23477d96eda974490b3d3fc2207947df2aead00e88b78854d14"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_fetch_pipeline.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_fetch_pipeline.v",
+      "sha256": "3a24bebfa2444f270720937849e6aabb42d65d5346e4225a7f21d028c4576231"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32m_multiplier.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32m_multiplier.v",
+      "sha256": "c869c50e0339a87db83c536c2efe4bc0d4a2bd15b7e069053cf20f5663e42de4"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_rename_unit.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_rename_unit.v",
+      "sha256": "83a3e861e89eb59d59ad7af707e56e72553e2aab640f93628336c4659c46c072"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_branch_predictor.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_branch_predictor.v",
+      "sha256": "2a3f4bc299aaf69fcb76a8b13b0c8965e1f296c2c137f9ac5625c8f4a055a371"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/filelist.f",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/filelist.f",
+      "sha256": "b15315edad74029beb5ea26f8319034da29b837b0c4954fb78c941820cde879c"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_memory_reservation_station.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_memory_reservation_station.v",
+      "sha256": "970c4e15bc6f02bdc37f865d1380aeb88e5c4de342fb6c8314fb63b4fcccefda"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_reorder_buffer.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_reorder_buffer.v",
+      "sha256": "fccf91e5e7003c4c9d4b8f631bcdcb5cc4ce8e85d1afecd6999643f06e55bf54"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32m_divider.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32m_divider.v",
+      "sha256": "96bb78f8b6062d5ecfacc7faa979bdd9061b15fcb131b7a49a855988251909b0"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_data_cache.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_data_cache.v",
+      "sha256": "e79fdc049949ef8bb157fef92c9598fe95d94b11b2f78e8f60101f23e045d234"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_instruction_cache.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_instruction_cache.v",
+      "sha256": "4bd7d1e9c7d5ced546ef4373c04edd03faee6b68734fb13a2cee2a663c5cf9c0"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_physical_register_file.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_physical_register_file.v",
+      "sha256": "54b5e2a06fe8a7dd4772166e21d776b2f48143c7f0a518f2e3fb1bd1bb24b8b5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_completion_writeback_network.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_completion_writeback_network.v",
+      "sha256": "3cb43793c0dda0dc9d065bc1368096f33e1603fb1d46bd1b6ac73c35ed616950"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_ranked_select.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_ranked_select.v",
+      "sha256": "5d431c0a9f2c2bba8bf5d921c785fd8c485f253ac43d51eafae2a3cdeee72f11"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_mdu_reservation_stations.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_mdu_reservation_stations.v",
+      "sha256": "e701426dad6d37e1cb143c98d605e0d759930e0b77bd3812bb534b6f3d0be9aa"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_integer_reservation_station.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_integer_reservation_station.v",
+      "sha256": "6485ce16127d8ecb238d4ce598b064930782ef8eefeb659bb554db61422d0ca4"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/student_top.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/student_top.v",
+      "sha256": "a3a02978c2562378465d91ac0fd49090a77f0e98961c54b164f579a5fcfdae0b"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/synth.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/synth.py",
+      "sha256": "34c3a8e9a7cab599c0f26e600d51e4e64b32c12bfbe2cd598b529058c4507c08"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/timing.tcl",
+      "frozen": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/timing.tcl",
+      "sha256": "dc8314b75f29ef1ae483ece9d2dbbac076a4d0dd50bee6d9273f4a78c601b484"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/build.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/build.py",
+      "sha256": "53a696ea526986a67e5affeab447e81378d61eeedce3fb37b92a45fb16318a8b"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/sim.cpp",
+      "frozen": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/sim.cpp",
+      "sha256": "8dc91fce4c30e48b2caa73d62fc2fa89f71b3d938bf53bb622efa5d0572836ec"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/fakeram.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/fakeram.py",
+      "sha256": "bcad1312d66d279e22c932fc548cb5aaf3ab0f795e6fcf15115e393ac87dcc21"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/ram/sram_fakeram.sv",
+      "frozen": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/ram/sram_fakeram.sv",
+      "sha256": "c0a2389d5c3211fbd2fbca22a2e2e86edc38eafa9260407d72a55841274098cc"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32im_decoder.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32im_decoder.v",
+      "sha256": "3ce6671c29569caa6078ab0207a97af73ab4a7244cba962fd1d513c6cc093b84"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_branch_predictor.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_branch_predictor.v",
+      "sha256": "2a3f4bc299aaf69fcb76a8b13b0c8965e1f296c2c137f9ac5625c8f4a055a371"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_fetch_pipeline.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_fetch_pipeline.v",
+      "sha256": "998147ebdefe1975e67927f4c335cbffe75d8ceee7dc563fd4a9c1548e0e08fc"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_physical_register_file.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_physical_register_file.v",
+      "sha256": "54b5e2a06fe8a7dd4772166e21d776b2f48143c7f0a518f2e3fb1bd1bb24b8b5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_rename_unit.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_rename_unit.v",
+      "sha256": "83a3e861e89eb59d59ad7af707e56e72553e2aab640f93628336c4659c46c072"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_decode_rename_dispatch.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_decode_rename_dispatch.v",
+      "sha256": "df3a4a6d22c1854006eeeca365858cc7b7dd3840d95bb6f5a8ebe2f2f9ce2ab5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_reorder_buffer.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_reorder_buffer.v",
+      "sha256": "fccf91e5e7003c4c9d4b8f631bcdcb5cc4ce8e85d1afecd6999643f06e55bf54"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_integer_reservation_station.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_integer_reservation_station.v",
+      "sha256": "6485ce16127d8ecb238d4ce598b064930782ef8eefeb659bb554db61422d0ca4"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32i_alu.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32i_alu.v",
+      "sha256": "e7d2dec003603f806349a3f0ac07bd1b1fe126b29648a00ffce359f80d40d9fd"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32m_multiplier.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32m_multiplier.v",
+      "sha256": "c869c50e0339a87db83c536c2efe4bc0d4a2bd15b7e069053cf20f5663e42de4"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32m_divider.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32m_divider.v",
+      "sha256": "96bb78f8b6062d5ecfacc7faa979bdd9061b15fcb131b7a49a855988251909b0"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_mdu_reservation_stations.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_mdu_reservation_stations.v",
+      "sha256": "e701426dad6d37e1cb143c98d605e0d759930e0b77bd3812bb534b6f3d0be9aa"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_memory_reservation_station.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_memory_reservation_station.v",
+      "sha256": "970c4e15bc6f02bdc37f865d1380aeb88e5c4de342fb6c8314fb63b4fcccefda"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_load_store_queue.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_load_store_queue.v",
+      "sha256": "2f68ec50b36ef2f5eb111eb62beb0531f164193f0bd70415905bb409e49700b7"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_completion_writeback_network.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_completion_writeback_network.v",
+      "sha256": "3cb43793c0dda0dc9d065bc1368096f33e1603fb1d46bd1b6ac73c35ed616950"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_l1_instruction_cache.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_l1_instruction_cache.v",
+      "sha256": "4bd7d1e9c7d5ced546ef4373c04edd03faee6b68734fb13a2cee2a663c5cf9c0"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_l1_data_cache.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_l1_data_cache.v",
+      "sha256": "e79fdc049949ef8bb157fef92c9598fe95d94b11b2f78e8f60101f23e045d234"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_l1_cache_axi_bridge.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_l1_cache_axi_bridge.v",
+      "sha256": "bf9bef95fa164e7f9f019903681a0f34c5f6a5be883275be64ec47e7321b01a7"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_issue_arbiter.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_issue_arbiter.v",
+      "sha256": "c9ea9b77ba570e53c3e37c938d5321936729ffb01cb26ff7f4fd01dde73af7c1"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_cpu_core.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_cpu_core.v",
+      "sha256": "b8bc66c62f5f631221a2dff4de33546010eea3e8692307c207e83152be8fc240"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/student_top.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/student_top.v",
+      "sha256": "daf76538297592cddbd413f90ae9a32e6ee9969bf46ccf8b3f95518686eb22fa"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32_ranked_select.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32_ranked_select.v",
+      "sha256": "5d431c0a9f2c2bba8bf5d921c785fd8c485f253ac43d51eafae2a3cdeee72f11"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/rv32im_defs.vh",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/rv32im_defs.vh",
+      "sha256": "f53bfa40d9f8847dd83af31ba01553722820e7f238f04fb9eb4b6fdba4312432"
+    },
+    {
+      "original": "../RISC-V-CPU-2026/scripts/sim.cpp",
+      "frozen": "/Users/zhaoruicheng/Downloads/RISC-V-CPU-2026/scripts/sim.cpp",
+      "sha256": "8dc91fce4c30e48b2caa73d62fc2fa89f71b3d938bf53bb622efa5d0572836ec"
+    },
+    {
+      "original": "tb/rv32_cpu_core_width_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cpu_core_width_tb.v",
+      "sha256": "31c3fb37f767a3516da8b7ca607f90a476ffd790469eaa1188f59dca8267ada8"
+    },
+    {
+      "original": "tools/build_configured.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/build_configured.py",
+      "sha256": "e52a93b20e053f754d9da597ff4517eb673942120815282e863bca897037bc12"
+    },
+    {
+      "original": "tools/generate_core_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_core_vectors.py",
+      "sha256": "909fc73930e5147e892ca4b3c5280b6495b7d73558513308f643ab5dfe3497bc"
+    },
+    {
+      "original": "tools/generate_divider_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_divider_vectors.py",
+      "sha256": "dbd955c6d39e145d100bd2c6d395c0d850b7f5f07972f4a8cb6ca6318d1f3d84"
+    },
+    {
+      "original": "tools/generate_int_rs_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_int_rs_vectors.py",
+      "sha256": "ca24c45514c1e4e688f6d511a6f7f863d75b6e3d323e82f00b8f2fb6022a85dd"
+    },
+    {
+      "original": "tools/generate_issue_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_issue_vectors.py",
+      "sha256": "e9c6ed32e50ad3a9136dfec82f98b4ef4345f5922119af07ee1f9a524e41cfc4"
+    },
+    {
+      "original": "tools/generate_mdu_rs_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_mdu_rs_vectors.py",
+      "sha256": "b2def0f407fb85e7d6d94ae671470a9e3569b426e04e3af44cf6b4e3370184f8"
+    },
+    {
+      "original": "tools/generate_multiplier_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_multiplier_vectors.py",
+      "sha256": "88500183b3f56e3fc0998cb11970117bbf4f1c2ba7d620fc3f96589a0bb3f74a"
+    },
+    {
+      "original": "tools/generate_rob_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_rob_vectors.py",
+      "sha256": "b718ef782785efe37b67ceecb189c21752946fbd96f4ec9700e01e8fcdca7407"
+    },
+    {
+      "original": "tools/generate_writeback_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_writeback_vectors.py",
+      "sha256": "b5967c7125183863a5ea489426774fb5d90f97342ac1ac7f358de44bda76c3d1"
+    },
+    {
+      "original": "tools/make_image.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/make_image.py",
+      "sha256": "972af353ffbe4ceaaa17b78aae84d8e18867f41485db08779e8ce5ac29fce4d8"
+    },
+    {
+      "original": "tools/report_bus_pipeline.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/report_bus_pipeline.py",
+      "sha256": "e709a830efaf5efc5cb8b08f7a7a180d804e6436e99660fae5ffcbbf0b7de3ed"
+    },
+    {
+      "original": "tools/report_performance.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/report_performance.py",
+      "sha256": "3c909e6a17d65ee9d83d72d39d4bddd914a42a11367ce4b3f3fde82cd3e46b90"
+    },
+    {
+      "original": "tools/run_parameter_matrix.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/run_parameter_matrix.py",
+      "sha256": "93b160a6a5f8bd58417a1e35497885c1f84722e31e1f69d76f1860cd8bb6bcd6"
+    },
+    {
+      "original": "tools/run_performance.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/run_performance.py",
+      "sha256": "b8ce13f22c3f768b18b3dac839f8f036533fe1137d65d15ba97ead387c1141db"
+    },
+    {
+      "original": "tools/run_synthesis.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/run_synthesis.py",
+      "sha256": "c970cc1e6c2a08abddf4007e666c37389f34b8863a94647ace319ef0d08feaa8"
+    },
+    {
+      "original": "tools/run_width_regression.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/run_width_regression.py",
+      "sha256": "971dfc2b83219adf3805af50703290a97a53030e4fbe98bb0eb0319b6f6d980b"
+    },
+    {
+      "original": "tools/setup_synthesis.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/setup_synthesis.py",
+      "sha256": "3ac8f3a0145f71a227d8adbbef032db5afd1675e7ac19b4a30751255f2f92785"
+    },
+    {
+      "original": "tools/test_cache_config.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_cache_config.py",
+      "sha256": "c2cf48ce8e7935271b268ffed5d2e92a47335f1d3e23ca4a9113784c1ac167ef"
+    },
+    {
+      "original": "tools/test_core_watchdog.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_core_watchdog.py",
+      "sha256": "a5203d6dde93eeda5d40b18666c24e7a02984a01ee238124e2e57f09ee953afa"
+    },
+    {
+      "original": "tools/test_cpu_optimizations.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_cpu_optimizations.py",
+      "sha256": "fd31135da1866be62e7544b6e485beff78c9bfda1f6b432bd5b64a54539f32c5"
+    },
+    {
+      "original": "tools/test_deep_cpu.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_deep_cpu.py",
+      "sha256": "45fc197e81688c67898bfaf0122c0cfe19cd8c7be55f45f475e0b1d15f05f602"
+    },
+    {
+      "original": "tools/test_hum.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_hum.py",
+      "sha256": "bdd4cd26971592485a6eb490e412b2de2a2b5d07445654503991c55c584a1f5e"
+    },
+    {
+      "original": "tools/test_image_pipeline.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_image_pipeline.py",
+      "sha256": "4a98f790ff5920c8429afe1aadc9278bdae625685302e93651007598568950ed"
+    },
+    {
+      "original": "tools/test_int_rs_reuse.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_int_rs_reuse.py",
+      "sha256": "0f235865b8628845da8c63db2c96d2ca649c960c33383712f0d1ca141b4c76a1"
+    },
+    {
+      "original": "tools/test_parameter_matrix.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_parameter_matrix.py",
+      "sha256": "3c9e00bce280e77861f6bc10dc87d18dda9697d597cceb886f65a49fe398d749"
+    },
+    {
+      "original": "tools/test_performance.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_performance.py",
+      "sha256": "ee4a5a0d41f5bb97a3ef48ee84df1d8b072f28ae624f7e2a15ddb852a5da85c8"
+    },
+    {
+      "original": "tools/test_response_owner.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_response_owner.py",
+      "sha256": "e65d55774cffc1dd4496b651ec5f8687494e7e617953805e15a8ed1848c5f89d"
+    },
+    {
+      "original": "tools/test_synthesis.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_synthesis.py",
+      "sha256": "e6b3a5780e81833604b91838b703f53a1a443ecdd8b5c7fd411c72441c217e0f"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/rtl/.gitkeep",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/rtl/.gitkeep",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_main_memory_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_main_memory_tb.v",
+      "sha256": "e7f74ea1526fafb2836b469bea8e38aef9340b1221444ea045d253e0044f1c48"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_load_store_queue_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_load_store_queue_tb.v",
+      "sha256": "87f67ebfc05d6b2e5563fc6bc93e5aba9ff3f7c82a04e945f45222a4e44a4741"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_decode_rename_dispatch_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_decode_rename_dispatch_tb.v",
+      "sha256": "e1f13558013d77a8c7138a70466d63990c9cb44d4ba0fe258a321a1a8861ccc1"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_mdu_reservation_stations_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_mdu_reservation_stations_tb.v",
+      "sha256": "4006e5214a8a8c5a88743b1bf6628e8815bc3b60edf1ed2f8c178b16945a6044"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_lsq_tagged_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_lsq_tagged_tb.v",
+      "sha256": "5926506a35fe76c42a3f5a0c4de60ab882d6a269a352749be2e19b4c486e2549"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_posted_store_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_posted_store_tb.v",
+      "sha256": "b25ebc68aff6fa34767aba1ab370cd4cc4ebb122208d336d71a63405ff368140"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_reorder_buffer_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_reorder_buffer_tb.v",
+      "sha256": "be0354ed1beea22e076c3149f76d0f6e5dff1dc45af7769d5670390337d6b2e6"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_fetch_pipeline_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_fetch_pipeline_tb.v",
+      "sha256": "9826d171e377ffba83f7d913324258ed65e64421b84e434c010ead5c17ea99d5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_cache_posted_random_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cache_posted_random_tb.v",
+      "sha256": "65af12632c4cb4c049dc3ad4a14c84103768a20a011703ae64f5a79cdc2d25a6"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_rename_unit_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_rename_unit_tb.v",
+      "sha256": "a9a48e88a9c7463189e8d72f37e1cba3a63bb99ff0c7c7d85f5eb30e7025969d"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_branch_predictor_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_branch_predictor_tb.v",
+      "sha256": "0b267ddf1e5727076816cb02da15f6783a5cecc75b93f049bd68b0c2a49360f9"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_cache_hum_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cache_hum_tb.v",
+      "sha256": "b22a00d3fba4fdd361bcc18ee2988324e10b2f452fa990c655282b1ca8e2cf80"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_cpu_core_dual_issue_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cpu_core_dual_issue_tb.v",
+      "sha256": "3f5664d9e82f39c9586a2dd21819534919f519a2755b28040e2bf790f37b88e5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_result_bypass_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_result_bypass_tb.v",
+      "sha256": "ceaab210c872488d92ff56fa0b58a6f803568771423028952c5c339016a3cea2"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_l1_instruction_cache_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_l1_instruction_cache_tb.v",
+      "sha256": "158ac5599e72147cce6acdc384717079586010a5e205266204f6105bedf2eb3a"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_lsq_posted_wrap_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_lsq_posted_wrap_tb.v",
+      "sha256": "b94494a132f1d58e3c5f5240c1b4f1ab171140f5dca3fdc764a4a337cdcb7e50"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_integer_reservation_station_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_integer_reservation_station_tb.v",
+      "sha256": "a882586d664f89d0a167fe07cd866463670ab164b1236f939d5091e3b3bc23c7"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_cpu_core_alignment_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cpu_core_alignment_tb.v",
+      "sha256": "156637360d3d1f08fa9110e3e9aa994a9804380028f3628965836136e88311b4"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_cpu_core_posted_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cpu_core_posted_tb.v",
+      "sha256": "b1161dbcaa64d927051695e5c5ea78ac6a68259e071cab734614fad63ccab410"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_cpu_core_width_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cpu_core_width_tb.v",
+      "sha256": "31c3fb37f767a3516da8b7ca607f90a476ffd790469eaa1188f59dca8267ada8"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_completion_writeback_network_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_completion_writeback_network_tb.v",
+      "sha256": "1ebd65f142758be54a3f699acdea2c760054ccc9928b3d8bd65e54769f7e1411"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_issue_arbiter_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_issue_arbiter_tb.v",
+      "sha256": "3603ee35c556d71b93d7c51b5d5035e39ff4ca4111760f2c0b0c5abec105b43f"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_fetch_icache_integration_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_fetch_icache_integration_tb.v",
+      "sha256": "2cc05604ccc7f1ae1714a97cf8240f2045a8a7608f89aadf8edbf3d0752d1f21"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_l1_data_cache_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_l1_data_cache_tb.v",
+      "sha256": "b488f8ed03b6b4bfd13b3a5136dccb9fe9d7dcbb3a3177ff57d27241039c6e78"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_l1_cache_parameter_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_l1_cache_parameter_tb.v",
+      "sha256": "cd5329b67e4d53e1c1e6e40cc5194ac814eca1b441f9a1500c075f8a6f1ea4be"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_completion_writeback_integration_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_completion_writeback_integration_tb.v",
+      "sha256": "86e8c68f3eb402eab0ba1baac70ecc5f195d00749c27dc9c4fa789ba915eb778"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_l1_cache_axi_bridge_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_l1_cache_axi_bridge_tb.v",
+      "sha256": "05c473803101394a91b7be9de4364675e8ca0dded5f19648aeb6e37d927d5b36"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_physical_register_file_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_physical_register_file_tb.v",
+      "sha256": "fcaf0156287eca0a8437cca1788921cbeb03d4fd82b2f7569b20ff792c3d1cec"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32m_multiplier_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32m_multiplier_tb.v",
+      "sha256": "64b585a045d4bf09072e7e84d88ba4da7d348f619967992b64e4e982886a3f82"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_result_bypass_rob_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_result_bypass_rob_tb.v",
+      "sha256": "108d1383fe8489d7f68e3e311f6220a540bc6ed9a211c061e2d857325892ac0d"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_main_memory.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_main_memory.v",
+      "sha256": "9f4d0536f975c82984eaa88000e082eb70e82eaeed009fb1bb3392553ce5f49a"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_lsq_rob_integration_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_lsq_rob_integration_tb.v",
+      "sha256": "ec8a80ffba713045a46a35ca3db35ad69767268884e9f6a024d461acd1dbf889"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_memory_reservation_station_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_memory_reservation_station_tb.v",
+      "sha256": "ae514e1ccab1701118760bc5e35801235589e7da2ceb5be9e754681bca0208ec"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_l1_cache_axi_pipeline_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_l1_cache_axi_pipeline_tb.v",
+      "sha256": "87ae493af3c531c2e82904fdf2b38e169cf89eb5cd0725fee75c7e0752604a07"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_dispatch_integration_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_dispatch_integration_tb.v",
+      "sha256": "8ba8b68f786976321dcf2cb679faa717a21ef982a661bf8f8810504d61ba6cd9"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_response_owner_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_response_owner_tb.v",
+      "sha256": "6e7030504b28d6ba89b6c104249e89ded4802853745c584ee508c28064369097"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32i_alu_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32i_alu_tb.v",
+      "sha256": "897e786f61076b945e114912d86721f4903994b2e6776c6df432a6be5e2ee605"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_ranked_select_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_ranked_select_tb.v",
+      "sha256": "ec6cab204577345a225cc70fe9a7ab899486b23b0a14be390dcfd5f4ae4270cd"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_cpu_core_tagged_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_cpu_core_tagged_tb.v",
+      "sha256": "34337d266b3503ac43d8d8da643cbda8b5554439b6db101a5e552dfe221958f6"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32m_divider_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32m_divider_tb.v",
+      "sha256": "ee0d4b42171b39b4ce915204199f7d021e15110ee96d86b94fdd43d80e220668"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_int_rs_reuse_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_int_rs_reuse_tb.v",
+      "sha256": "7f56841660a141eb0acc3f74a0009bf0405c058e43f550197b987270d25466e5"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_lsq_dcache_integration_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_lsq_dcache_integration_tb.v",
+      "sha256": "0531e091a32ef9d3a526755e90d8fe44fa067a67dd6f7bbebcb5703c0c6e0360"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32im_decoder_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32im_decoder_tb.v",
+      "sha256": "2e4238b20706a2f27eeb4f3edabdad48ca023fb4fd4a6f03866f144e43fb2573"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tb/rv32_l1_cache_parallel_tb.v",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tb/rv32_l1_cache_parallel_tb.v",
+      "sha256": "bb32c24f3c19ffdd3b37058d883dd1eb4977c4f86989a680d52bcec8a87486ea"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tools/test_hum.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_hum.py",
+      "sha256": "bdd4cd26971592485a6eb490e412b2de2a2b5d07445654503991c55c584a1f5e"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tools/generate_core_vectors.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/generate_core_vectors.py",
+      "sha256": "909fc73930e5147e892ca4b3c5280b6495b7d73558513308f643ab5dfe3497bc"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tools/test_deep_cpu.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_deep_cpu.py",
+      "sha256": "45fc197e81688c67898bfaf0122c0cfe19cd8c7be55f45f475e0b1d15f05f602"
+    },
+    {
+      "original": "/Users/zhaoruicheng/Downloads/VerilogCPU/tools/test_response_owner.py",
+      "frozen": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-qualified-inputs/tools/test_response_owner.py",
+      "sha256": "e65d55774cffc1dd4496b651ec5f8687494e7e617953805e15a8ed1848c5f89d"
+    }
+  ],
+  "evidence_sha256": {
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/snapshot.json": "5545d3f5432eead0ad350ae5e87a57533ee51998f5c7c23132bceb7442822031",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/sim-results.json": "1c5bee11e9faa694e7032b8e7a41a71af65be757b0b381791d0860086a609f02",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/ppa-results.json": "afb4dde1d48db0c49c07787c0904bb6b9c4ce927d03418dbdfdd3a0f5eb80ea3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-matrix.json": "bef71625cf1be48cef5abd69a3ceddcf463240dcdf2ca2bda4391a38fb6c5ae9",
+    "build/return-path-20261014/final-matrix/1x1-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p48-r64/verilator.log": "4ae34f4788fc4fb7cf5052a032a5b6d9bfbefe266e4ab3344f5ab110ad1653f6",
+    "build/return-path-20261014/final-matrix/1x1-p48-r32/verilator.log": "e43fab2616ac0dea077d03447ae2760ae5b0fd67cf0060f399760df198b4c3d7",
+    "build/return-path-20261014/final-matrix/1x1-p64-r16/verilator.log": "31809df4a55eeaa193a43650ad9310d1e547fd6e43f54a0e8f4536f780cb15ce",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/verilator.log": "406f90c6c3a18921ab6d436b38cf6b90f110bc36982b923d6d1dfe9c853d3ea8",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/yosys.log": "2b9efc7d7f7afb3f781117f4e37e83dad0d1e1a9c8005b9a2f6a05afdef668b1",
+    "build/return-path-20261014/final-matrix/1x1-p64-r16/yosys.log": "8050aae03ef7043e1c39b863317816fc88b6edd96b9e534b531e124005c890ab",
+    "build/return-path-20261014/final-matrix/1x1-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p48-r32/yosys.log": "f331fedb9c956136244441c94b25100e7fe692b031e08868c6428c20d455ae88",
+    "build/return-path-20261014/final-matrix/1x1-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p64-r32/verilator.log": "0b626c5a19d94d2c84af9bed0d2efe26dccd63aecc9a0b69124cba74de3a97db",
+    "build/return-path-20261014/final-matrix/1x1-p64-r64/verilator.log": "95cc43977d95187342cfaf024d86bdfc30b1e6bcb6604ae44ab1892daa92de3c",
+    "build/return-path-20261014/final-matrix/1x1-p96-r16/verilator.log": "50a03d4d1b3ed336c7f381866f46fe6b289bb8e2e9666557d6e826478135b8ce",
+    "build/return-path-20261014/final-matrix/1x1-p48-r64/yosys.log": "069ba18a54aa71c8000205ebec3b55dc0dcbe500b796c6a4845e1eb6cb96a9d9",
+    "build/return-path-20261014/final-matrix/1x1-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r32/verilator.log": "c7442997f81e47ec1c128a92af2ea20102495c67df8d5789c0ec87a4f6fe3800",
+    "build/return-path-20261014/final-matrix/1x1-p64-r32/yosys.log": "cea2d3d65fd67c2641c498f411555cfa6515772eb548048010d2c2d287ce5cd2",
+    "build/return-path-20261014/final-matrix/1x1-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r16/yosys.log": "2618157399087746ec332ad2a828ca1ab529d63c26d86f752f618281c048c208",
+    "build/return-path-20261014/final-matrix/1x2-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r64/verilator.log": "73d40dcc609ee10e2f910a4f916c74a2f7b858f6339aa381926579ebf7eff909",
+    "build/return-path-20261014/final-matrix/1x2-p48-r16/verilator.log": "e5287d0dc5bf2d52c9368a9e77892caccd4094afbdf69b4fe88245ddaf92eb51",
+    "build/return-path-20261014/final-matrix/1x1-p64-r64/yosys.log": "75a145ffda12e1884596d4a62448a82059c2757f644a05e373168c352ec247c9",
+    "build/return-path-20261014/final-matrix/1x2-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r32/yosys.log": "faf3764db82879224aebffed079f678092c5730a5ef9c46cbc609fca7e7486b9",
+    "build/return-path-20261014/final-matrix/1x2-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p48-r32/verilator.log": "f140b951f0f46f033873ab84b6e4eb8dbc7afe7862450059acd4a9c2b2b473c0",
+    "build/return-path-20261014/final-matrix/1x2-p48-r64/verilator.log": "291899dfc17b909c632e969dd27d18397ad86310ffb5d12b5ee181e582a1308f",
+    "build/return-path-20261014/final-matrix/1x2-p48-r16/yosys.log": "407bcf550da60d00e859447c8a6ad9767121c5647ebd39c520e5d7ae5689018e",
+    "build/return-path-20261014/final-matrix/1x2-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x1-p96-r64/yosys.log": "b4334c19768386c0181265fa49d4b49e30a86ed9062cad95fca3ece3510b7c97",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p64-r16/verilator.log": "4e342128efc24f0841d7f4c7526e7e428f714b7aaf3f1f4c1fb50382ff9d249d",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/verilator.log": "c436c647d799bc2c8b2530b35934252e86c431170460941724af0bde28042041",
+    "build/return-path-20261014/final-matrix/1x2-p48-r32/yosys.log": "55a47008b10b69119e3eac2378695b1e3aebfe5f575d3570fa7667a03027bc80",
+    "build/return-path-20261014/final-matrix/1x2-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p64-r64/verilator.log": "93b68bfc992557d6cd76bc4712fdc2c415bc48e7f20fe83bf1b47d06f650a631",
+    "build/return-path-20261014/final-matrix/1x2-p48-r64/yosys.log": "a9173516bd4b7d2dd6de195d831e967074b50bf4a4d8ba3fe698785838719435",
+    "build/return-path-20261014/final-matrix/1x2-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p96-r16/verilator.log": "43d544ad3ff65a4c2d9e24edc1d3712f7a44d5e75a49ca856c1a34fde0e6559d",
+    "build/return-path-20261014/final-matrix/1x2-p64-r16/yosys.log": "7c8c6f3593e605ae7b15e744a624b74a22c983fb84bd6c8ea9de4f72a567a542",
+    "build/return-path-20261014/final-matrix/1x2-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p96-r32/verilator.log": "464a4377d0729e3555405b33a2ab07354953fc1ac2e026c419ae4556dfd2f456",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/yosys.log": "5e0d1b32db266a829fb86399be25e4709f75add51190c3d673b778a667c13be9",
+    "build/return-path-20261014/final-matrix/1x2-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x2-p96-r64/verilator.log": "f3b4b3291de50607e3b7326613df00e8a6be50082ae50aea493a3b1cd7824e7a",
+    "build/return-path-20261014/final-matrix/1x2-p96-r16/yosys.log": "97e30950266563f5cb30e154e3273ae6f87a85de4d072ce25cd2245139d12e4b",
+    "build/return-path-20261014/final-matrix/1x2-p64-r64/yosys.log": "c18ed7b8a83b386a98a8c00d01b2fa133a79b3807fa14d8bd010562bc8c135b5",
+    "build/return-path-20261014/final-matrix/1x4-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p48-r16/verilator.log": "e241751558081778dfb8d241be7ec1c6fca6a049492e85414cda519bdc173688",
+    "build/return-path-20261014/final-matrix/1x4-p48-r32/verilator.log": "3c89beb230f0b1953769e60edbc74ed73428b4f8333ad4abfdc927b3ee44ee12",
+    "build/return-path-20261014/final-matrix/1x2-p96-r32/yosys.log": "38786b8f84de6a2c759dc3447449b9cb8325ea598e9b4032a2e0b0a391ff7838",
+    "build/return-path-20261014/final-matrix/1x4-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p48-r64/verilator.log": "57d996dd652d13009e9ee1b679352b266933483378c8b415e437c04d8b51c671",
+    "build/return-path-20261014/final-matrix/1x2-p96-r64/yosys.log": "cea5146934da507d42733d3658eb1e08419837ec461e334c01acbd8b818ce498",
+    "build/return-path-20261014/final-matrix/1x4-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p64-r16/verilator.log": "5119d698400153c5d64ccfbdc0bc0ac5defcfef43d38c4de6605865ec7d18ee0",
+    "build/return-path-20261014/final-matrix/1x4-p48-r16/yosys.log": "15cb8a3ae1c8fb0e1c368a26d1252d4ef4f90274963c2dc750321f6763a108e3",
+    "build/return-path-20261014/final-matrix/1x4-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p64-r32/verilator.log": "e5069b388b5a2db84fe23045a3458f847f5408644e6f7ed48c912d7eafdb4e8f",
+    "build/return-path-20261014/final-matrix/1x4-p48-r32/yosys.log": "ac90192715cd0235f801cfe76c00ea2eed697aa479c6a60494e76c347331dff2",
+    "build/return-path-20261014/final-matrix/1x4-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p64-r64/verilator.log": "573cd326ed11d528a8ee5ec898e43e2f64180c0abc69fd69d12bbded765cd4f0",
+    "build/return-path-20261014/final-matrix/1x4-p48-r64/yosys.log": "a8a11f04c04726b5a7f40dce53a95f876d0f016b23460bfbd2bb781ac0a87a7e",
+    "build/return-path-20261014/final-matrix/1x4-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p96-r16/verilator.log": "8df9ee06b1cc1960788a28c6d5cabbd7f207af679788da5b2af7695cf45e43a8",
+    "build/return-path-20261014/final-matrix/1x4-p64-r16/yosys.log": "9d2c4cc381b9b7712d015a56fe151c134971cb8ea0bfcdbe5179a629959b7b6e",
+    "build/return-path-20261014/final-matrix/1x4-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p96-r32/verilator.log": "fae4651d6bed3ed9b1a2cf4d188dc7dbf492348868acf42155084b4e1e28fb5a",
+    "build/return-path-20261014/final-matrix/1x4-p64-r32/yosys.log": "75c4162e28c1a4ee67b0a90511037454db4c8078d2b3dec62c14f7c0faa608e8",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/verilator.log": "14595e2d0fe060b199602c1b6338091434d26e1097053e4873a6d7a09cc7efdb",
+    "build/return-path-20261014/final-matrix/1x4-p64-r64/yosys.log": "852455da0df7d2c508dd66f564921f906cd992535adfe2d7b8b8bf53ffcc1c0c",
+    "build/return-path-20261014/final-matrix/2x1-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p48-r16/verilator.log": "8c4798820bc1fa0e154b0f2ef0982d7c796ae2bf52fc0e4465471187b42c6fdc",
+    "build/return-path-20261014/final-matrix/1x4-p96-r16/yosys.log": "c489325e95c30ec1366a66129fcaf07788da7c10bf3e76b3dc984456dc2d7fc1",
+    "build/return-path-20261014/final-matrix/2x1-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p48-r32/verilator.log": "3baa275b9de55862877dc9a97525311d7b7322ceaa1f8a8ff87e252c1c727679",
+    "build/return-path-20261014/final-matrix/1x4-p96-r32/yosys.log": "9961585d6ba0b181ad1da520578d6886a8899ef531d6cf8ebbc3646b9d2c3afb",
+    "build/return-path-20261014/final-matrix/2x1-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p48-r64/verilator.log": "7a29a3d4ba489de6c4cfc46af95fb2e475f430c27f6392ecaef3319e1abae57f",
+    "build/return-path-20261014/final-matrix/2x1-p48-r16/yosys.log": "0e5a71f6a8668a1beb2154dd60269116e246b6f315af797509c662cd91831be9",
+    "build/return-path-20261014/final-matrix/2x1-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p64-r16/verilator.log": "d959cdc6cc98f7f705c9534dd41d841920358764e2b7599b5d37494843116828",
+    "build/return-path-20261014/final-matrix/2x1-p48-r32/yosys.log": "536de369309d415f1f30f3f38ca526f28e20775280e9650621c99e4b80abfa55",
+    "build/return-path-20261014/final-matrix/2x1-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p64-r32/verilator.log": "6518cde461a001bfd6e375cd808a2b6298e025b8f99fdfda14129f7e562e2da5",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/yosys.log": "b0e7b275e5d5ea5e9e6dfbed397eee57b1215d875f58ff7258838b215783a264",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/verilator.log": "32a466747915c29f61d0c80b72134b7634b3871a10647cd6b91894a386ec8ea9",
+    "build/return-path-20261014/final-matrix/2x1-p64-r16/yosys.log": "15b4d377c3b93baa10878845bc57d3a97a02a2c785d375f1a055da79e01151bb",
+    "build/return-path-20261014/final-matrix/2x1-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p48-r64/yosys.log": "88622080127217d5d29f55aca86368a3e8aa851e9217da89bb69847353096bc5",
+    "build/return-path-20261014/final-matrix/2x1-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p96-r16/verilator.log": "a7a5b90c3c81b51d5c27ca5ac45fa0ed5e4eaf81a47943e77caddb4ee2aa6401",
+    "build/return-path-20261014/final-matrix/2x1-p96-r32/verilator.log": "ba72e59172d83339fb72b56b51da089b199b915cd005db594a4778145b87bc97",
+    "build/return-path-20261014/final-matrix/2x1-p64-r32/yosys.log": "bf7872cdbb3c2414da0417739ecc5b599f5fd0ea6015b2346cb9b90da0758331",
+    "build/return-path-20261014/final-matrix/2x1-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p96-r64/verilator.log": "8e963089e8af9bb2e19ca064e584ae8fce118670cffd02ce7f07cfa9a83c851d",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/yosys.log": "e1965c44b4a289061a5e72e18ec4e5ce3bc4a680e10833446d96be0fef70d4d4",
+    "build/return-path-20261014/final-matrix/2x2-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p48-r16/verilator.log": "35706c98ae7a924128bdc4e4273cf1d09251fd9397b182eeb4013a84d554b974",
+    "build/return-path-20261014/final-matrix/2x1-p96-r16/yosys.log": "32448ac9841bb85a0839d38b85a9df069ffea2c6b4fd41fd7b00e4e34bc1ac81",
+    "build/return-path-20261014/final-matrix/2x2-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x1-p96-r32/yosys.log": "66ef1d5d192b83bdae58ea029930d63bd76137c5f960ba3c3a06a2448ae832e7",
+    "build/return-path-20261014/final-matrix/2x2-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p48-r32/verilator.log": "0073f44fdfe990e15379f90bc1ccd937d868ef158fa14f81232778711245b216",
+    "build/return-path-20261014/final-matrix/2x2-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p48-r64/verilator.log": "016d5d17329ac9c8cd3e46ad41e9e10dd7e369f0b29ed5c9a0dae9a61783a963",
+    "build/return-path-20261014/final-matrix/2x1-p96-r64/yosys.log": "1d85c7a1b670ec88eea427541a92d07be8f4c8a04258fe3afdf0860612fdb54f",
+    "build/return-path-20261014/final-matrix/2x2-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p64-r16/verilator.log": "f0f0a948358c4848a2b7ac6fdbb977812b86a73532224b557593a3b3b692cee1",
+    "build/return-path-20261014/final-matrix/2x2-p48-r16/yosys.log": "96006a5daa7bb0ff7de334d8b33209161a5bb04d80238bd5897ae7a0516293e0",
+    "build/return-path-20261014/final-matrix/2x2-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p64-r32/verilator.log": "865b9f55de36d4f44dd1a609910d4972e35bdb12b98e89d9020fec24e45120cd",
+    "build/return-path-20261014/final-matrix/2x2-p48-r32/yosys.log": "64da6bf10b46db84d4a5c89aefea5103180c31e343a06ee0fc57c2fea5916b65",
+    "build/return-path-20261014/final-matrix/2x2-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p64-r64/verilator.log": "60eac251de711c4d3fcf91217edaaf877e8674508ea2af667d31879226fb3fc4",
+    "build/return-path-20261014/final-matrix/2x2-p48-r64/yosys.log": "c85be489bc7cd0a79ef1c501e3fa2ea85d95d08c435b9795014438c71446eb5e",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/verilator.log": "4baebb9411e130b99f32c48df52543784872b0df97facc0a3c8d6ed7a0ecb273",
+    "build/return-path-20261014/final-matrix/2x2-p64-r16/yosys.log": "67b32e19d2c6bb5cce5182bc6e40509610f4bfa8607aa42b89e2417e087c3c3b",
+    "build/return-path-20261014/final-matrix/2x2-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p96-r32/verilator.log": "0136189d2252003d1c9a0e433eac1285c933959b958f7703c688a4198d9c6636",
+    "build/return-path-20261014/final-matrix/2x2-p64-r32/yosys.log": "1827e9d1de62217c9ef4cce09bef05ad51fad5a8ca71cd11ddcae115bd9b58bc",
+    "build/return-path-20261014/final-matrix/2x2-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p96-r64/verilator.log": "1cd32daec5f1ddfe9e9d04256404df64fd7e6645ca5966c1cb0da66888490c9e",
+    "build/return-path-20261014/final-matrix/2x2-p64-r64/yosys.log": "e273f85f4a05a2f9b9cb569569471c78f87fa06841fae694fd697a5915abbc74",
+    "build/return-path-20261014/final-matrix/2x4-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/yosys.log": "a331ab46bdaf925f58732a452bda6d9a304d94ecf5cef4afe38957215c09962a",
+    "build/return-path-20261014/final-matrix/2x4-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p48-r16/verilator.log": "6724036f95ddbcbe19161a364f6eb2ba9aee3af91bbd0cb0af3b6a5be1494d66",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/verilator.log": "787547a3d941a2537983d46af28843868e7465f5306c1e60f886fc12a08a9f85",
+    "build/return-path-20261014/final-matrix/2x2-p96-r32/yosys.log": "3a262daabe378cb3dae7df2e438f576008a51dc0559ad2a202046a943db2309e",
+    "build/return-path-20261014/final-matrix/2x4-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p48-r64/verilator.log": "cad91c2c2518b0532861051610e5a0fe18287b811f33628babbd96a22a70b000",
+    "build/return-path-20261014/final-matrix/2x2-p96-r64/yosys.log": "46fa513a0354f1f386499f17fbba7335f518ffe2af3933d24b6b30bda840bead",
+    "build/return-path-20261014/final-matrix/2x4-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p64-r16/verilator.log": "1fd523728ed3aa6c56944cfa8216523d5959d29229890e80be3bbdfc7de5a65a",
+    "build/return-path-20261014/final-matrix/2x4-p48-r16/yosys.log": "3f794e0ed2e2cd77ace345c745b8a2ece56591f3718a288539280792fb6badc9",
+    "build/return-path-20261014/final-matrix/2x4-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/yosys.log": "c3f2bab886fdbc53340bad9daa33e76ea8cc1eee86a169d30f4873204cf3079d",
+    "build/return-path-20261014/final-matrix/2x4-p64-r32/verilator.log": "349d2ae75ff6b256fc47bd98bc0bd09ff1b6b7c0a639c1bc7e1003496a7a59bd",
+    "build/return-path-20261014/final-matrix/2x4-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p64-r64/verilator.log": "85fe71516080735c5674d61ea5a1f533dccf1a53adb6588aa54858a751486861",
+    "build/return-path-20261014/final-matrix/2x4-p48-r64/yosys.log": "64350891c29ac32af5dcff4e900178a3e1f43bacc4560abe08266a045764bcac",
+    "build/return-path-20261014/final-matrix/2x4-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p96-r16/verilator.log": "d71dd1b18f7ea94dafa01e44178e63376aa08cd235b576f4af6f645767964f0e",
+    "build/return-path-20261014/final-matrix/2x4-p64-r16/yosys.log": "c3d4a0289cd94477fb4f10d2956c45a53947c75cb0450e96c17f85ca2d706613",
+    "build/return-path-20261014/final-matrix/2x4-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p96-r32/verilator.log": "4f3ae0aab7f6f36370352f9582d00fdd57c60d367d0afaec60bbde9df1c2c4f2",
+    "build/return-path-20261014/final-matrix/2x4-p96-r16/yosys.log": "0ee9109d94a3d2f0acfccbd07efea2a9a7b5d4a53459f51b8924074932edb7ff",
+    "build/return-path-20261014/final-matrix/2x4-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p64-r32/yosys.log": "86516ae90ff7f7e25fc4d89e082f77bf6f8eee88b7a48f91e0a03be32683a05d",
+    "build/return-path-20261014/final-matrix/4x1-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/2x4-p96-r64/verilator.log": "8434014004a92973ad956056aa9550391ad84a2188549f2d14188a2ee27a39d3",
+    "build/return-path-20261014/final-matrix/4x1-p48-r16/verilator.log": "fdc91d73a27eef134184aa3aa9f5fe0894e9f5879d25c00a02a4688910172ae2",
+    "build/return-path-20261014/final-matrix/2x4-p64-r64/yosys.log": "3a185650831695c1e2f7c25770854078c316eec2377b464be3c8403cebe7324a",
+    "build/return-path-20261014/final-matrix/4x1-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p48-r32/verilator.log": "e539fac8c838d69aa08ad20ce0c8dddd87412247393856653641b660f56d70df",
+    "build/return-path-20261014/final-matrix/2x4-p96-r32/yosys.log": "9c7ab638e27aae52b96c78f95e95d805333c2b8350f7c5149cc888aa61058293",
+    "build/return-path-20261014/final-matrix/4x1-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p48-r16/yosys.log": "5c92c82927b335db7212df0aa82c8c0bf04a82fc4aceb49fbd41383b6290b92b",
+    "build/return-path-20261014/final-matrix/4x1-p48-r64/verilator.log": "e5dca0a48e4033e96c55a3d13e377fa672385cc48887a64d430358b90a7f30a8",
+    "build/return-path-20261014/final-matrix/4x1-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p64-r16/verilator.log": "46aed8cfa5e8c536b3c72bd5ecc64087f3991933bafd566eea22900114b651ee",
+    "build/return-path-20261014/final-matrix/4x1-p48-r32/yosys.log": "e651683868a489238f1e5b470177a6ce8352fe6b28dfecfe669a735653c1e177",
+    "build/return-path-20261014/final-matrix/4x1-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p64-r32/verilator.log": "dffe3fc3feb7dfc53225c40fbfe9b3b145b28e664153f53e2ca080c136359488",
+    "build/return-path-20261014/final-matrix/2x4-p96-r64/yosys.log": "ba2fc9426e0dba26904600184b69c87259c90420445ffe939c3d710ba56374d4",
+    "build/return-path-20261014/final-matrix/4x1-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p64-r64/verilator.log": "9dfa39cfcc63f247506b0416b2b4e34b9f5cdcad79baf908e317d904aac5ef97",
+    "build/return-path-20261014/final-matrix/4x1-p64-r16/yosys.log": "42210b620c8b7882ee1583cacfc031c12810d490674d5d2a9a2a5e5eb8cea314",
+    "build/return-path-20261014/final-matrix/4x1-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p96-r16/verilator.log": "508a5ac631cf5924f337072e19eaa03e022554a63fd752b829d7fe75683b75a5",
+    "build/return-path-20261014/final-matrix/4x1-p48-r64/yosys.log": "8262033dc0353b8340110870822c0200adc43167aca204e1f0d74897c661e4ce",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/verilator.log": "6399f576b129ce415430c179acf48d7158ec5de94bef33c3d64d27753b891c4f",
+    "build/return-path-20261014/final-matrix/4x1-p64-r32/yosys.log": "6dc2b3e56a3c908b137040274f35ddd01a293e17a732303af91c2ee9ea99bed6",
+    "build/return-path-20261014/final-matrix/4x1-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x1-p96-r64/verilator.log": "7266eefe7247383022745b51492975bd05da8c3ac11af1c5f8faff6c654ec3d7",
+    "build/return-path-20261014/final-matrix/4x1-p64-r64/yosys.log": "81f12463657c877d3ed2044f482a1eea085f03ec7f44069e3d810a1493de3d4e",
+    "build/return-path-20261014/final-matrix/4x2-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p48-r16/verilator.log": "d6b0a2bf17fac9305be4766453f8e994b93516f4373e9cdbd74ce9654fe8199e",
+    "build/return-path-20261014/final-matrix/4x1-p96-r16/yosys.log": "9727f1bdbae5f24304e8507738933d013c6ad3cf021bce7e54ddcfe2cb4fe231",
+    "build/return-path-20261014/final-matrix/4x2-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p48-r32/verilator.log": "c64f740b0c949f2acadc187a8e863e02a3db6d73e6714a3e73c1b5f0d6eabf1c",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/yosys.log": "77193b78946771d80654c5166d242df1d087280dd8073c5d4a1987266f52a78b",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/verilator.log": "a046fbc9e2ef85a55751a33eb55448914f50a32310a0593a85da40e2b9d3d744",
+    "build/return-path-20261014/final-matrix/4x1-p96-r64/yosys.log": "c21c886a57239c4257c417a323bce7cdeb908a3965387cd3bb4fa89139bb5c67",
+    "build/return-path-20261014/final-matrix/4x2-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p64-r16/verilator.log": "ddd642bf69791c2cad88300eabe426ff00adc05d2880e1fed46423fbe6cf25b3",
+    "build/return-path-20261014/final-matrix/4x2-p48-r16/yosys.log": "55b7f5d5b6a0281228b9045be1c13ec6cf4e1d3ff913b360c32a506fee6ce944",
+    "build/return-path-20261014/final-matrix/4x2-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p64-r32/verilator.log": "699518e9459352285b0006376727b78235993464b97604e92b26614c3e912d5e",
+    "build/return-path-20261014/final-matrix/4x2-p48-r32/yosys.log": "80347875c1f1c760e84e0369841f5db4f22472e9c3cacc695dda962733c5dfa7",
+    "build/return-path-20261014/final-matrix/4x2-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p64-r64/verilator.log": "fda430c506e610affd060ccf9dfe5a40470740df7c62deea70f1d79005309a8b",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/yosys.log": "d939a0229303818cbe9f62cbf6c1e9c62c43486088b225afad157456cb590caa",
+    "build/return-path-20261014/final-matrix/4x2-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p96-r16/verilator.log": "57be1f583a522f1241279f9ce69732dcea3e370dbcabd3c077957c1fcbdc4946",
+    "build/return-path-20261014/final-matrix/4x2-p64-r16/yosys.log": "eb2a39d4532f07557a940e2e2fc68d1f47b366f1fd8ae88812a625f1951f45d0",
+    "build/return-path-20261014/final-matrix/4x2-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p96-r32/verilator.log": "f17cb63833f4b892198259fd3e049f4e0420482748065e3d8e0d8cdd86d373da",
+    "build/return-path-20261014/final-matrix/4x2-p64-r32/yosys.log": "8885fc9421058ee834c0b67cae17e104ab6313f201a22f5a024889fd96cd32f2",
+    "build/return-path-20261014/final-matrix/4x2-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p96-r64/verilator.log": "d9605bce73436fbe71614e8bc53d510166bed1e4dca80fd61028e901458cf8c6",
+    "build/return-path-20261014/final-matrix/4x2-p64-r64/yosys.log": "0b48de5b4ab096c7965cb548db7bb8f95d1bd51ec78e84bd35143339f17368c3",
+    "build/return-path-20261014/final-matrix/4x4-p48-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p48-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x2-p96-r16/yosys.log": "191e8a80b169bf6f9da0df60c25860ff7fa70b80817f64d152e8f016db70784c",
+    "build/return-path-20261014/final-matrix/4x4-p48-r16/verilator.log": "ba4170d97b22e0581a7c4efe588147a8a1a46e442ba5b6b8a56d178b6f4162f5",
+    "build/return-path-20261014/final-matrix/4x4-p48-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p48-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p48-r32/verilator.log": "cdafcc131ff57859b30eae2295532cddd3f85410d418e1c6f722379a34da1124",
+    "build/return-path-20261014/final-matrix/4x2-p96-r32/yosys.log": "f1bdfbaa58949f427f2e8ca5fc81808f3f9db2e994768d943bf0d101c1a5fce5",
+    "build/return-path-20261014/final-matrix/4x4-p48-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p48-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p48-r64/verilator.log": "aa6a167a6f8be1c31e0fc9088f2b56a587ddab068a777ad11f5df7c7febaa91f",
+    "build/return-path-20261014/final-matrix/4x2-p96-r64/yosys.log": "f6527f9e613229512fea2586178c5b0fa20feae2a9c509c243ac978f80022699",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/verilator.log": "048ab719e6b483476a6b41267011199255a0c187736efe7171790da2718df0ad",
+    "build/return-path-20261014/final-matrix/4x4-p48-r16/yosys.log": "c26348fa84cf91a1efe489aaf97964734a98e8b182061a578d5c311744b9916c",
+    "build/return-path-20261014/final-matrix/4x4-p64-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p64-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p64-r32/verilator.log": "1e80bc9e6c73d2d16c85ae71469a5830b0ef075315b70e425d14effdaf3181ba",
+    "build/return-path-20261014/final-matrix/4x4-p48-r32/yosys.log": "9c9ba53af56b0794593e3468eb10d0f48fbd203983c7faadc44a5101f4182931",
+    "build/return-path-20261014/final-matrix/4x4-p64-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p64-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p64-r64/verilator.log": "2a3ddaf563b32d74b975513eebc0cdfbfdbe8dafabf5a30a04d63bd1e21ecec2",
+    "build/return-path-20261014/final-matrix/4x4-p48-r64/yosys.log": "49ad16dc1c603622b83766d8ad36b45357a52a225029dee27efd1b055ec65bf4",
+    "build/return-path-20261014/final-matrix/4x4-p96-r16/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p96-r16/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p96-r16/verilator.log": "987ef5afea44c106257f455a3487a1351dffd3c9cf49776136f319560577516d",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/yosys.log": "dc2d56ee07f5dba01dc98d8e385c18475f8aa1cb984a843edb04dd6702fdae0b",
+    "build/return-path-20261014/final-matrix/4x4-p96-r32/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p96-r32/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p96-r32/verilator.log": "a1e99955ddd5ae9839efcea5ba9becb7de6fc504678663a1dab16f54d2ef5cbb",
+    "build/return-path-20261014/final-matrix/4x4-p96-r16/yosys.log": "48270647915978925d6cc0b358e9ce3956a2314372684a67d99b8eb8b8776da7",
+    "build/return-path-20261014/final-matrix/4x4-p96-r64/iverilog.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p96-r64/startup.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/return-path-20261014/final-matrix/4x4-p96-r64/verilator.log": "7148137eeb5b205c20119a12f7ccca2125604621c895a5371ae734554baa3fa9",
+    "build/return-path-20261014/final-matrix/4x4-p64-r32/yosys.log": "f3ad602716d14d82ef25d98967f2f5cc4807ae59eeef2eeea5a9ecc8bb57e094",
+    "build/return-path-20261014/final-matrix/4x4-p64-r64/yosys.log": "28359d4b4c2ffb561322bdb5a8d54383416de87cbbb8a0041bc87f511a40556f",
+    "build/return-path-20261014/final-matrix/4x4-p96-r32/yosys.log": "cafd59835d16f079162e869290a24a870322b985f683b98db8f485816335e73f",
+    "build/return-path-20261014/final-matrix/4x4-p96-r64/yosys.log": "6b47c0f043076d817ffdd6cf94d55c19e628659af0176273d30a3eacf6c4a903",
+    "build/return-path-20261014/final-matrix/vectors/9217.log": "e6cef14e93f98a0df8ea4152d0d1f58507970f7f6ffcf7113abc627d2f100b6e",
+    "build/return-path-20261014/final-matrix/vectors/9218.log": "ddcea0d679e6f431231b0f3b6a91d33ac9a8795ecf8eefcba0ff6855e53646b5",
+    "build/return-path-20261014/final-matrix/vectors/9219.log": "b9e9f3cf8d890a6f1c34ac76d8bfce3ffe329fcdb345b288f1f04277d3a4acb9",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/core-build.log": "3e7265ac1e177b1b24fc2e5cdd0a8add94e14d03dd7d067c4265833d972b5673",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/retirement-9217.log": "decbe07df7faa3961ed542befbc9c4f3e4808fb977d6fdeaf66902fcb7ae2889",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/retirement-9218.log": "619366b260383bc81653292b188f35ab8af332e13d191f0af1dcdcd2b5d69e41",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/retirement-9219.log": "96dc37651a463b57c3a198600888235a60228c4e557986461e81ad291ab189fe",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/official-build.log": "758866646a6e40b6297afffe24d54ea941e04a92c0900a88dd7146160271e210",
+    "build/return-path-20261014/final-matrix/1x1-p48-r16/functional.log": "0881f362ab71cd429b9419a0fa132e60ccb8774e0cc8bdb91ade710c6f6e87ad",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/core-build.log": "8d778a9f311c784444a184cf470cc5aaee98c6ba75695a11fa60fa2137223492",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/retirement-9217.log": "71ddfa24abad31cc5f5ba4b453b0cec90319ca4490811ded36b4254677d7a824",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/retirement-9218.log": "12375718421333fd9559312d0b06f1e83e84197e1cc8d6e32750cf83c1a2e7b6",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/retirement-9219.log": "5fb448a15e143480393d15ca20878316cce9cb5a402c8ee941d991c93697335a",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/official-build.log": "90f70256eb1b3acb8325c20bc7abbf22d5ce142b560c035e2366b2ac1011c4aa",
+    "build/return-path-20261014/final-matrix/1x2-p64-r32/functional.log": "d26a0def6631dd87fbccba025c64fa8873656d9a6d86f06aaab72eaad9bcd024",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/core-build.log": "42b683b2325758b7a7fe1bd6d00eaca6ad1489f42683417461ae3e11a28ebca5",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/retirement-9217.log": "4d90680ecc2cf0acf27cfebf24e7fe9887db70ed221c5ec8b1631b086220d1d5",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/retirement-9218.log": "9226386929eb27848637c454171ff581480a12dea40e1497bccc60e363baf993",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/retirement-9219.log": "9d9fa7b753ecdcfe79d6b986a2fd708de986d26cc8cbb3614122d4968e7cfa29",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/official-build.log": "6c5b3d710be36c4a32230568c57073f28c84143dea028f95228f3d0bf9c378d7",
+    "build/return-path-20261014/final-matrix/1x4-p96-r64/functional.log": "76b99ba0b728cb068e99e7e4b7e2016af736a8aa9faeeb378ea694092e11f6fd",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/core-build.log": "6563a9b2eb88313b18c3cbbd5197ea4cba3b832d4bc38052c7b2484fe1dc2ffc",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/retirement-9217.log": "599a059c09f06594c76af673f5aff1f10fd18eaf3f1f0d0b03ddfadfbc0e0d7f",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/retirement-9218.log": "b05d1754697eb1137b514aa92f9dc0f7018015d8c83620925246c05bc2f66fca",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/retirement-9219.log": "c2a6374bd2c8182b148a12f4f3e68fd68891e85c407875189b7de146a1175bb4",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/official-build.log": "9641869574b1aa585f891777a9eea80b4a71c0244e621083c9f64ed48bacc54f",
+    "build/return-path-20261014/final-matrix/2x1-p64-r64/functional.log": "c79f28bf52b939b66241a88cddfcace9ec8496ed6b2c28987cd7ed09cee99d44",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/core-build.log": "639368df3bfe3a0a30189afef222b6cb94bc174b68c7f3ec02db27e46296560a",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/retirement-9217.log": "fdad2dc33f9f7840fa997e378a5527c2a1a7791f5673a3b332848a9e3b05fdeb",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/retirement-9218.log": "540539a95b5e46a5bb314e10362cd3dc8be07dcb87968c5d8d38cfcd25ceb283",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/retirement-9219.log": "e43d090f4aa5f4daa2b852525ea15dd12d660275b03724b3e1cfbbc2e100effe",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/official-build.log": "fd0ba5d494f20efc1631d6468b309fc6907ed114bd3f6a0123c920f793aefacd",
+    "build/return-path-20261014/final-matrix/2x2-p96-r16/functional.log": "7f22bf067976cde49af5a4306f846c4f3b1cb42d9eab9446ba0febb61d6c9f71",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/core-build.log": "4655804ea49192e2e52776e8929e439d04289f144ff3a7e22b4ad383d1955d82",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/retirement-9217.log": "6538f678f66b94f4101c9c0d0434926e340c4add356a612cda571a66e0c38f1b",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/retirement-9218.log": "6cdb4897fef763412cd95ce35af3197570ca3f9d3bc7980fece6f3254eb091d9",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/retirement-9219.log": "85505a3e2051253e9cb792349921a7054e3cd6e7b7b28dada46a469bbb2105bf",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/official-build.log": "ab3c3db6515e33c784a5581903c492414539133a77e66fe82b1f0ec8197b4ba1",
+    "build/return-path-20261014/final-matrix/2x4-p48-r32/functional.log": "f1fcbb84a4e582ac5c987b2d95b361d0e19dcd20b6b4bb73a04e856f648ce7e3",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/core-build.log": "db62d7acfa80bbb45d19150d888ceab6546f8075348f5fe3db237c0cb8f1bb43",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/retirement-9217.log": "b54bd84009b66ff55ab5e02e01a8f4c9b6427f78db3f0aa98ba3028424faca2a",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/retirement-9218.log": "8aeaee9e838066a6b9d20256e8419c7ee8553097116a42ef600756444ece0cf0",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/retirement-9219.log": "3485b15628d80cb5f80df80aa2a758f18600dadcfa83d2c9e12c12dde840a9f7",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/official-build.log": "c413dd1143779cef24ffe637092e7972521646d5899a742a149561eaa00bff97",
+    "build/return-path-20261014/final-matrix/4x1-p96-r32/functional.log": "70645b8449c354f9a1daa182422c05fc9c2bf989bf56b5451ae4ac2efea50676",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/core-build.log": "ec26cee69ebcd46ac47fa42fc261e4886fd35a9904dcb79be5e67f226b55064d",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/retirement-9217.log": "83f051f4bc7576db68b9e2fd9e0503728792d1110b7e31d58759de008c040086",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/retirement-9218.log": "13d7a33aca9503b5c904ac2feaace7a1e7b81040a97e0ebe45772fb1c6d67bbd",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/retirement-9219.log": "d4e9d56e1bdc23e5c815980994373bdabef26e0424e76526d49164772b541add",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/official-build.log": "9879af4a6372d7d81d8498948b17b0f6267792a205389e6f60d39dda337c7225",
+    "build/return-path-20261014/final-matrix/4x2-p48-r64/functional.log": "48a5233ea1e7e41259333b84808bd6a4d78af8d6e695f64cde1d191bd44e57cf",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/core-build.log": "2ca78b6b0e4ec66c8c518333f13b4987ad7ae456f9af4a68232bfa89fd67068d",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/retirement-9217.log": "5c24b277fbf876a18bdb5499efc297a246cbd2f45ddba3bcc5166b2d03591b7c",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/retirement-9218.log": "a7172623902ff8a47511c5bddf523d1130ae6a4c98dc286d43e9356a1fcbe745",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/retirement-9219.log": "d40b6e5e74d640905d31f9450cef607e0226fe86847952ee621e9a26865680e7",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/official-build.log": "61a1b65f36194b754d42c63b4fa5dc6616c3e7d5697eb5f3e66a5c644cd29cd2",
+    "build/return-path-20261014/final-matrix/4x4-p64-r16/functional.log": "d922b09cbe6a3150372dc01bd1624e20b022950834f87b1be8bda90807e0e058",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-hum/results.json": "4e0cf3fbbe39c622517b3a2f43dcde64f9e7fd612542dae434c0b43d0ae472c5",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-deep.json": "7e2eba7b9a5747d75c37e1a0dca1cb80c4ddbcd06ee8adcb551bd24eba407835",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-response-owner-unit-archive/results.json": "42711a79020f1d23301392b6fb7342c507af5571a2eb3dff442cb19ad3ab541a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-gates.json": "083dd44bc81e1db35c45b8082c0afbcb3f1c50952be8b2a05ea03b70cd15ad8b"
+  }
+}

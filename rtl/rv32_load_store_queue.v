@@ -110,6 +110,7 @@ module rv32_load_store_queue #(
     reg late_error_sent [0:LSQ_ENTRIES-1];
 
     wire response_bypass;
+    wire response_payload;
     wire [31:0] response_value;
     reg source_valid;
     reg [ROB_TAG_WIDTH-1:0] source_rob_tag;
@@ -355,6 +356,7 @@ module rv32_load_store_queue #(
         end
     end
 
+    assign response_payload = LOAD_FALLTHROUGH != 0 && !source_valid;
     assign response_bypass = LOAD_FALLTHROUGH != 0 && !source_valid &&
         inflight && !inflight_write && !inflight_discard && inflight_match &&
         cache_response_valid_i;
@@ -383,13 +385,13 @@ module rv32_load_store_queue #(
 
     assign completion_valid_o = !reset_i && !flush_i && !recover_i &&
         (source_valid || response_bypass);
-    assign completion_rob_tag_o = response_bypass ? inflight_rob_tag : source_rob_tag;
-    assign completion_value_o = response_bypass ? response_value : source_value;
-    assign completion_exception_valid_o = response_bypass ?
+    assign completion_rob_tag_o = response_payload ? inflight_rob_tag : source_rob_tag;
+    assign completion_value_o = response_payload ? response_value : source_value;
+    assign completion_exception_valid_o = response_payload ?
         cache_response_error_i : source_exception_valid;
-    assign completion_exception_cause_o = response_bypass ?
+    assign completion_exception_cause_o = response_payload ?
         (cache_response_error_i ? 4'd5 : 4'd0) : source_exception_cause;
-    assign completion_exception_tval_o = response_bypass ?
+    assign completion_exception_tval_o = response_payload ?
         (cache_response_error_i ? inflight_address : 32'd0) : source_exception_tval;
     assign cache_request_valid_o = !reset_i && !flush_i && !recover_i &&
         request_valid && (inflight_count < MAX_INFLIGHT || response_fire) &&

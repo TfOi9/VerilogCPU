@@ -277,9 +277,8 @@ module rv32_completion_writeback_network #(
 
     always @* begin
         writeback_valid_reg = {BE_WIDTH{1'b0}};
-        writeback_phys_reg =
-            {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
-        writeback_value_reg = {(BE_WIDTH*32){1'b0}};
+        writeback_phys_reg = SOURCE_AUTH != 0 ? selected_phys : completion_phys_i;
+        writeback_value_reg = completion_value_reg;
         writeback_lane_index = 0;
         writeback_prior_lane = 0;
         writeback_duplicate = 1'b0;
@@ -301,11 +300,7 @@ module rv32_completion_writeback_network #(
                         selected_phys[writeback_lane_index*PHYS_REG_ADDR_WIDTH +:
                             PHYS_REG_ADDR_WIDTH] != 0) begin
                     writeback_valid_reg[writeback_lane_index] = 1'b1;
-                    writeback_phys_reg[writeback_lane_index*PHYS_REG_ADDR_WIDTH +:
-                        PHYS_REG_ADDR_WIDTH] = selected_phys[
-                        writeback_lane_index*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH];
-                    writeback_value_reg[writeback_lane_index*32 +: 32] =
-                        completion_value_reg[writeback_lane_index*32 +: 32];
+
                 end
             end else if (completion_valid_reg[writeback_lane_index] &&
                     completion_ready_i[writeback_lane_index] &&
@@ -318,15 +313,7 @@ module rv32_completion_writeback_network #(
                         PHYS_REG_ADDR_WIDTH] !=
                         {PHYS_REG_ADDR_WIDTH{1'b0}})) begin
                 writeback_valid_reg[writeback_lane_index] = 1'b1;
-                writeback_phys_reg[
-                    writeback_lane_index*PHYS_REG_ADDR_WIDTH +:
-                    PHYS_REG_ADDR_WIDTH] = completion_phys_i[
-                    writeback_lane_index*PHYS_REG_ADDR_WIDTH +:
-                    PHYS_REG_ADDR_WIDTH];
-                writeback_value_reg[
-                    writeback_lane_index*32 +: 32] =
-                    completion_value_reg[
-                    writeback_lane_index*32 +: 32];
+
             end
         end
     end

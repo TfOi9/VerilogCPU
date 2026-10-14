@@ -75,3 +75,5 @@ Load 多笔在途、Store 同拍提交与提前取指预测的正式实现及部
 返回标签与Load地址接收捷径的分步验收、官方IPC/面积/频率对照和复现证据见 [load-path-optimization-20261014.md](load-path-optimization-20261014.md)。
 
 较老Store地址已知且不重叠时的Load省拍、独立字节区间测试和最新官方对照见 [load-nonoverlap-optimization-20261014.md](load-nonoverlap-optimization-20261014.md)。
+
+总线返回至整数保留站的状态位定位、四种候选筛选、完整回归和IPC乘频率验收见 [return-path-optimization-20261014.md](return-path-optimization-20261014.md)。

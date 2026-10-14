@@ -22,6 +22,12 @@ ROB completion ready 当前采用全开或全关的 bundle 语义。网络在仿
 
 执行单元只传递 ROB tag 和结果，不携带目的物理寄存器。ROB 对每个被接受的 completion lane 输出 `completion_writes_rd_o` 和 `completion_phys_o`；未接受 lane 的两个字段固定为零。这样无需扩大 ALU、乘除法器或保留站中的在途 payload。
 
-物理写回使能满足以下全部条件：completion 与 ROB 完成握手、ROB accept、指令写 rd、没有完成异常且目的物理寄存器不为 p0。写回物理编号和值同时连接 PRF 写端口、rename writeback 端口以及整数、乘法、除法保留站的广播端口。控制流、store、异常完成和 stale tag 可以更新或排空 ROB，但不会修改 PRF 或唤醒依赖项。
+当前核心启用`SOURCE_AUTH`：各源的完整ROB tag先查询活跃性、generation和物理目的号，授权与数据共同参与仲裁。缓冲源查询其缓冲tag，空源查询执行单元tag，避免跨回滚缓存授权。兼容模式仍使用仲裁后ROB的completion查询。结构见[结果旁路](posted-stores-and-result-bypass.md)。
+
+物理写回使能满足以下全部条件：completion 与 ROB 完成握手、ROB accept、指令写 rd、没有完成异常且目的物理寄存器不为 p0。写回物理编号和值同时连接 PRF 写端口、rename writeback 端口以及全部保留站的广播端口。不写rd的控制流指令、store、异常完成和stale tag可以更新或排空ROB，但不会修改PRF或唤醒依赖项。
+
+目的物理号和值现在直接连接已选payload，独立于`writeback_valid_o`计算；SOURCE_AUTH模式取`selected_phys`，兼容模式取`completion_phys_i`。有效性仍保留原有握手、live授权、重复tag、异常和p0过滤，开启SOURCE_AUTH时由断言核对与ROB接受决定一致。PRF、rename和所有RS继续以`writeback_valid_o`决定写入或捕获，valid为零时不承诺数据字段为零。这样物理号比较可与写回资格并行，减少从返回valid到消费者唤醒的串行门控；没有增加流水级。
+
+新增`make int-rs-reuse-unit`覆盖BE1/2/4与ROB16/32/64的无效广播、同拍唤醒发射、槽位复用、不同物理号、反压锁定、恢复及flush。完整项目回归与新版官方IPC、面积、频率对照见[返回路径优化验收](return-path-optimization-20261014.md)。
 
 仿真协议检查覆盖非法参数、非统一 ROB ready、无握手 accept、越界物理寄存器、重复物理写回和损坏的 one-hot 轮询状态。单元测试使用独立 Python 模型穷举 1/2/4 路后端的来源 mask 与轮询起点，并额外覆盖回压、连续补入、公平性、恢复、flush、异常和 stale/重复 tag。集成测试连接真实 ROB 与 PRF，检查同周期旁路和上升沿写入。

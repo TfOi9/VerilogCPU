@@ -38,6 +38,12 @@ MMIO 只从 lane 0 准备，保持等待 B 响应并登记 `write_done` 后退�
 
 load 请求可在满足顺序约束后乱序发出。读响应按原地址选择字节或半字并执行符号或零扩展，再进入单项完成缓冲。读错误生成 cause 5。普通 store 数据按字内偏移移位并产生相应 byte enable；退出 MMIO Store 始终为完整字写。
 
+## 返回payload与资格分离
+
+开启`LOAD_FALLTHROUGH`时，`response_payload`只由已注册的`source_valid`决定：完成缓冲为空则提前选择在途返回的tag、扩展值和异常字段，有缓冲结果则选择注册payload。`response_bypass`仍检查在途身份、读类型、discard、Cache valid及恢复条件，只有完整资格通过才形成`completion_valid_o`并允许握手或释放Load项。关闭旁路时仍使用原有注册payload。
+
+这使ROB能够与返回资格判断并行准备tag查询，消除组合资格信号再选择tag和值的串行等待。`completion_valid_o=0`时，payload可变化且不保证为零；下游必须以valid和握手决定使用。完整tag校验、反压捕获、错误处理及不重叠Load省拍均保持。正式对照见[返回路径时序优化](return-path-optimization-20261014.md)。
+
 ## 恢复与接线
 
 选择性恢复阻止新请求、响应和完成握手，并按完整 tag 删除错误路径项，同时扫描整个在途 FIFO 标记匹配项为 discard。恢复结束后旧响应按序排空，不污染复用槽。全局 flush 清空 LSQ 和未握手请求，但保留已握手 FIFO 的计数与 tag，并将它们全部标记为 discard；即使 generation 复位后发生同 tag 复用，也不会接收旧响应。reset 才会清空在途 FIFO，需与 Cache/存储系统同时施加。系统集成不得用 flush 取消已经交给存储系统的架构 Store。

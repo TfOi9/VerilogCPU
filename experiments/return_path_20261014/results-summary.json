@@ -1,0 +1,1565 @@
+{
+  "completed": true,
+  "passed": true,
+  "selected": "metadata-wb-v2",
+  "framework_revision": "302f0cf3cccdaa5de084a2120e0d950c663e4cf5",
+  "baseline_revision": "07e32b8",
+  "configuration": {
+    "FE_WIDTH": 2,
+    "BE_WIDTH": 2,
+    "PHYS_REGS": 64,
+    "ROB_ENTRIES": 32,
+    "ICACHE_BYTES": 1024,
+    "ICACHE_WAYS": 1,
+    "DCACHE_BYTES": 16384,
+    "DCACHE_WAYS": 2
+  },
+  "rows": {
+    "baseline": {
+      "ipc_geomean": 0.6964709293260942,
+      "cases": [
+        {
+          "name": "correctness_add_to_100",
+          "cycles": 462,
+          "log_sha256": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+          "image_sha256": "24152a4791d002c691e1aa12cc811e391fb4015c9da27a1201d72eb3ac50a7d5",
+          "expected_sha256": "cae8934a441243980ca44aadcdf5e70da43aff4b901e7d53b6f17b479ec4986e"
+        },
+        {
+          "name": "correctness_array_test1",
+          "cycles": 678,
+          "log_sha256": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+          "image_sha256": "d381d0d150082d2188b9ff73abbac2da13ffddc8438a83e89a2ccb4a4b8ed43c",
+          "expected_sha256": "181210f8f9c779c26da1d9b2075bde0127302ee0e3fca38c9a83f5b1dd8e5d3b"
+        },
+        {
+          "name": "correctness_array_test2",
+          "cycles": 767,
+          "log_sha256": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+          "image_sha256": "9ff2cc83c0d1f73fcf55d598f950d286c57a4843455de8f20d65dd25d0ce3386",
+          "expected_sha256": "0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
+        },
+        {
+          "name": "correctness_basicopt1",
+          "cycles": 523578,
+          "log_sha256": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+          "image_sha256": "5e4c5b252f013d38c8489d904af8d671bb22f692ca337c144e6310aceacc8ac6",
+          "expected_sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
+        },
+        {
+          "name": "correctness_bulgarian",
+          "cycles": 237410,
+          "log_sha256": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+          "image_sha256": "9a07c05b0ae3202e94475a38f7140eb531a4d32b1b945aca05f2588e624b2024",
+          "expected_sha256": "d8a4344b811f6eda0a52f8a81366eff32fe57a10f597a33214cff788ff271efc"
+        },
+        {
+          "name": "correctness_expr",
+          "cycles": 737,
+          "log_sha256": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+          "image_sha256": "ee9a0e41ec4829a9794cf1a81d14c12565fab5e909811e8832e0710b27d01db2",
+          "expected_sha256": "748ea33db356501af68a9e37a1583cfa57192a894aab2a692c5475f031d1e81a"
+        },
+        {
+          "name": "correctness_gcd",
+          "cycles": 636,
+          "log_sha256": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+          "image_sha256": "2832face4ed1c64c2df75559c7004eaed97f094289017fe4538e6f553fd5f3bc",
+          "expected_sha256": "2093474895a9cef09980364d47d6a01723022d4a6617503302ea3f24274eb339"
+        },
+        {
+          "name": "correctness_hanoi",
+          "cycles": 6071,
+          "log_sha256": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+          "image_sha256": "03dfa3f2eeeb6f27d77b79c4a2d2cda6a8d7d2ac8644b3e55e95b378185b672c",
+          "expected_sha256": "58f324108d121cf6db3f474460cddae0deb18ed351e863a00cf32b39c20387cd"
+        },
+        {
+          "name": "correctness_lvalue2",
+          "cycles": 366,
+          "log_sha256": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+          "image_sha256": "57a0671f3d6a1120ce997ec6f75393dba3e3154fb0e0e55f5bf1cb3fb97f47b1",
+          "expected_sha256": "f0448ca7d8645d6c1d4902a2c058a37abfc44f1de59ab54163c80faaf72f6a4c"
+        },
+        {
+          "name": "correctness_magic",
+          "cycles": 613236,
+          "log_sha256": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+          "image_sha256": "f9ea5c54749673c9fcf01332e79dcf9c51105cd7700b5378f821d51d5e37dda5",
+          "expected_sha256": "e595be81bf15aa95763adb4fc0ba525bbed1971cf5fccdf3a946cd37025fb2c9"
+        },
+        {
+          "name": "correctness_manyarguments",
+          "cycles": 378,
+          "log_sha256": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+          "image_sha256": "cf9f63ef9174bbe8e1a60999ee14c8e301053caf5ddd18a0b28c82c87c3a78ad",
+          "expected_sha256": "673650f936cb3b0a2f93ce09d81be10748b1b203c19e8176b4eefc1964a0cf3a"
+        },
+        {
+          "name": "correctness_multiarray",
+          "cycles": 2445,
+          "log_sha256": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+          "image_sha256": "5095fa12e0a3523fe4e6ae844f8b947053eefbdde71e17d950092e974da41a3b",
+          "expected_sha256": "e623772cc677b6536e0545bc9870ad53a37b5cf0187fcc9851641b52344c7ee8"
+        },
+        {
+          "name": "correctness_naive",
+          "cycles": 354,
+          "log_sha256": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+          "image_sha256": "f273375cd8450b29b1ce8b556206d594a0db6ecf24946aca923ec55179d117e9",
+          "expected_sha256": "969eeff1eaac226a228cc61503effa46ea87d872ef3174365befc7c36ffa3c48"
+        },
+        {
+          "name": "correctness_pi",
+          "cycles": 19181081,
+          "log_sha256": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+          "image_sha256": "c045bbfa2b961a149ffee068e2e0bc9d2ac49b42562a8fb6f9c0247ac5ab611b",
+          "expected_sha256": "f7dbab4769334b25f2b4c0606fef276da29bc7477cc15f51f0967a6e477e7c94"
+        },
+        {
+          "name": "correctness_qsort",
+          "cycles": 1258060,
+          "log_sha256": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+          "image_sha256": "f9058b9186a38d3d05edf5b2664a224cf0b72aa3e2acafabf594ce15e53ab5f0",
+          "expected_sha256": "ce516e29a2ccfe4bab40e4e6adab7661cd695680482c00b1faa738fc0df62698"
+        },
+        {
+          "name": "correctness_queens",
+          "cycles": 387683,
+          "log_sha256": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+          "image_sha256": "0f3ba005f9593ec97f6c9ec020ebb5dac410bee65d266ae2d6fcb604ae06d60c",
+          "expected_sha256": "9efe5a55840d37eb5db13a22ccab7e8f9867c982d1f7d18313c63fa0aa1c801b"
+        },
+        {
+          "name": "correctness_statement_test",
+          "cycles": 1537,
+          "log_sha256": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+          "image_sha256": "4b859a528ad74856d9d674c05ccc58684a9691c0e654f27b798695e64be953bc",
+          "expected_sha256": "7ea9844ae84eccbf55e8330640865e36c43521e45a1baec24233327aab7e6595"
+        },
+        {
+          "name": "correctness_superloop",
+          "cycles": 488684,
+          "log_sha256": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+          "image_sha256": "652f925c742d2c30e676c0804fd427242d91d122e956742295149fb128b907b3",
+          "expected_sha256": "e726b440cc164001999e718b51780d80314709efe06e7857282377be9111127b"
+        },
+        {
+          "name": "correctness_tak",
+          "cycles": 1587942,
+          "log_sha256": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+          "image_sha256": "22195f73a3f82d5d317fa9119c105878c2be4d5e0c640028f6c3d5b577cfdfda",
+          "expected_sha256": "aaeeefc8f66b433fc4079c06b096c2d63fb9e012d5038eeb8d35cbb9d2110d84"
+        },
+        {
+          "name": "perf_median",
+          "cycles": 13473,
+          "log_sha256": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+          "image_sha256": "94b9f9dda2be384dd56d8871e5b1f156ac8aea739f20ab49c33357dc4f3be917",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 6961,
+          "ipc": 0.5166629555407111,
+          "metrics_sha256": "cea9403970ed3486e6f41c0695d68e135bcb97555e7d199cce3e8741b64ab508"
+        },
+        {
+          "name": "perf_multiply",
+          "cycles": 21605,
+          "log_sha256": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+          "image_sha256": "ffd81f8c9fb75737575528f87f8398980b8ba341e9b52d13a7e72d49a95cf9ce",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 21722,
+          "ipc": 1.0054154130988198,
+          "metrics_sha256": "d4931e6a1241cc62d226c154901ff403e0254a64b130622f6fbaafcc0977ef67"
+        },
+        {
+          "name": "perf_qsort",
+          "cycles": 221188,
+          "log_sha256": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+          "image_sha256": "724e77c16cc499a27b39a7ba2c6497e8f251e5b1f921c628152e38e64bc689df",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 139900,
+          "ipc": 0.6324936253322965,
+          "metrics_sha256": "a3d973d38d3b5f5e220b865c50035a82da9f943f7ac4042facc308a1f52567eb"
+        },
+        {
+          "name": "perf_rsort",
+          "cycles": 203504,
+          "log_sha256": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+          "image_sha256": "e51033effdebdbecbe9527384311c7e6c29ae9dc7779ee4122fd964d4f2b838f",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 195719,
+          "ipc": 0.961745223681107,
+          "metrics_sha256": "5cd55b6fa51ec8b3e2346dc6605e4a4d7d62f7e8aa024bfc45093a56488b7d7c"
+        },
+        {
+          "name": "perf_towers",
+          "cycles": 7882,
+          "log_sha256": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+          "image_sha256": "419ae4f1e80efd4b045afccffefa59cad6bf9395ebd54f947391f6f74f72063e",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 5278,
+          "ipc": 0.6696269982238011,
+          "metrics_sha256": "7f7e099f999b0b21a12ce16dc9f16c3cadcfa88c0339e5ef037b0844ec902f7d"
+        },
+        {
+          "name": "perf_vvadd",
+          "cycles": 8387,
+          "log_sha256": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+          "image_sha256": "cb55a0bbc86377fbd49a1de4fe0dbec250b40c74a407c303f6bba1b391caffae",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 4524,
+          "ipc": 0.5394062239179683,
+          "metrics_sha256": "2de758238dc05f6bbc2ebe12a2c8237128be1df911224147757b87f45d3633c7"
+        }
+      ],
+      "area_um2": 26913.129260999995,
+      "fmax_mhz": 305.3070960047704,
+      "minimum_period_ns": 3.275390625,
+      "critical_path": {
+        "arrival_ns": 3.216,
+        "combinational_stages": 96,
+        "buffers_inverters": 14,
+        "max_path_fanout": 10,
+        "startpoint": {
+          "pin": "_405569_/QN",
+          "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+        },
+        "endpoint": {
+          "pin": "_404786_/D",
+          "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/input/rv32_integer_reservation_station.v:529.5-726.8"
+        }
+      }
+    },
+    "metadata-v2": {
+      "ipc_geomean": 0.6964709293260942,
+      "cases": [
+        {
+          "name": "correctness_add_to_100",
+          "cycles": 462,
+          "log_sha256": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+          "image_sha256": "24152a4791d002c691e1aa12cc811e391fb4015c9da27a1201d72eb3ac50a7d5",
+          "expected_sha256": "cae8934a441243980ca44aadcdf5e70da43aff4b901e7d53b6f17b479ec4986e"
+        },
+        {
+          "name": "correctness_array_test1",
+          "cycles": 678,
+          "log_sha256": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+          "image_sha256": "d381d0d150082d2188b9ff73abbac2da13ffddc8438a83e89a2ccb4a4b8ed43c",
+          "expected_sha256": "181210f8f9c779c26da1d9b2075bde0127302ee0e3fca38c9a83f5b1dd8e5d3b"
+        },
+        {
+          "name": "correctness_array_test2",
+          "cycles": 767,
+          "log_sha256": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+          "image_sha256": "9ff2cc83c0d1f73fcf55d598f950d286c57a4843455de8f20d65dd25d0ce3386",
+          "expected_sha256": "0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
+        },
+        {
+          "name": "correctness_basicopt1",
+          "cycles": 523578,
+          "log_sha256": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+          "image_sha256": "5e4c5b252f013d38c8489d904af8d671bb22f692ca337c144e6310aceacc8ac6",
+          "expected_sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
+        },
+        {
+          "name": "correctness_bulgarian",
+          "cycles": 237410,
+          "log_sha256": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+          "image_sha256": "9a07c05b0ae3202e94475a38f7140eb531a4d32b1b945aca05f2588e624b2024",
+          "expected_sha256": "d8a4344b811f6eda0a52f8a81366eff32fe57a10f597a33214cff788ff271efc"
+        },
+        {
+          "name": "correctness_expr",
+          "cycles": 737,
+          "log_sha256": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+          "image_sha256": "ee9a0e41ec4829a9794cf1a81d14c12565fab5e909811e8832e0710b27d01db2",
+          "expected_sha256": "748ea33db356501af68a9e37a1583cfa57192a894aab2a692c5475f031d1e81a"
+        },
+        {
+          "name": "correctness_gcd",
+          "cycles": 636,
+          "log_sha256": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+          "image_sha256": "2832face4ed1c64c2df75559c7004eaed97f094289017fe4538e6f553fd5f3bc",
+          "expected_sha256": "2093474895a9cef09980364d47d6a01723022d4a6617503302ea3f24274eb339"
+        },
+        {
+          "name": "correctness_hanoi",
+          "cycles": 6071,
+          "log_sha256": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+          "image_sha256": "03dfa3f2eeeb6f27d77b79c4a2d2cda6a8d7d2ac8644b3e55e95b378185b672c",
+          "expected_sha256": "58f324108d121cf6db3f474460cddae0deb18ed351e863a00cf32b39c20387cd"
+        },
+        {
+          "name": "correctness_lvalue2",
+          "cycles": 366,
+          "log_sha256": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+          "image_sha256": "57a0671f3d6a1120ce997ec6f75393dba3e3154fb0e0e55f5bf1cb3fb97f47b1",
+          "expected_sha256": "f0448ca7d8645d6c1d4902a2c058a37abfc44f1de59ab54163c80faaf72f6a4c"
+        },
+        {
+          "name": "correctness_magic",
+          "cycles": 613236,
+          "log_sha256": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+          "image_sha256": "f9ea5c54749673c9fcf01332e79dcf9c51105cd7700b5378f821d51d5e37dda5",
+          "expected_sha256": "e595be81bf15aa95763adb4fc0ba525bbed1971cf5fccdf3a946cd37025fb2c9"
+        },
+        {
+          "name": "correctness_manyarguments",
+          "cycles": 378,
+          "log_sha256": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+          "image_sha256": "cf9f63ef9174bbe8e1a60999ee14c8e301053caf5ddd18a0b28c82c87c3a78ad",
+          "expected_sha256": "673650f936cb3b0a2f93ce09d81be10748b1b203c19e8176b4eefc1964a0cf3a"
+        },
+        {
+          "name": "correctness_multiarray",
+          "cycles": 2445,
+          "log_sha256": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+          "image_sha256": "5095fa12e0a3523fe4e6ae844f8b947053eefbdde71e17d950092e974da41a3b",
+          "expected_sha256": "e623772cc677b6536e0545bc9870ad53a37b5cf0187fcc9851641b52344c7ee8"
+        },
+        {
+          "name": "correctness_naive",
+          "cycles": 354,
+          "log_sha256": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+          "image_sha256": "f273375cd8450b29b1ce8b556206d594a0db6ecf24946aca923ec55179d117e9",
+          "expected_sha256": "969eeff1eaac226a228cc61503effa46ea87d872ef3174365befc7c36ffa3c48"
+        },
+        {
+          "name": "correctness_pi",
+          "cycles": 19181081,
+          "log_sha256": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+          "image_sha256": "c045bbfa2b961a149ffee068e2e0bc9d2ac49b42562a8fb6f9c0247ac5ab611b",
+          "expected_sha256": "f7dbab4769334b25f2b4c0606fef276da29bc7477cc15f51f0967a6e477e7c94"
+        },
+        {
+          "name": "correctness_qsort",
+          "cycles": 1258060,
+          "log_sha256": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+          "image_sha256": "f9058b9186a38d3d05edf5b2664a224cf0b72aa3e2acafabf594ce15e53ab5f0",
+          "expected_sha256": "ce516e29a2ccfe4bab40e4e6adab7661cd695680482c00b1faa738fc0df62698"
+        },
+        {
+          "name": "correctness_queens",
+          "cycles": 387683,
+          "log_sha256": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+          "image_sha256": "0f3ba005f9593ec97f6c9ec020ebb5dac410bee65d266ae2d6fcb604ae06d60c",
+          "expected_sha256": "9efe5a55840d37eb5db13a22ccab7e8f9867c982d1f7d18313c63fa0aa1c801b"
+        },
+        {
+          "name": "correctness_statement_test",
+          "cycles": 1537,
+          "log_sha256": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+          "image_sha256": "4b859a528ad74856d9d674c05ccc58684a9691c0e654f27b798695e64be953bc",
+          "expected_sha256": "7ea9844ae84eccbf55e8330640865e36c43521e45a1baec24233327aab7e6595"
+        },
+        {
+          "name": "correctness_superloop",
+          "cycles": 488684,
+          "log_sha256": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+          "image_sha256": "652f925c742d2c30e676c0804fd427242d91d122e956742295149fb128b907b3",
+          "expected_sha256": "e726b440cc164001999e718b51780d80314709efe06e7857282377be9111127b"
+        },
+        {
+          "name": "correctness_tak",
+          "cycles": 1587942,
+          "log_sha256": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+          "image_sha256": "22195f73a3f82d5d317fa9119c105878c2be4d5e0c640028f6c3d5b577cfdfda",
+          "expected_sha256": "aaeeefc8f66b433fc4079c06b096c2d63fb9e012d5038eeb8d35cbb9d2110d84"
+        },
+        {
+          "name": "perf_median",
+          "cycles": 13473,
+          "log_sha256": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+          "image_sha256": "94b9f9dda2be384dd56d8871e5b1f156ac8aea739f20ab49c33357dc4f3be917",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 6961,
+          "ipc": 0.5166629555407111,
+          "metrics_sha256": "cea9403970ed3486e6f41c0695d68e135bcb97555e7d199cce3e8741b64ab508"
+        },
+        {
+          "name": "perf_multiply",
+          "cycles": 21605,
+          "log_sha256": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+          "image_sha256": "ffd81f8c9fb75737575528f87f8398980b8ba341e9b52d13a7e72d49a95cf9ce",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 21722,
+          "ipc": 1.0054154130988198,
+          "metrics_sha256": "d4931e6a1241cc62d226c154901ff403e0254a64b130622f6fbaafcc0977ef67"
+        },
+        {
+          "name": "perf_qsort",
+          "cycles": 221188,
+          "log_sha256": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+          "image_sha256": "724e77c16cc499a27b39a7ba2c6497e8f251e5b1f921c628152e38e64bc689df",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 139900,
+          "ipc": 0.6324936253322965,
+          "metrics_sha256": "a3d973d38d3b5f5e220b865c50035a82da9f943f7ac4042facc308a1f52567eb"
+        },
+        {
+          "name": "perf_rsort",
+          "cycles": 203504,
+          "log_sha256": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+          "image_sha256": "e51033effdebdbecbe9527384311c7e6c29ae9dc7779ee4122fd964d4f2b838f",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 195719,
+          "ipc": 0.961745223681107,
+          "metrics_sha256": "5cd55b6fa51ec8b3e2346dc6605e4a4d7d62f7e8aa024bfc45093a56488b7d7c"
+        },
+        {
+          "name": "perf_towers",
+          "cycles": 7882,
+          "log_sha256": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+          "image_sha256": "419ae4f1e80efd4b045afccffefa59cad6bf9395ebd54f947391f6f74f72063e",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 5278,
+          "ipc": 0.6696269982238011,
+          "metrics_sha256": "7f7e099f999b0b21a12ce16dc9f16c3cadcfa88c0339e5ef037b0844ec902f7d"
+        },
+        {
+          "name": "perf_vvadd",
+          "cycles": 8387,
+          "log_sha256": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+          "image_sha256": "cb55a0bbc86377fbd49a1de4fe0dbec250b40c74a407c303f6bba1b391caffae",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 4524,
+          "ipc": 0.5394062239179683,
+          "metrics_sha256": "2de758238dc05f6bbc2ebe12a2c8237128be1df911224147757b87f45d3633c7"
+        }
+      ],
+      "area_um2": 27052.251621000727,
+      "fmax_mhz": 301.1764705882353,
+      "minimum_period_ns": 3.3203125,
+      "critical_path": {
+        "arrival_ns": 3.26,
+        "combinational_stages": 99,
+        "buffers_inverters": 11,
+        "max_path_fanout": 10,
+        "startpoint": {
+          "pin": "_410763_/QN",
+          "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/input/student_top.v:143.5-152.8"
+        },
+        "endpoint": {
+          "pin": "_398323_/D",
+          "src": null
+        }
+      }
+    },
+    "metadata-wb-v2": {
+      "ipc_geomean": 0.6964709293260942,
+      "cases": [
+        {
+          "name": "correctness_add_to_100",
+          "cycles": 462,
+          "log_sha256": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+          "image_sha256": "24152a4791d002c691e1aa12cc811e391fb4015c9da27a1201d72eb3ac50a7d5",
+          "expected_sha256": "cae8934a441243980ca44aadcdf5e70da43aff4b901e7d53b6f17b479ec4986e"
+        },
+        {
+          "name": "correctness_array_test1",
+          "cycles": 678,
+          "log_sha256": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+          "image_sha256": "d381d0d150082d2188b9ff73abbac2da13ffddc8438a83e89a2ccb4a4b8ed43c",
+          "expected_sha256": "181210f8f9c779c26da1d9b2075bde0127302ee0e3fca38c9a83f5b1dd8e5d3b"
+        },
+        {
+          "name": "correctness_array_test2",
+          "cycles": 767,
+          "log_sha256": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+          "image_sha256": "9ff2cc83c0d1f73fcf55d598f950d286c57a4843455de8f20d65dd25d0ce3386",
+          "expected_sha256": "0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
+        },
+        {
+          "name": "correctness_basicopt1",
+          "cycles": 523578,
+          "log_sha256": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+          "image_sha256": "5e4c5b252f013d38c8489d904af8d671bb22f692ca337c144e6310aceacc8ac6",
+          "expected_sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
+        },
+        {
+          "name": "correctness_bulgarian",
+          "cycles": 237410,
+          "log_sha256": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+          "image_sha256": "9a07c05b0ae3202e94475a38f7140eb531a4d32b1b945aca05f2588e624b2024",
+          "expected_sha256": "d8a4344b811f6eda0a52f8a81366eff32fe57a10f597a33214cff788ff271efc"
+        },
+        {
+          "name": "correctness_expr",
+          "cycles": 737,
+          "log_sha256": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+          "image_sha256": "ee9a0e41ec4829a9794cf1a81d14c12565fab5e909811e8832e0710b27d01db2",
+          "expected_sha256": "748ea33db356501af68a9e37a1583cfa57192a894aab2a692c5475f031d1e81a"
+        },
+        {
+          "name": "correctness_gcd",
+          "cycles": 636,
+          "log_sha256": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+          "image_sha256": "2832face4ed1c64c2df75559c7004eaed97f094289017fe4538e6f553fd5f3bc",
+          "expected_sha256": "2093474895a9cef09980364d47d6a01723022d4a6617503302ea3f24274eb339"
+        },
+        {
+          "name": "correctness_hanoi",
+          "cycles": 6071,
+          "log_sha256": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+          "image_sha256": "03dfa3f2eeeb6f27d77b79c4a2d2cda6a8d7d2ac8644b3e55e95b378185b672c",
+          "expected_sha256": "58f324108d121cf6db3f474460cddae0deb18ed351e863a00cf32b39c20387cd"
+        },
+        {
+          "name": "correctness_lvalue2",
+          "cycles": 366,
+          "log_sha256": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+          "image_sha256": "57a0671f3d6a1120ce997ec6f75393dba3e3154fb0e0e55f5bf1cb3fb97f47b1",
+          "expected_sha256": "f0448ca7d8645d6c1d4902a2c058a37abfc44f1de59ab54163c80faaf72f6a4c"
+        },
+        {
+          "name": "correctness_magic",
+          "cycles": 613236,
+          "log_sha256": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+          "image_sha256": "f9ea5c54749673c9fcf01332e79dcf9c51105cd7700b5378f821d51d5e37dda5",
+          "expected_sha256": "e595be81bf15aa95763adb4fc0ba525bbed1971cf5fccdf3a946cd37025fb2c9"
+        },
+        {
+          "name": "correctness_manyarguments",
+          "cycles": 378,
+          "log_sha256": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+          "image_sha256": "cf9f63ef9174bbe8e1a60999ee14c8e301053caf5ddd18a0b28c82c87c3a78ad",
+          "expected_sha256": "673650f936cb3b0a2f93ce09d81be10748b1b203c19e8176b4eefc1964a0cf3a"
+        },
+        {
+          "name": "correctness_multiarray",
+          "cycles": 2445,
+          "log_sha256": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+          "image_sha256": "5095fa12e0a3523fe4e6ae844f8b947053eefbdde71e17d950092e974da41a3b",
+          "expected_sha256": "e623772cc677b6536e0545bc9870ad53a37b5cf0187fcc9851641b52344c7ee8"
+        },
+        {
+          "name": "correctness_naive",
+          "cycles": 354,
+          "log_sha256": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+          "image_sha256": "f273375cd8450b29b1ce8b556206d594a0db6ecf24946aca923ec55179d117e9",
+          "expected_sha256": "969eeff1eaac226a228cc61503effa46ea87d872ef3174365befc7c36ffa3c48"
+        },
+        {
+          "name": "correctness_pi",
+          "cycles": 19181081,
+          "log_sha256": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+          "image_sha256": "c045bbfa2b961a149ffee068e2e0bc9d2ac49b42562a8fb6f9c0247ac5ab611b",
+          "expected_sha256": "f7dbab4769334b25f2b4c0606fef276da29bc7477cc15f51f0967a6e477e7c94"
+        },
+        {
+          "name": "correctness_qsort",
+          "cycles": 1258060,
+          "log_sha256": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+          "image_sha256": "f9058b9186a38d3d05edf5b2664a224cf0b72aa3e2acafabf594ce15e53ab5f0",
+          "expected_sha256": "ce516e29a2ccfe4bab40e4e6adab7661cd695680482c00b1faa738fc0df62698"
+        },
+        {
+          "name": "correctness_queens",
+          "cycles": 387683,
+          "log_sha256": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+          "image_sha256": "0f3ba005f9593ec97f6c9ec020ebb5dac410bee65d266ae2d6fcb604ae06d60c",
+          "expected_sha256": "9efe5a55840d37eb5db13a22ccab7e8f9867c982d1f7d18313c63fa0aa1c801b"
+        },
+        {
+          "name": "correctness_statement_test",
+          "cycles": 1537,
+          "log_sha256": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+          "image_sha256": "4b859a528ad74856d9d674c05ccc58684a9691c0e654f27b798695e64be953bc",
+          "expected_sha256": "7ea9844ae84eccbf55e8330640865e36c43521e45a1baec24233327aab7e6595"
+        },
+        {
+          "name": "correctness_superloop",
+          "cycles": 488684,
+          "log_sha256": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+          "image_sha256": "652f925c742d2c30e676c0804fd427242d91d122e956742295149fb128b907b3",
+          "expected_sha256": "e726b440cc164001999e718b51780d80314709efe06e7857282377be9111127b"
+        },
+        {
+          "name": "correctness_tak",
+          "cycles": 1587942,
+          "log_sha256": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+          "image_sha256": "22195f73a3f82d5d317fa9119c105878c2be4d5e0c640028f6c3d5b577cfdfda",
+          "expected_sha256": "aaeeefc8f66b433fc4079c06b096c2d63fb9e012d5038eeb8d35cbb9d2110d84"
+        },
+        {
+          "name": "perf_median",
+          "cycles": 13473,
+          "log_sha256": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+          "image_sha256": "94b9f9dda2be384dd56d8871e5b1f156ac8aea739f20ab49c33357dc4f3be917",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 6961,
+          "ipc": 0.5166629555407111,
+          "metrics_sha256": "cea9403970ed3486e6f41c0695d68e135bcb97555e7d199cce3e8741b64ab508"
+        },
+        {
+          "name": "perf_multiply",
+          "cycles": 21605,
+          "log_sha256": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+          "image_sha256": "ffd81f8c9fb75737575528f87f8398980b8ba341e9b52d13a7e72d49a95cf9ce",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 21722,
+          "ipc": 1.0054154130988198,
+          "metrics_sha256": "d4931e6a1241cc62d226c154901ff403e0254a64b130622f6fbaafcc0977ef67"
+        },
+        {
+          "name": "perf_qsort",
+          "cycles": 221188,
+          "log_sha256": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+          "image_sha256": "724e77c16cc499a27b39a7ba2c6497e8f251e5b1f921c628152e38e64bc689df",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 139900,
+          "ipc": 0.6324936253322965,
+          "metrics_sha256": "a3d973d38d3b5f5e220b865c50035a82da9f943f7ac4042facc308a1f52567eb"
+        },
+        {
+          "name": "perf_rsort",
+          "cycles": 203504,
+          "log_sha256": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+          "image_sha256": "e51033effdebdbecbe9527384311c7e6c29ae9dc7779ee4122fd964d4f2b838f",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 195719,
+          "ipc": 0.961745223681107,
+          "metrics_sha256": "5cd55b6fa51ec8b3e2346dc6605e4a4d7d62f7e8aa024bfc45093a56488b7d7c"
+        },
+        {
+          "name": "perf_towers",
+          "cycles": 7882,
+          "log_sha256": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+          "image_sha256": "419ae4f1e80efd4b045afccffefa59cad6bf9395ebd54f947391f6f74f72063e",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 5278,
+          "ipc": 0.6696269982238011,
+          "metrics_sha256": "7f7e099f999b0b21a12ce16dc9f16c3cadcfa88c0339e5ef037b0844ec902f7d"
+        },
+        {
+          "name": "perf_vvadd",
+          "cycles": 8387,
+          "log_sha256": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+          "image_sha256": "cb55a0bbc86377fbd49a1de4fe0dbec250b40c74a407c303f6bba1b391caffae",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 4524,
+          "ipc": 0.5394062239179683,
+          "metrics_sha256": "2de758238dc05f6bbc2ebe12a2c8237128be1df911224147757b87f45d3633c7"
+        }
+      ],
+      "area_um2": 27035.28050099965,
+      "fmax_mhz": 313.72549019607845,
+      "minimum_period_ns": 3.1875,
+      "critical_path": {
+        "arrival_ns": 3.147,
+        "combinational_stages": 88,
+        "buffers_inverters": 7,
+        "max_path_fanout": 10,
+        "startpoint": {
+          "pin": "_408632_/QN",
+          "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+        },
+        "endpoint": {
+          "pin": "_393751_/D",
+          "src": null
+        }
+      }
+    },
+    "rs-retain-v2": {
+      "ipc_geomean": 0.6964709293260942,
+      "cases": [
+        {
+          "name": "correctness_add_to_100",
+          "cycles": 462,
+          "log_sha256": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+          "image_sha256": "24152a4791d002c691e1aa12cc811e391fb4015c9da27a1201d72eb3ac50a7d5",
+          "expected_sha256": "cae8934a441243980ca44aadcdf5e70da43aff4b901e7d53b6f17b479ec4986e"
+        },
+        {
+          "name": "correctness_array_test1",
+          "cycles": 678,
+          "log_sha256": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+          "image_sha256": "d381d0d150082d2188b9ff73abbac2da13ffddc8438a83e89a2ccb4a4b8ed43c",
+          "expected_sha256": "181210f8f9c779c26da1d9b2075bde0127302ee0e3fca38c9a83f5b1dd8e5d3b"
+        },
+        {
+          "name": "correctness_array_test2",
+          "cycles": 767,
+          "log_sha256": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+          "image_sha256": "9ff2cc83c0d1f73fcf55d598f950d286c57a4843455de8f20d65dd25d0ce3386",
+          "expected_sha256": "0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
+        },
+        {
+          "name": "correctness_basicopt1",
+          "cycles": 523578,
+          "log_sha256": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+          "image_sha256": "5e4c5b252f013d38c8489d904af8d671bb22f692ca337c144e6310aceacc8ac6",
+          "expected_sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
+        },
+        {
+          "name": "correctness_bulgarian",
+          "cycles": 237410,
+          "log_sha256": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+          "image_sha256": "9a07c05b0ae3202e94475a38f7140eb531a4d32b1b945aca05f2588e624b2024",
+          "expected_sha256": "d8a4344b811f6eda0a52f8a81366eff32fe57a10f597a33214cff788ff271efc"
+        },
+        {
+          "name": "correctness_expr",
+          "cycles": 737,
+          "log_sha256": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+          "image_sha256": "ee9a0e41ec4829a9794cf1a81d14c12565fab5e909811e8832e0710b27d01db2",
+          "expected_sha256": "748ea33db356501af68a9e37a1583cfa57192a894aab2a692c5475f031d1e81a"
+        },
+        {
+          "name": "correctness_gcd",
+          "cycles": 636,
+          "log_sha256": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+          "image_sha256": "2832face4ed1c64c2df75559c7004eaed97f094289017fe4538e6f553fd5f3bc",
+          "expected_sha256": "2093474895a9cef09980364d47d6a01723022d4a6617503302ea3f24274eb339"
+        },
+        {
+          "name": "correctness_hanoi",
+          "cycles": 6071,
+          "log_sha256": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+          "image_sha256": "03dfa3f2eeeb6f27d77b79c4a2d2cda6a8d7d2ac8644b3e55e95b378185b672c",
+          "expected_sha256": "58f324108d121cf6db3f474460cddae0deb18ed351e863a00cf32b39c20387cd"
+        },
+        {
+          "name": "correctness_lvalue2",
+          "cycles": 366,
+          "log_sha256": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+          "image_sha256": "57a0671f3d6a1120ce997ec6f75393dba3e3154fb0e0e55f5bf1cb3fb97f47b1",
+          "expected_sha256": "f0448ca7d8645d6c1d4902a2c058a37abfc44f1de59ab54163c80faaf72f6a4c"
+        },
+        {
+          "name": "correctness_magic",
+          "cycles": 613236,
+          "log_sha256": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+          "image_sha256": "f9ea5c54749673c9fcf01332e79dcf9c51105cd7700b5378f821d51d5e37dda5",
+          "expected_sha256": "e595be81bf15aa95763adb4fc0ba525bbed1971cf5fccdf3a946cd37025fb2c9"
+        },
+        {
+          "name": "correctness_manyarguments",
+          "cycles": 378,
+          "log_sha256": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+          "image_sha256": "cf9f63ef9174bbe8e1a60999ee14c8e301053caf5ddd18a0b28c82c87c3a78ad",
+          "expected_sha256": "673650f936cb3b0a2f93ce09d81be10748b1b203c19e8176b4eefc1964a0cf3a"
+        },
+        {
+          "name": "correctness_multiarray",
+          "cycles": 2445,
+          "log_sha256": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+          "image_sha256": "5095fa12e0a3523fe4e6ae844f8b947053eefbdde71e17d950092e974da41a3b",
+          "expected_sha256": "e623772cc677b6536e0545bc9870ad53a37b5cf0187fcc9851641b52344c7ee8"
+        },
+        {
+          "name": "correctness_naive",
+          "cycles": 354,
+          "log_sha256": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+          "image_sha256": "f273375cd8450b29b1ce8b556206d594a0db6ecf24946aca923ec55179d117e9",
+          "expected_sha256": "969eeff1eaac226a228cc61503effa46ea87d872ef3174365befc7c36ffa3c48"
+        },
+        {
+          "name": "correctness_pi",
+          "cycles": 19181081,
+          "log_sha256": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+          "image_sha256": "c045bbfa2b961a149ffee068e2e0bc9d2ac49b42562a8fb6f9c0247ac5ab611b",
+          "expected_sha256": "f7dbab4769334b25f2b4c0606fef276da29bc7477cc15f51f0967a6e477e7c94"
+        },
+        {
+          "name": "correctness_qsort",
+          "cycles": 1258060,
+          "log_sha256": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+          "image_sha256": "f9058b9186a38d3d05edf5b2664a224cf0b72aa3e2acafabf594ce15e53ab5f0",
+          "expected_sha256": "ce516e29a2ccfe4bab40e4e6adab7661cd695680482c00b1faa738fc0df62698"
+        },
+        {
+          "name": "correctness_queens",
+          "cycles": 387683,
+          "log_sha256": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+          "image_sha256": "0f3ba005f9593ec97f6c9ec020ebb5dac410bee65d266ae2d6fcb604ae06d60c",
+          "expected_sha256": "9efe5a55840d37eb5db13a22ccab7e8f9867c982d1f7d18313c63fa0aa1c801b"
+        },
+        {
+          "name": "correctness_statement_test",
+          "cycles": 1537,
+          "log_sha256": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+          "image_sha256": "4b859a528ad74856d9d674c05ccc58684a9691c0e654f27b798695e64be953bc",
+          "expected_sha256": "7ea9844ae84eccbf55e8330640865e36c43521e45a1baec24233327aab7e6595"
+        },
+        {
+          "name": "correctness_superloop",
+          "cycles": 488684,
+          "log_sha256": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+          "image_sha256": "652f925c742d2c30e676c0804fd427242d91d122e956742295149fb128b907b3",
+          "expected_sha256": "e726b440cc164001999e718b51780d80314709efe06e7857282377be9111127b"
+        },
+        {
+          "name": "correctness_tak",
+          "cycles": 1587942,
+          "log_sha256": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+          "image_sha256": "22195f73a3f82d5d317fa9119c105878c2be4d5e0c640028f6c3d5b577cfdfda",
+          "expected_sha256": "aaeeefc8f66b433fc4079c06b096c2d63fb9e012d5038eeb8d35cbb9d2110d84"
+        },
+        {
+          "name": "perf_median",
+          "cycles": 13473,
+          "log_sha256": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+          "image_sha256": "94b9f9dda2be384dd56d8871e5b1f156ac8aea739f20ab49c33357dc4f3be917",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 6961,
+          "ipc": 0.5166629555407111,
+          "metrics_sha256": "cea9403970ed3486e6f41c0695d68e135bcb97555e7d199cce3e8741b64ab508"
+        },
+        {
+          "name": "perf_multiply",
+          "cycles": 21605,
+          "log_sha256": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+          "image_sha256": "ffd81f8c9fb75737575528f87f8398980b8ba341e9b52d13a7e72d49a95cf9ce",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 21722,
+          "ipc": 1.0054154130988198,
+          "metrics_sha256": "d4931e6a1241cc62d226c154901ff403e0254a64b130622f6fbaafcc0977ef67"
+        },
+        {
+          "name": "perf_qsort",
+          "cycles": 221188,
+          "log_sha256": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+          "image_sha256": "724e77c16cc499a27b39a7ba2c6497e8f251e5b1f921c628152e38e64bc689df",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 139900,
+          "ipc": 0.6324936253322965,
+          "metrics_sha256": "a3d973d38d3b5f5e220b865c50035a82da9f943f7ac4042facc308a1f52567eb"
+        },
+        {
+          "name": "perf_rsort",
+          "cycles": 203504,
+          "log_sha256": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+          "image_sha256": "e51033effdebdbecbe9527384311c7e6c29ae9dc7779ee4122fd964d4f2b838f",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 195719,
+          "ipc": 0.961745223681107,
+          "metrics_sha256": "5cd55b6fa51ec8b3e2346dc6605e4a4d7d62f7e8aa024bfc45093a56488b7d7c"
+        },
+        {
+          "name": "perf_towers",
+          "cycles": 7882,
+          "log_sha256": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+          "image_sha256": "419ae4f1e80efd4b045afccffefa59cad6bf9395ebd54f947391f6f74f72063e",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 5278,
+          "ipc": 0.6696269982238011,
+          "metrics_sha256": "7f7e099f999b0b21a12ce16dc9f16c3cadcfa88c0339e5ef037b0844ec902f7d"
+        },
+        {
+          "name": "perf_vvadd",
+          "cycles": 8387,
+          "log_sha256": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+          "image_sha256": "cb55a0bbc86377fbd49a1de4fe0dbec250b40c74a407c303f6bba1b391caffae",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 4524,
+          "ipc": 0.5394062239179683,
+          "metrics_sha256": "2de758238dc05f6bbc2ebe12a2c8237128be1df911224147757b87f45d3633c7"
+        }
+      ],
+      "area_um2": 27068.377101000588,
+      "fmax_mhz": 310.1150817686251,
+      "minimum_period_ns": 3.224609375,
+      "critical_path": {
+        "arrival_ns": 3.169,
+        "combinational_stages": 97,
+        "buffers_inverters": 11,
+        "max_path_fanout": 10,
+        "startpoint": {
+          "pin": "_408820_/QN",
+          "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/input/student_top.v:143.5-152.8"
+        },
+        "endpoint": {
+          "pin": "_392668_/D",
+          "src": null
+        }
+      }
+    },
+    "metadata-wb-rs-v2": {
+      "ipc_geomean": 0.6964709293260942,
+      "cases": [
+        {
+          "name": "correctness_add_to_100",
+          "cycles": 462,
+          "log_sha256": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+          "image_sha256": "24152a4791d002c691e1aa12cc811e391fb4015c9da27a1201d72eb3ac50a7d5",
+          "expected_sha256": "cae8934a441243980ca44aadcdf5e70da43aff4b901e7d53b6f17b479ec4986e"
+        },
+        {
+          "name": "correctness_array_test1",
+          "cycles": 678,
+          "log_sha256": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+          "image_sha256": "d381d0d150082d2188b9ff73abbac2da13ffddc8438a83e89a2ccb4a4b8ed43c",
+          "expected_sha256": "181210f8f9c779c26da1d9b2075bde0127302ee0e3fca38c9a83f5b1dd8e5d3b"
+        },
+        {
+          "name": "correctness_array_test2",
+          "cycles": 767,
+          "log_sha256": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+          "image_sha256": "9ff2cc83c0d1f73fcf55d598f950d286c57a4843455de8f20d65dd25d0ce3386",
+          "expected_sha256": "0e55092af0746630c98d1b2e0d960617c33f8ea7b55739fd18cb7cd5342a28ca"
+        },
+        {
+          "name": "correctness_basicopt1",
+          "cycles": 523578,
+          "log_sha256": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+          "image_sha256": "5e4c5b252f013d38c8489d904af8d671bb22f692ca337c144e6310aceacc8ac6",
+          "expected_sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
+        },
+        {
+          "name": "correctness_bulgarian",
+          "cycles": 237410,
+          "log_sha256": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+          "image_sha256": "9a07c05b0ae3202e94475a38f7140eb531a4d32b1b945aca05f2588e624b2024",
+          "expected_sha256": "d8a4344b811f6eda0a52f8a81366eff32fe57a10f597a33214cff788ff271efc"
+        },
+        {
+          "name": "correctness_expr",
+          "cycles": 737,
+          "log_sha256": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+          "image_sha256": "ee9a0e41ec4829a9794cf1a81d14c12565fab5e909811e8832e0710b27d01db2",
+          "expected_sha256": "748ea33db356501af68a9e37a1583cfa57192a894aab2a692c5475f031d1e81a"
+        },
+        {
+          "name": "correctness_gcd",
+          "cycles": 636,
+          "log_sha256": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+          "image_sha256": "2832face4ed1c64c2df75559c7004eaed97f094289017fe4538e6f553fd5f3bc",
+          "expected_sha256": "2093474895a9cef09980364d47d6a01723022d4a6617503302ea3f24274eb339"
+        },
+        {
+          "name": "correctness_hanoi",
+          "cycles": 6071,
+          "log_sha256": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+          "image_sha256": "03dfa3f2eeeb6f27d77b79c4a2d2cda6a8d7d2ac8644b3e55e95b378185b672c",
+          "expected_sha256": "58f324108d121cf6db3f474460cddae0deb18ed351e863a00cf32b39c20387cd"
+        },
+        {
+          "name": "correctness_lvalue2",
+          "cycles": 366,
+          "log_sha256": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+          "image_sha256": "57a0671f3d6a1120ce997ec6f75393dba3e3154fb0e0e55f5bf1cb3fb97f47b1",
+          "expected_sha256": "f0448ca7d8645d6c1d4902a2c058a37abfc44f1de59ab54163c80faaf72f6a4c"
+        },
+        {
+          "name": "correctness_magic",
+          "cycles": 613236,
+          "log_sha256": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+          "image_sha256": "f9ea5c54749673c9fcf01332e79dcf9c51105cd7700b5378f821d51d5e37dda5",
+          "expected_sha256": "e595be81bf15aa95763adb4fc0ba525bbed1971cf5fccdf3a946cd37025fb2c9"
+        },
+        {
+          "name": "correctness_manyarguments",
+          "cycles": 378,
+          "log_sha256": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+          "image_sha256": "cf9f63ef9174bbe8e1a60999ee14c8e301053caf5ddd18a0b28c82c87c3a78ad",
+          "expected_sha256": "673650f936cb3b0a2f93ce09d81be10748b1b203c19e8176b4eefc1964a0cf3a"
+        },
+        {
+          "name": "correctness_multiarray",
+          "cycles": 2445,
+          "log_sha256": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+          "image_sha256": "5095fa12e0a3523fe4e6ae844f8b947053eefbdde71e17d950092e974da41a3b",
+          "expected_sha256": "e623772cc677b6536e0545bc9870ad53a37b5cf0187fcc9851641b52344c7ee8"
+        },
+        {
+          "name": "correctness_naive",
+          "cycles": 354,
+          "log_sha256": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+          "image_sha256": "f273375cd8450b29b1ce8b556206d594a0db6ecf24946aca923ec55179d117e9",
+          "expected_sha256": "969eeff1eaac226a228cc61503effa46ea87d872ef3174365befc7c36ffa3c48"
+        },
+        {
+          "name": "correctness_pi",
+          "cycles": 19181081,
+          "log_sha256": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+          "image_sha256": "c045bbfa2b961a149ffee068e2e0bc9d2ac49b42562a8fb6f9c0247ac5ab611b",
+          "expected_sha256": "f7dbab4769334b25f2b4c0606fef276da29bc7477cc15f51f0967a6e477e7c94"
+        },
+        {
+          "name": "correctness_qsort",
+          "cycles": 1258060,
+          "log_sha256": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+          "image_sha256": "f9058b9186a38d3d05edf5b2664a224cf0b72aa3e2acafabf594ce15e53ab5f0",
+          "expected_sha256": "ce516e29a2ccfe4bab40e4e6adab7661cd695680482c00b1faa738fc0df62698"
+        },
+        {
+          "name": "correctness_queens",
+          "cycles": 387683,
+          "log_sha256": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+          "image_sha256": "0f3ba005f9593ec97f6c9ec020ebb5dac410bee65d266ae2d6fcb604ae06d60c",
+          "expected_sha256": "9efe5a55840d37eb5db13a22ccab7e8f9867c982d1f7d18313c63fa0aa1c801b"
+        },
+        {
+          "name": "correctness_statement_test",
+          "cycles": 1537,
+          "log_sha256": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+          "image_sha256": "4b859a528ad74856d9d674c05ccc58684a9691c0e654f27b798695e64be953bc",
+          "expected_sha256": "7ea9844ae84eccbf55e8330640865e36c43521e45a1baec24233327aab7e6595"
+        },
+        {
+          "name": "correctness_superloop",
+          "cycles": 488684,
+          "log_sha256": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+          "image_sha256": "652f925c742d2c30e676c0804fd427242d91d122e956742295149fb128b907b3",
+          "expected_sha256": "e726b440cc164001999e718b51780d80314709efe06e7857282377be9111127b"
+        },
+        {
+          "name": "correctness_tak",
+          "cycles": 1587942,
+          "log_sha256": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+          "image_sha256": "22195f73a3f82d5d317fa9119c105878c2be4d5e0c640028f6c3d5b577cfdfda",
+          "expected_sha256": "aaeeefc8f66b433fc4079c06b096c2d63fb9e012d5038eeb8d35cbb9d2110d84"
+        },
+        {
+          "name": "perf_median",
+          "cycles": 13473,
+          "log_sha256": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+          "image_sha256": "94b9f9dda2be384dd56d8871e5b1f156ac8aea739f20ab49c33357dc4f3be917",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 6961,
+          "ipc": 0.5166629555407111,
+          "metrics_sha256": "cea9403970ed3486e6f41c0695d68e135bcb97555e7d199cce3e8741b64ab508"
+        },
+        {
+          "name": "perf_multiply",
+          "cycles": 21605,
+          "log_sha256": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+          "image_sha256": "ffd81f8c9fb75737575528f87f8398980b8ba341e9b52d13a7e72d49a95cf9ce",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 21722,
+          "ipc": 1.0054154130988198,
+          "metrics_sha256": "d4931e6a1241cc62d226c154901ff403e0254a64b130622f6fbaafcc0977ef67"
+        },
+        {
+          "name": "perf_qsort",
+          "cycles": 221188,
+          "log_sha256": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+          "image_sha256": "724e77c16cc499a27b39a7ba2c6497e8f251e5b1f921c628152e38e64bc689df",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 139900,
+          "ipc": 0.6324936253322965,
+          "metrics_sha256": "a3d973d38d3b5f5e220b865c50035a82da9f943f7ac4042facc308a1f52567eb"
+        },
+        {
+          "name": "perf_rsort",
+          "cycles": 203504,
+          "log_sha256": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+          "image_sha256": "e51033effdebdbecbe9527384311c7e6c29ae9dc7779ee4122fd964d4f2b838f",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 195719,
+          "ipc": 0.961745223681107,
+          "metrics_sha256": "5cd55b6fa51ec8b3e2346dc6605e4a4d7d62f7e8aa024bfc45093a56488b7d7c"
+        },
+        {
+          "name": "perf_towers",
+          "cycles": 7882,
+          "log_sha256": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+          "image_sha256": "419ae4f1e80efd4b045afccffefa59cad6bf9395ebd54f947391f6f74f72063e",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 5278,
+          "ipc": 0.6696269982238011,
+          "metrics_sha256": "7f7e099f999b0b21a12ce16dc9f16c3cadcfa88c0339e5ef037b0844ec902f7d"
+        },
+        {
+          "name": "perf_vvadd",
+          "cycles": 8387,
+          "log_sha256": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+          "image_sha256": "cb55a0bbc86377fbd49a1de4fe0dbec250b40c74a407c303f6bba1b391caffae",
+          "expected_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "dynamic_instructions": 4524,
+          "ipc": 0.5394062239179683,
+          "metrics_sha256": "2de758238dc05f6bbc2ebe12a2c8237128be1df911224147757b87f45d3633c7"
+        }
+      ],
+      "area_um2": 27024.739161000674,
+      "fmax_mhz": 312.48092767775404,
+      "minimum_period_ns": 3.2001953125,
+      "critical_path": {
+        "arrival_ns": 3.1439999999999997,
+        "combinational_stages": 93,
+        "buffers_inverters": 9,
+        "max_path_fanout": 10,
+        "startpoint": {
+          "pin": "_407310_/QN",
+          "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+        },
+        "endpoint": {
+          "pin": "_393126_/D",
+          "src": null
+        }
+      }
+    }
+  },
+  "prior_load_version": {
+    "ipc_geomean": 0.6863106683607078,
+    "area_um2": 26997.328761001507,
+    "fmax_mhz": 312.958435207824
+  },
+  "change_percent": {
+    "ipc_geomean": 0.0,
+    "area_um2": 0.45387230453599603,
+    "fmax_mhz": 2.757352941176472
+  },
+  "throughput_change_percent": 2.757352941176494,
+  "throughput_vs_pre_nonoverlap_percent": 1.7291436814202088,
+  "validation": {
+    "official_programs": 25,
+    "matrix_static_checks": 324,
+    "matrix_retirement_traces": 27,
+    "matrix_programs": 243,
+    "hum_tests": 28,
+    "deep_unit_configurations": 17,
+    "response_boundary_checks": 7168,
+    "unit_and_lint_exit_code": 0,
+    "rs_reuse_configurations": 9,
+    "rs_reuse_checks": 36864,
+    "isolated_protocol_tests": 22,
+    "rs_screen_tests": 54
+  },
+  "original_path_state": {
+    "start": {
+      "pin": "_405569_/QN",
+      "preserved_cell": "$auto$ff.cc:337:slice$353226",
+      "rtl_state": [
+        "bridge.parallel_adapter.response_locked"
+      ],
+      "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-nonoverlap-20261014/candidate/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+    },
+    "end": {
+      "pin": "_404786_/D",
+      "preserved_cell": "$auto$ff.cc:337:slice$352040",
+      "rtl_state": [
+        "core.int_rs.entry_lhs_value[5][25]"
+      ],
+      "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/load-nonoverlap-20261014/candidate/input/rv32_integer_reservation_station.v:529.5-726.8"
+    },
+    "arrival_ns": 3.216
+  },
+  "final_path_state": {
+    "start": {
+      "pin": "_408632_/QN",
+      "preserved_cell": "$auto$ff.cc:337:slice$353088",
+      "rtl_state": [
+        "bridge.parallel_adapter.response_locked"
+      ],
+      "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+    },
+    "end": {
+      "pin": "_393751_/D",
+      "preserved_cell": "$auto$ff.cc:337:slice$298290",
+      "rtl_state": [
+        "core.lsq.address[4][19]"
+      ],
+      "src": null
+    },
+    "arrival_ns": 3.147
+  },
+  "probes": [
+    {
+      "stage": "baseline",
+      "probe": "store-disjoint-load-chain",
+      "passed": true,
+      "cycles": 38657,
+      "instructions": 13208,
+      "ipc": 0.3416716248027524,
+      "expected": 65536,
+      "command": [
+        "timeout",
+        "-k",
+        "5",
+        "60",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/official/sim",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-disjoint-load-chain.data",
+        "65536",
+        "1000000",
+        "10"
+      ],
+      "sim_sha256": "1ea1e64c689937391f1a9e3dfa2c4c9736e4ba5dfb80a068d86139e2601c0dd6",
+      "image": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-disjoint-load-chain.data",
+      "image_sha256": "30a74741d9621b652629b2330b463483d0186a907b203715c39ec504af74f2ba",
+      "log": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/baseline-store-disjoint-load-chain.log",
+      "log_sha256": "8b0b02f1bbfde03f7aee6032376739cfd4c66b9b87edafe6bbc28e68ebad67e2"
+    },
+    {
+      "stage": "metadata-wb-v2",
+      "probe": "store-disjoint-load-chain",
+      "passed": true,
+      "cycles": 38657,
+      "instructions": 13208,
+      "ipc": 0.3416716248027524,
+      "expected": 65536,
+      "command": [
+        "timeout",
+        "-k",
+        "5",
+        "60",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/official/sim",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-disjoint-load-chain.data",
+        "65536",
+        "1000000",
+        "10"
+      ],
+      "sim_sha256": "7c07cfc5c4f734c20c4363eb11f18f77c29d02dc5fecbb99af0f8ea65c6af295",
+      "image": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-disjoint-load-chain.data",
+      "image_sha256": "30a74741d9621b652629b2330b463483d0186a907b203715c39ec504af74f2ba",
+      "log": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/metadata-wb-v2-store-disjoint-load-chain.log",
+      "log_sha256": "8b0b02f1bbfde03f7aee6032376739cfd4c66b9b87edafe6bbc28e68ebad67e2"
+    },
+    {
+      "stage": "baseline",
+      "probe": "store-alias-load-chain",
+      "passed": true,
+      "cycles": 25940,
+      "instructions": 13208,
+      "ipc": 0.5091750192752506,
+      "expected": 65536,
+      "command": [
+        "timeout",
+        "-k",
+        "5",
+        "60",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/official/sim",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-alias-load-chain.data",
+        "65536",
+        "1000000",
+        "10"
+      ],
+      "sim_sha256": "1ea1e64c689937391f1a9e3dfa2c4c9736e4ba5dfb80a068d86139e2601c0dd6",
+      "image": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-alias-load-chain.data",
+      "image_sha256": "ac6dcae2ae55f5ab6bf65e6f2982cb42fe5dd52b56e2df73c8ec6f5bb46875d5",
+      "log": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/baseline-store-alias-load-chain.log",
+      "log_sha256": "2c5a671484ad5fec24bdd3d5ee457574a2a0a8b0750e655c23af4142a5e7889b"
+    },
+    {
+      "stage": "metadata-wb-v2",
+      "probe": "store-alias-load-chain",
+      "passed": true,
+      "cycles": 25940,
+      "instructions": 13208,
+      "ipc": 0.5091750192752506,
+      "expected": 65536,
+      "command": [
+        "timeout",
+        "-k",
+        "5",
+        "60",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/official/sim",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-alias-load-chain.data",
+        "65536",
+        "1000000",
+        "10"
+      ],
+      "sim_sha256": "7c07cfc5c4f734c20c4363eb11f18f77c29d02dc5fecbb99af0f8ea65c6af295",
+      "image": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-alias-load-chain.data",
+      "image_sha256": "ac6dcae2ae55f5ab6bf65e6f2982cb42fe5dd52b56e2df73c8ec6f5bb46875d5",
+      "log": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/metadata-wb-v2-store-alias-load-chain.log",
+      "log_sha256": "2c5a671484ad5fec24bdd3d5ee457574a2a0a8b0750e655c23af4142a5e7889b"
+    },
+    {
+      "stage": "baseline",
+      "probe": "store-byte-disjoint-load",
+      "passed": true,
+      "cycles": 33944,
+      "instructions": 14808,
+      "ipc": 0.43624793777987275,
+      "expected": 85,
+      "command": [
+        "timeout",
+        "-k",
+        "5",
+        "60",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/official/sim",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-byte-disjoint-load.data",
+        "85",
+        "1000000",
+        "10"
+      ],
+      "sim_sha256": "1ea1e64c689937391f1a9e3dfa2c4c9736e4ba5dfb80a068d86139e2601c0dd6",
+      "image": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-byte-disjoint-load.data",
+      "image_sha256": "2a170c6885d12dd893726bb0f2b831f1e31b582aee043f37614c274804d283c8",
+      "log": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/baseline-store-byte-disjoint-load.log",
+      "log_sha256": "411340b92d7afe7f25a378543580d8ace110ba5d4478a7ff63ee0a21f91b4375"
+    },
+    {
+      "stage": "metadata-wb-v2",
+      "probe": "store-byte-disjoint-load",
+      "passed": true,
+      "cycles": 33944,
+      "instructions": 14808,
+      "ipc": 0.43624793777987275,
+      "expected": 85,
+      "command": [
+        "timeout",
+        "-k",
+        "5",
+        "60",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/official/sim",
+        "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-byte-disjoint-load.data",
+        "85",
+        "1000000",
+        "10"
+      ],
+      "sim_sha256": "7c07cfc5c4f734c20c4363eb11f18f77c29d02dc5fecbb99af0f8ea65c6af295",
+      "image": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-byte-disjoint-load.data",
+      "image_sha256": "2a170c6885d12dd893726bb0f2b831f1e31b582aee043f37614c274804d283c8",
+      "log": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/metadata-wb-v2-store-byte-disjoint-load.log",
+      "log_sha256": "411340b92d7afe7f25a378543580d8ace110ba5d4478a7ff63ee0a21f91b4375"
+    }
+  ],
+  "evidence_sha256": {
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/snapshot.json": "179e5b936d630183bc4e13d485b03520cf3e57aaec68808b4564d2be0f3f6c12",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/sim-results.json": "3cf10e78479ee0627cfac337b42230d2a00789b4f6f3a10a9cf4358eeb9e4f4e",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/ppa-results.json": "6256ed4341cdc04fc138d34331fbf6669152bd8ff76f88a5062a02d4af7bd0be",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_add_to_100.log": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_array_test1.log": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_array_test2.log": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_basicopt1.log": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_bulgarian.log": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_expr.log": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_gcd.log": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_hanoi.log": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_lvalue2.log": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_magic.log": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_manyarguments.log": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_multiarray.log": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_naive.log": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_pi.log": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_qsort.log": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_queens.log": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_statement_test.log": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_superloop.log": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/correctness_tak.log": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/perf_median.log": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/perf_multiply.log": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/perf_qsort.log": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/perf_rsort.log": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/perf_towers.log": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/baseline/perf_vvadd.log": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/snapshot.json": "051445df6ab97e3924b7ca587e1099012df6b588dfd6f1629c753488d972e201",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/sim-results.json": "9105fd21ceae1f8ae5293926514ac4efc53abadb70871c61576525c39b25b541",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/ppa-results.json": "553ea3e5fd671fcfcf9f0e3932425b006107818b8c13904398a3fe3c387dbb3c",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_add_to_100.log": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_array_test1.log": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_array_test2.log": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_basicopt1.log": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_bulgarian.log": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_expr.log": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_gcd.log": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_hanoi.log": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_lvalue2.log": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_magic.log": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_manyarguments.log": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_multiarray.log": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_naive.log": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_pi.log": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_qsort.log": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_queens.log": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_statement_test.log": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_superloop.log": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/correctness_tak.log": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/perf_median.log": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/perf_multiply.log": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/perf_qsort.log": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/perf_rsort.log": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/perf_towers.log": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-v2/perf_vvadd.log": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/snapshot.json": "5545d3f5432eead0ad350ae5e87a57533ee51998f5c7c23132bceb7442822031",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/sim-results.json": "1c5bee11e9faa694e7032b8e7a41a71af65be757b0b381791d0860086a609f02",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/ppa-results.json": "afb4dde1d48db0c49c07787c0904bb6b9c4ce927d03418dbdfdd3a0f5eb80ea3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_add_to_100.log": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_array_test1.log": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_array_test2.log": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_basicopt1.log": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_bulgarian.log": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_expr.log": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_gcd.log": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_hanoi.log": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_lvalue2.log": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_magic.log": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_manyarguments.log": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_multiarray.log": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_naive.log": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_pi.log": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_qsort.log": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_queens.log": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_statement_test.log": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_superloop.log": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/correctness_tak.log": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/perf_median.log": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/perf_multiply.log": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/perf_qsort.log": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/perf_rsort.log": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/perf_towers.log": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-v2/perf_vvadd.log": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/snapshot.json": "5d76c7a24bfdc17b7ffb19f4e8983b3750dcf8071e225a4dd3c0d667f20959f8",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/sim-results.json": "9144157faacee7b6a18afbedd0454ca5f4254cedb3d6d73a60cbf72a075d3705",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/ppa-results.json": "5d6d6e25a6e0bcb4ea5c3377c79fda24875b56323415ce53e91b86eb8bdd0fcb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_add_to_100.log": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_array_test1.log": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_array_test2.log": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_basicopt1.log": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_bulgarian.log": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_expr.log": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_gcd.log": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_hanoi.log": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_lvalue2.log": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_magic.log": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_manyarguments.log": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_multiarray.log": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_naive.log": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_pi.log": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_qsort.log": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_queens.log": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_statement_test.log": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_superloop.log": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/correctness_tak.log": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/perf_median.log": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/perf_multiply.log": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/perf_qsort.log": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/perf_rsort.log": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/perf_towers.log": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-retain-v2/perf_vvadd.log": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/snapshot.json": "6ed0480548546911557d7f2049b7e3952a9052ff2f88657cf2f3964467cd01fc",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/sim-results.json": "84669c3748b7d6fd1f3af44f188c03602b2d01856004eee41f64e37e825f665b",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/ppa-results.json": "06b736a4574653fafbad06e9d220b6c8c6c2641379aea0fb1de200f6269c6225",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_add_to_100.log": "4c6c7d87bbdf9f9d80ee86ab59d5cd99426462f922f657a04e45af91eafa9a7a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_array_test1.log": "51a364066533aaa8ec0173a18dfcc59122b1bb27f26f1aeac6c52369a6418543",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_array_test2.log": "f2a19043e613b2c35e2b094c16facf60cc0c600f8cfa7171e7b6ad1933722e74",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_basicopt1.log": "1f224285ba2856a4b50c6d0599bd4941746b7d52cd278251a41d36c009ecaeb0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_bulgarian.log": "6cd1714d43b06c7849387279cb75bde8a24fd47c1aa9285ad1f819f7bac4c451",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_expr.log": "a0869f2120f5cda2824a004d6fcba9275cabc924106102c33b92c658f9f7a35f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_gcd.log": "d52a8275fac2b52c0f826525a50db11d47cfa3bcee1e104f8be8cfa47f0cc275",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_hanoi.log": "18040bf5e75413ba85946cbd849858433de020a42d175e4ef82da31c7c1ed6f3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_lvalue2.log": "0ac9736308d3adebcabc9126295a7e2d1c58f81c804c2a7bfb81b514270546e9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_magic.log": "2a806391a5b68b590c4fb4ecf129e55a327417c711e19729bfad9b9852def322",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_manyarguments.log": "72a137aaa523a476d2f5f35ae184d23afc8a6ce1da0d3e2d247492ae981a7738",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_multiarray.log": "08749a226391bd2c6ba3ee2fd9f83cd248f9cb6eed860c1531dc42ce9bb39425",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_naive.log": "e81d80eb5d8a07b492d7d4eab0ffa1efa2cb39a853bcac66c507927d714012da",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_pi.log": "0a3f231a91dd9d753549f50de01555004663e1e1d0ad079748a5abc539c286eb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_qsort.log": "3a69ac4e615079152fe1d3eeb6c9935586009cd3e2cdd6101b09dd87d4c60a9d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_queens.log": "5008bbafe7c08bd5f149a45351191cf4827e6338c6b7d37a05d69c9c8dd85bed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_statement_test.log": "794c42c33ded570914fec5cc19f2ad1adeb708589408da6a74e116f9e69518ae",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_superloop.log": "76d500dcd49b69e348c1c732626b46554973e1d60a4739b875bdcc1833b8a8aa",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/correctness_tak.log": "86a72488b87d1524bf09748c57e9d92a4fff5d119984b65bc7385ebae57d3925",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/perf_median.log": "dc7f86ff87072db6f1f27d16dfd7dcc7a822d5a753baac506abc024af02e918d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/perf_multiply.log": "fb3b654aa7321dba8dd388677a10a31ef5a9ec5935e73747346437638b4561d6",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/perf_qsort.log": "6ad5d1efb4a34eb8ff947d732c2fb6087d306345682877ed21260d9d263cc612",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/perf_rsort.log": "a13f48888b98281872bd3ac4faac56ab2469074299098df7122d39df209f43d2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/perf_towers.log": "72e96c76694e832c3447c893dec5206e7fda50b516718c8f0495e05b6cd926db",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/metadata-wb-rs-v2/perf_vvadd.log": "bde114e89918e991fb4e2fdad83e1ad1db8c2ae5bbabc969630bc79754e903ed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/load_nonoverlap_20261014/results-summary.json": "b743655349b23b99907e1a7ee60f6bf98cd086a05ef1128bc6101d3a2935266f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/load_path_20261014/load-results.json": "ddf48458634f8306e72035da748d8ea4b6750b5eb909627b9de76a73a80ad6b3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/final-results.json": "5df42424dcf0633913db1a1f54f086b5ecb7fb4ec4e6a7fb69fe5c474d1d4f5c",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/results.json": "d7bacf375b23bc795a76096ced03c2cc213d2c64b915dae1ef83413ad9be79f8",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/results.json": "6fa5c2b1a85b661b259a0590130037a775964340b7cd2db5025353491961d071",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/path-audit.json": "005df4715d8ebfa7225abc9447fdb7f7fbbfd75167a041b8033ef1611ba17e4f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/selected-path/path-audit.json": "36d7d07c6c6ffe58258240b5895da6c276b810234cdf628e54e6ddb1f5d17649",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/results.json": "a075e286ca94835fad8e70cdfbc33ad0dca3c3640af38be87f6bcfc5c821a0fb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-lsq-1-0.log": "e4d6e3fc556df4fb9fdad5f8fdaed22ded0805533849b4745efeaa8c7f99b252",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-lsq-1-1.log": "e4d6e3fc556df4fb9fdad5f8fdaed22ded0805533849b4745efeaa8c7f99b252",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-wb-1.log": "bb33be30a26b220baf5732727782cc4a0f411f42253cd5852357f1d502a8022d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-lsq-2-0.log": "c485cf33065efe5f8c356c8476f17085f824657f2a0fdaa1eb606d417e87b293",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-lsq-2-1.log": "c485cf33065efe5f8c356c8476f17085f824657f2a0fdaa1eb606d417e87b293",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-wb-2.log": "79323094e330eb7e54ee5cab617d9394cebdfbd07d73efb625c5fef39409b951",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-lsq-4-0.log": "c253fccdd97804b4f6103338395bde32e2fcf3c8f7bd6914decd7976cdbf32e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-lsq-4-1.log": "c253fccdd97804b4f6103338395bde32e2fcf3c8f7bd6914decd7976cdbf32e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-wb-4.log": "e8ee6e3c4e4195ca28fb05755e6fadf848aa6e8a1dbacd01b2583631eb354f76",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-wb-rob-2.log": "ea6764e2385cdce1f79c8369eba27676e3c8cc1769bff7b910d8749f375bfb6f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-v2-wb-rob-4.log": "ea6764e2385cdce1f79c8369eba27676e3c8cc1769bff7b910d8749f375bfb6f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-lsq-1-0.log": "e4d6e3fc556df4fb9fdad5f8fdaed22ded0805533849b4745efeaa8c7f99b252",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-lsq-1-1.log": "e4d6e3fc556df4fb9fdad5f8fdaed22ded0805533849b4745efeaa8c7f99b252",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-wb-1.log": "bb33be30a26b220baf5732727782cc4a0f411f42253cd5852357f1d502a8022d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-lsq-2-0.log": "c485cf33065efe5f8c356c8476f17085f824657f2a0fdaa1eb606d417e87b293",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-lsq-2-1.log": "c485cf33065efe5f8c356c8476f17085f824657f2a0fdaa1eb606d417e87b293",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-wb-2.log": "79323094e330eb7e54ee5cab617d9394cebdfbd07d73efb625c5fef39409b951",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-lsq-4-0.log": "c253fccdd97804b4f6103338395bde32e2fcf3c8f7bd6914decd7976cdbf32e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-lsq-4-1.log": "c253fccdd97804b4f6103338395bde32e2fcf3c8f7bd6914decd7976cdbf32e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-wb-4.log": "e8ee6e3c4e4195ca28fb05755e6fadf848aa6e8a1dbacd01b2583631eb354f76",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-wb-rob-2.log": "ea6764e2385cdce1f79c8369eba27676e3c8cc1769bff7b910d8749f375bfb6f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/screen-v2/metadata-wb-v2-wb-rob-4.log": "ea6764e2385cdce1f79c8369eba27676e3c8cc1769bff7b910d8749f375bfb6f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w1-r16.log": "4c02334ecd406e68dcf3f2d2683f0670989e72e388b0b2b11ff60f1e43a3692e",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w1-r32.log": "12604134d4d86ee40182fa5d8b4bac49aab23b6fee2f3197eb9c402af8d99beb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w1-r64.log": "c0f166e80138b4a46c6cd6e2084eb6555e672a490c3b3dac22d1a116c5ea4cc3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w1-seed8201.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w1-seed8202.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w1-seed8203.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w2-r16.log": "e3381cdec234367a14ac015a78baea091b7f38e4d46390a8f93929e35a7f2ad3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w2-r32.log": "c8c74042de358e8620fd3e72eb7323b0e3cd6b2e892dd1130edbc906dd2887e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w2-r64.log": "80f93ba1bbf160a9756546588125e9c92b84744decbefdb6db3968b76c2f85ee",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w2-seed8201.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w2-seed8202.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w2-seed8203.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w4-r16.log": "acd9dba4c2ad623dc9a326355a4f508f2f7f2d3c32444a543ea71aecdbc17f26",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w4-r32.log": "db797cc794a38b82bfb9d985759c4f4bd4c059a8d510fff1469e37f188a51267",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-reuse-w4-r64.log": "97eec1d374abd0c24e28a5728c5583b4d339e685e0261db993f07dd1cdf51582",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w4-seed8201.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w4-seed8202.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/baseline-model-w4-seed8203.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w1-r16.log": "4c02334ecd406e68dcf3f2d2683f0670989e72e388b0b2b11ff60f1e43a3692e",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w1-r32.log": "12604134d4d86ee40182fa5d8b4bac49aab23b6fee2f3197eb9c402af8d99beb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w1-r64.log": "c0f166e80138b4a46c6cd6e2084eb6555e672a490c3b3dac22d1a116c5ea4cc3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w1-seed8201.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w1-seed8202.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w1-seed8203.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w2-r16.log": "e3381cdec234367a14ac015a78baea091b7f38e4d46390a8f93929e35a7f2ad3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w2-r32.log": "c8c74042de358e8620fd3e72eb7323b0e3cd6b2e892dd1130edbc906dd2887e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w2-r64.log": "80f93ba1bbf160a9756546588125e9c92b84744decbefdb6db3968b76c2f85ee",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w2-seed8201.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w2-seed8202.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w2-seed8203.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w4-r16.log": "acd9dba4c2ad623dc9a326355a4f508f2f7f2d3c32444a543ea71aecdbc17f26",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w4-r32.log": "db797cc794a38b82bfb9d985759c4f4bd4c059a8d510fff1469e37f188a51267",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-reuse-w4-r64.log": "97eec1d374abd0c24e28a5728c5583b4d339e685e0261db993f07dd1cdf51582",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w4-seed8201.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w4-seed8202.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/rs-retain-v2-model-w4-seed8203.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w1-r16.log": "4c02334ecd406e68dcf3f2d2683f0670989e72e388b0b2b11ff60f1e43a3692e",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w1-r32.log": "12604134d4d86ee40182fa5d8b4bac49aab23b6fee2f3197eb9c402af8d99beb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w1-r64.log": "c0f166e80138b4a46c6cd6e2084eb6555e672a490c3b3dac22d1a116c5ea4cc3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w1-seed8201.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w1-seed8202.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w1-seed8203.log": "10a76156248b4727fdb50adc96c87db58586c0c57bac1b5de4de89e4b5558a82",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w2-r16.log": "e3381cdec234367a14ac015a78baea091b7f38e4d46390a8f93929e35a7f2ad3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w2-r32.log": "c8c74042de358e8620fd3e72eb7323b0e3cd6b2e892dd1130edbc906dd2887e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w2-r64.log": "80f93ba1bbf160a9756546588125e9c92b84744decbefdb6db3968b76c2f85ee",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w2-seed8201.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w2-seed8202.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w2-seed8203.log": "b80780e61643e71cb6781b63e321ecc325e7182ae6e9c59919688c46e5175bf7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w4-r16.log": "acd9dba4c2ad623dc9a326355a4f508f2f7f2d3c32444a543ea71aecdbc17f26",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w4-r32.log": "db797cc794a38b82bfb9d985759c4f4bd4c059a8d510fff1469e37f188a51267",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-reuse-w4-r64.log": "97eec1d374abd0c24e28a5728c5583b4d339e685e0261db993f07dd1cdf51582",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w4-seed8201.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w4-seed8202.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/rs-screen/metadata-wb-rs-v2-model-w4-seed8203.log": "402c8daebdeca321637d3ecc1f2dbe6358276e52231a301705576efd52af5ee0",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w1-r16-run.log": "4c02334ecd406e68dcf3f2d2683f0670989e72e388b0b2b11ff60f1e43a3692e",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w1-r32-run.log": "12604134d4d86ee40182fa5d8b4bac49aab23b6fee2f3197eb9c402af8d99beb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w1-r64-run.log": "c0f166e80138b4a46c6cd6e2084eb6555e672a490c3b3dac22d1a116c5ea4cc3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w2-r16-run.log": "e3381cdec234367a14ac015a78baea091b7f38e4d46390a8f93929e35a7f2ad3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w2-r32-run.log": "c8c74042de358e8620fd3e72eb7323b0e3cd6b2e892dd1130edbc906dd2887e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w2-r64-run.log": "80f93ba1bbf160a9756546588125e9c92b84744decbefdb6db3968b76c2f85ee",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w4-r16-run.log": "acd9dba4c2ad623dc9a326355a4f508f2f7f2d3c32444a543ea71aecdbc17f26",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w4-r32-run.log": "db797cc794a38b82bfb9d985759c4f4bd4c059a8d510fff1469e37f188a51267",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/final-int-rs-reuse-unit-archive/w4-r64-run.log": "97eec1d374abd0c24e28a5728c5583b4d339e685e0261db993f07dd1cdf51582",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/results.json": "0fefebfe87681b347664f2d19280c2bf7abcd09c3f4642fdeaa8b6ad7c487a98",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-disjoint-load-chain.data": "30a74741d9621b652629b2330b463483d0186a907b203715c39ec504af74f2ba",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/baseline-store-disjoint-load-chain.log": "8b0b02f1bbfde03f7aee6032376739cfd4c66b9b87edafe6bbc28e68ebad67e2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/metadata-wb-v2-store-disjoint-load-chain.log": "8b0b02f1bbfde03f7aee6032376739cfd4c66b9b87edafe6bbc28e68ebad67e2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-alias-load-chain.data": "ac6dcae2ae55f5ab6bf65e6f2982cb42fe5dd52b56e2df73c8ec6f5bb46875d5",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/baseline-store-alias-load-chain.log": "2c5a671484ad5fec24bdd3d5ee457574a2a0a8b0750e655c23af4142a5e7889b",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/metadata-wb-v2-store-alias-load-chain.log": "2c5a671484ad5fec24bdd3d5ee457574a2a0a8b0750e655c23af4142a5e7889b",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/store-byte-disjoint-load.data": "2a170c6885d12dd893726bb0f2b831f1e31b582aee043f37614c274804d283c8",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/baseline-store-byte-disjoint-load.log": "411340b92d7afe7f25a378543580d8ace110ba5d4478a7ff63ee0a21f91b4375",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/return-path-20261014/probes/metadata-wb-v2-store-byte-disjoint-load.log": "411340b92d7afe7f25a378543580d8ace110ba5d4478a7ff63ee0a21f91b4375"
+  },
+  "audit_source_sha256": {
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/screen.py": "2f3c7bbe9b3d684b2dc39ae36d74e8506aa04d42cd25debba6b9a53d68360c32",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/rs_screen.py": "f8d9515bfe309ecd22fd47641d218f8133b5164a9b2263f3613022172493acf9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/paths.py": "b16dff8427e65b4a31e2c9f12b1fa22da0e27476f08254819964c68e1bd72c3c",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/candidate.py": "d7c70d6171432b2da32ec5706cbccb85da5372a328a93174945dacc10e4e659f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/probes.py": "41a774e32a291ed5402e27cf14e2ddf29c30a4e9acd9e7b3e96e49df6f9dcaf3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/trace_selected.py": "f98a241086760a9e845b76adc93bbfdad2f154c887e775be4a3988d4ae2d4e63",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/report.py": "ca7cc8e1bf5350687142a03aa6307fd07516b936d127e3a4addb3b5ab5b8fd8f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/return_path_20261014/qualify.py": "0a74916e14ffd69f412d14f9750b757a79a8512587769e54c9bb1014748eb8fa"
+  }
+}
