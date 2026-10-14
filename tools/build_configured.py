@@ -10,6 +10,28 @@ import sys
 from pathlib import Path
 
 
+def cache_geometry(value):
+    try:
+        size, ways = map(int, value.split(","))
+    except ValueError:
+        raise argparse.ArgumentTypeError("cache must be SIZE_BYTES,WAYS") from None
+    if ways < 1 or size < 1 or size % (16 * ways):
+        raise argparse.ArgumentTypeError("cache size must be a positive multiple of 16 * ways")
+    sets = size // (16 * ways)
+    if sets < 2 or sets & (sets - 1):
+        raise argparse.ArgumentTypeError("cache sets must be a power of two and at least 2")
+    return size, sets, ways
+
+
+def cache_options(icache=None, dcache=None):
+    options = []
+    for prefix, geometry in (("I", icache), ("D", dcache)):
+        if geometry is not None:
+            options.extend("-G{}CACHE_{}={}".format(prefix, name, value)
+                           for name, value in zip(("SIZE_BYTES", "NUM_SETS", "NUM_WAYS"), geometry))
+    return options
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--framework", type=Path, required=True)
@@ -19,6 +41,10 @@ def parse_args():
     parser.add_argument("--be-width", type=int, required=True)
     parser.add_argument("--phys-regs", type=int, default=64)
     parser.add_argument("--rob-entries", type=int, default=32)
+    parser.add_argument("--icache", type=cache_geometry, metavar="SIZE_BYTES,WAYS",
+                        help="override I-cache geometry; otherwise use RTL defaults")
+    parser.add_argument("--dcache", type=cache_geometry, metavar="SIZE_BYTES,WAYS",
+                        help="override D-cache geometry; otherwise use RTL defaults")
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--appimage", default="")
     parser.add_argument("--verilator")
@@ -86,6 +112,7 @@ def main():
         "-GPHYS_REGS={}".format(args.phys_regs),
         "-GROB_ENTRIES={}".format(args.rob_entries),
     ]
+    command.extend(cache_options(args.icache, args.dcache))
     command.extend(str(path) for path in with_ram_source(sources))
     command.append(str(scripts / "sim.cpp"))
     subprocess.run(command, check=True, env=environment)

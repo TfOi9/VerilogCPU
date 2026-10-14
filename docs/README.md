@@ -59,3 +59,5 @@ Decode、Rename 与 Dispatch 流水线设计见 [dispatch.md](dispatch.md)。
 第 27 项的全部性能测试、单参数敏感度、面积与频率门槛及 Pareto 对比见 [performance.md](performance.md)。
 
 总线流水化的正式实现、协议验证、完整回归及优化前后 IPC/频率/面积对比见 [bus_pipeline_performance.md](bus_pipeline_performance.md)。
+
+Cache 容量、两路相联的三程序轻量对照、SRAM 面积预算及后续 IPC 优化方向见 [cache-pilot-20261014.md](cache-pilot-20261014.md)。
