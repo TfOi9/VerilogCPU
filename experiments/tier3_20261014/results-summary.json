@@ -1,0 +1,1802 @@
+{
+  "completed": true,
+  "simulation_audit_passed": true,
+  "head": "033a46d93c586c83eb59157e631a229cc3b15aa2",
+  "configuration": {
+    "FE_WIDTH": 2,
+    "BE_WIDTH": 2,
+    "PHYS_REGS": 64,
+    "ROB_ENTRIES": 32,
+    "RECOVERY_WIDTH": 4,
+    "ICACHE_SIZE_BYTES": 1024,
+    "ICACHE_NUM_SETS": 64,
+    "ICACHE_NUM_WAYS": 1,
+    "DCACHE_SIZE_BYTES": 16384,
+    "DCACHE_NUM_SETS": 512,
+    "DCACHE_NUM_WAYS": 2
+  },
+  "baseline_ipc": 0.6816313861902019,
+  "ipc_gain_needed_percent": 61.1574851533429,
+  "original_custom_ppa": {
+    "area_um2": 33029.162240900376,
+    "fmax_mhz": 288.77608573040044,
+    "minimum_period_ns": 3.462890625
+  },
+  "original_fast_mapping": {
+    "area_um2": 25260.734121003745,
+    "fmax_mhz": 70.56229327453143,
+    "minimum_period_ns": 14.171875
+  },
+  "framework_update": {
+    "old_framework": "54fc150ffc290f52aa024209ffb9a29d43856f6d",
+    "new_framework": "302f0cf3cccdaa5de084a2120e0d950c663e4cf5",
+    "update": "fast-forward",
+    "changed_files": [
+      "Makefile",
+      "README-EN.md",
+      "README-ZH.md",
+      "config.mk",
+      "scripts/synth.py"
+    ],
+    "simulation_inputs_unchanged": true,
+    "stopped_old_runs": {
+      "official-synth": "interrupted before completion to update framework",
+      "response-mux-ppa": "interrupted before completion to update framework"
+    },
+    "new_defaults": {
+      "abc_driving_cell": "INVx1_ASAP7_75t_R",
+      "abc_load_ff": 5.0
+    },
+    "sta_constraints_changed": false
+  },
+  "official_ppa": {
+    "area_um2": 27066.72956100066,
+    "fmax_mhz": 293.4097421203438,
+    "minimum_period_ns": 3.408203125,
+    "abc_constraints": {
+      "driving_cell": "INVx1_ASAP7_75t_R",
+      "output_load_ff": 5.0
+    },
+    "report": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/report.json",
+    "critical_path": {
+      "arrival_ns": 3.3529999999999998,
+      "combinational_stages": 101,
+      "buffers_inverters": 12,
+      "max_path_fanout": 10,
+      "startpoint": {
+        "pin": "_409239_/QN",
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+      },
+      "endpoint": {
+        "pin": "_396548_/D",
+        "src": null
+      }
+    }
+  },
+  "response_mux_ppa": {
+    "area_um2": 26929.94000100108,
+    "fmax_mhz": 302.6899201891812,
+    "minimum_period_ns": 3.3037109375,
+    "abc_constraints": {
+      "driving_cell": "INVx1_ASAP7_75t_R",
+      "output_load_ff": 5.0
+    },
+    "report": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/report.json",
+    "critical_path": {
+      "arrival_ns": 3.2489999999999997,
+      "combinational_stages": 98,
+      "buffers_inverters": 12,
+      "max_path_fanout": 10,
+      "startpoint": {
+        "pin": "_407564_/QN",
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/response-mux-ppa/input/student_top.v:143.5-152.8"
+      },
+      "endpoint": {
+        "pin": "_404519_/D",
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/response-mux-ppa/input/rv32_integer_reservation_station.v:529.5-726.8"
+      }
+    }
+  },
+  "cases": [
+    {
+      "case": "perf_median",
+      "cycles": 14081,
+      "ipc": 0.4943540941694482,
+      "dynamic_instructions": 6961,
+      "counts": {
+        "accepted_control_completions": 3523,
+        "accepted_control_mismatches": 556,
+        "active_cycles": 12193,
+        "completion_width_0": 5878,
+        "completion_width_1": 3125,
+        "completion_width_2": 3190,
+        "control_conditional": 2856,
+        "control_jal": 663,
+        "control_jalr": 4,
+        "cycles": 14081,
+        "dcache_array_conflict": 228,
+        "dcache_nonrun": 6041,
+        "dcache_refills": 302,
+        "dependent_load_present": 0,
+        "detail_accepted_ram_stores": 402,
+        "detail_hit_during_miss": 482,
+        "detail_load_misses": 201,
+        "detail_load_responses": 2760,
+        "detail_posted_ram_stores": 300,
+        "detail_refill_install": 302,
+        "detail_retired_conditional": 2275,
+        "detail_retired_jal": 261,
+        "detail_retired_jalr": 4,
+        "detail_retired_wrong_conditional": 529,
+        "detail_retired_wrong_jal": 0,
+        "detail_retired_wrong_jalr": 4,
+        "detail_s1_same_line_lock": 1836,
+        "detail_s1_same_set_lock": 1836,
+        "detail_second_miss_stall": 36,
+        "detail_second_same_line": 0,
+        "detail_store_misses": 101,
+        "detail_store_no_hint": 102,
+        "detail_store_responses": 402,
+        "dispatch_width_0": 4038,
+        "dispatch_width_1": 2626,
+        "dispatch_width_2": 5529,
+        "eligible_load_present": 6114,
+        "fetch_empty": 3124,
+        "fetch_empty_active": 1766,
+        "fetch_empty_with_rob_empty": 746,
+        "fetch_path_corrections": 4,
+        "icache_line_reads": 22,
+        "icache_nonrun": 406,
+        "inflight_full_cycles": 1386,
+        "inflight_samples": 27247,
+        "int_rs_full_active": 15,
+        "issue_grants_0": 4624,
+        "issue_grants_1": 3810,
+        "issue_grants_2": 3759,
+        "issue_width_0": 4624,
+        "issue_width_1": 3810,
+        "issue_width_2": 3759,
+        "load_candidate_with_inflight": 6178,
+        "load_requests": 2760,
+        "load_stage_address": 1,
+        "load_stage_eligible": 1,
+        "load_stage_inflight": 3675,
+        "load_stage_request_queue": 108,
+        "load_stage_writeback": 58,
+        "load_store_address_collision": 169,
+        "lsq_full_active": 2612,
+        "lsq_occupancy_samples": 54125,
+        "mismatch_conditional": 552,
+        "mismatch_jal": 0,
+        "mismatch_jalr": 4,
+        "multiple_inflight_cycles": 9175,
+        "partition_head_branch": 361,
+        "partition_head_load": 3843,
+        "partition_head_other": 31,
+        "partition_head_store_address": 633,
+        "partition_head_store_response": 2383,
+        "partition_recovery": 1888,
+        "partition_retire": 3921,
+        "partition_rob_empty": 1021,
+        "prf_empty_active": 0,
+        "recovery_events": 538,
+        "request_backpressure_cycles": 3498,
+        "retire_width_0": 10160,
+        "retire_width_1": 882,
+        "retire_width_2": 3039,
+        "retired": 6960,
+        "retired_control": 2540,
+        "retired_integer": 2022,
+        "retired_load": 1996,
+        "retired_store": 402,
+        "rob_full_active": 1282,
+        "rob_occupancy_samples": 188645,
+        "rollback_entries": 6714,
+        "store_head_dcache_nonrun": 1635,
+        "store_requests": 403,
+        "store_stage_inflight": 1867,
+        "store_stage_prepare": 360,
+        "store_stage_request_queue": 156,
+        "unknown_store_present": 1396,
+        "unused_issue_grants": 0,
+        "writeback_backpressure": 105
+      },
+      "partition_percent": {
+        "head_branch": 2.5637383708543426,
+        "head_load": 27.29209573183723,
+        "head_other": 0.22015481854981891,
+        "head_store_address": 4.495419359420496,
+        "head_store_response": 16.92351395497479,
+        "recovery": 13.408138626518005,
+        "retire": 27.84603366238193,
+        "rob_empty": 7.25090547546339
+      },
+      "unique_refill_lines": 302,
+      "total_refills": 302,
+      "load_latencies": {
+        "4": 1188,
+        "5": 472,
+        "6": 126,
+        "7": 153,
+        "8": 154,
+        "9": 148,
+        "10": 29,
+        "12": 3,
+        "13": 3,
+        "16": 1,
+        "22": 99,
+        "23": 220,
+        "24": 99,
+        "25": 18,
+        "26": 21,
+        "27": 10,
+        "28": 11,
+        "29": 1,
+        "30": 1,
+        "43": 1,
+        "45": 1,
+        "64": 1
+      },
+      "store_latencies": {
+        "4": 227,
+        "6": 15,
+        "7": 12,
+        "8": 25,
+        "9": 5,
+        "11": 2,
+        "12": 1,
+        "13": 2,
+        "14": 2,
+        "15": 5,
+        "23": 99,
+        "24": 1,
+        "26": 3,
+        "27": 2,
+        "28": 1
+      },
+      "top_branch_errors": [
+        {
+          "pc": "0xf4",
+          "wrong": 251,
+          "retired": 398
+        },
+        {
+          "pc": "0xfc",
+          "wrong": 82,
+          "retired": 145
+        },
+        {
+          "pc": "0x114",
+          "wrong": 76,
+          "retired": 199
+        },
+        {
+          "pc": "0xf8",
+          "wrong": 59,
+          "retired": 199
+        },
+        {
+          "pc": "0x118",
+          "wrong": 56,
+          "retired": 134
+        }
+      ]
+    },
+    {
+      "case": "perf_multiply",
+      "cycles": 21820,
+      "ipc": 0.9955087076076994,
+      "dynamic_instructions": 21722,
+      "counts": {
+        "accepted_control_completions": 6979,
+        "accepted_control_mismatches": 669,
+        "active_cycles": 20983,
+        "completion_width_0": 5615,
+        "completion_width_1": 7153,
+        "completion_width_2": 8215,
+        "control_conditional": 6768,
+        "control_jal": 7,
+        "control_jalr": 204,
+        "cycles": 21820,
+        "dcache_array_conflict": 74,
+        "dcache_nonrun": 2060,
+        "dcache_refills": 103,
+        "dependent_load_present": 0,
+        "detail_accepted_ram_stores": 107,
+        "detail_hit_during_miss": 72,
+        "detail_load_misses": 76,
+        "detail_load_responses": 407,
+        "detail_posted_ram_stores": 80,
+        "detail_refill_install": 103,
+        "detail_retired_conditional": 6701,
+        "detail_retired_jalr": 202,
+        "detail_retired_wrong_conditional": 665,
+        "detail_retired_wrong_jalr": 3,
+        "detail_s1_same_line_lock": 432,
+        "detail_s1_same_set_lock": 432,
+        "detail_second_miss_stall": 36,
+        "detail_second_same_line": 0,
+        "detail_store_misses": 27,
+        "detail_store_no_hint": 27,
+        "detail_store_responses": 107,
+        "dispatch_width_0": 4927,
+        "dispatch_width_1": 7560,
+        "dispatch_width_2": 8496,
+        "eligible_load_present": 892,
+        "fetch_empty": 3804,
+        "fetch_empty_active": 3627,
+        "fetch_empty_with_rob_empty": 2432,
+        "fetch_path_corrections": 2,
+        "icache_line_reads": 26,
+        "icache_nonrun": 442,
+        "inflight_full_cycles": 168,
+        "inflight_samples": 5656,
+        "int_rs_full_active": 888,
+        "issue_grants_0": 5688,
+        "issue_grants_1": 7003,
+        "issue_grants_2": 8292,
+        "issue_width_0": 5688,
+        "issue_width_1": 7003,
+        "issue_width_2": 8292,
+        "load_candidate_with_inflight": 688,
+        "load_requests": 407,
+        "load_stage_address": 6,
+        "load_stage_eligible": 6,
+        "load_stage_inflight": 1765,
+        "load_stage_request_queue": 6,
+        "load_store_address_collision": 0,
+        "lsq_full_active": 336,
+        "lsq_occupancy_samples": 9542,
+        "mismatch_conditional": 665,
+        "mismatch_jal": 0,
+        "mismatch_jalr": 4,
+        "multiple_inflight_cycles": 1673,
+        "partition_head_branch": 208,
+        "partition_head_load": 1783,
+        "partition_head_other": 1052,
+        "partition_head_store_address": 108,
+        "partition_head_store_response": 705,
+        "partition_recovery": 837,
+        "partition_retire": 14097,
+        "partition_rob_empty": 3030,
+        "prf_empty_active": 0,
+        "recovery_events": 668,
+        "request_backpressure_cycles": 458,
+        "retire_width_0": 7723,
+        "retire_width_1": 6473,
+        "retire_width_2": 7624,
+        "retired": 21721,
+        "retired_control": 6903,
+        "retired_integer": 14304,
+        "retired_load": 407,
+        "retired_store": 107,
+        "rob_full_active": 400,
+        "rob_occupancy_samples": 133742,
+        "rollback_entries": 2821,
+        "store_head_dcache_nonrun": 479,
+        "store_requests": 108,
+        "store_stage_inflight": 572,
+        "store_stage_prepare": 104,
+        "store_stage_request_queue": 29,
+        "unknown_store_present": 108,
+        "unused_issue_grants": 0,
+        "writeback_backpressure": 24
+      },
+      "partition_percent": {
+        "head_branch": 0.9532538955087075,
+        "head_load": 8.171402383134739,
+        "head_other": 4.821264894592117,
+        "head_store_address": 0.4949587534372136,
+        "head_store_response": 3.230980751604033,
+        "recovery": 3.8359303391384056,
+        "retire": 64.60586617781851,
+        "rob_empty": 13.886342804766269
+      },
+      "unique_refill_lines": 103,
+      "total_refills": 103,
+      "load_latencies": {
+        "4": 156,
+        "5": 123,
+        "6": 1,
+        "14": 1,
+        "17": 1,
+        "22": 23,
+        "23": 52,
+        "24": 24,
+        "26": 1,
+        "43": 2,
+        "45": 23
+      },
+      "store_latencies": {
+        "4": 79,
+        "5": 1,
+        "23": 27
+      },
+      "top_branch_errors": [
+        {
+          "pc": "0x120",
+          "wrong": 556,
+          "retired": 3200
+        },
+        {
+          "pc": "0x130",
+          "wrong": 102,
+          "retired": 3200
+        },
+        {
+          "pc": "0xb8",
+          "wrong": 3,
+          "retired": 100
+        },
+        {
+          "pc": "0xe0",
+          "wrong": 3,
+          "retired": 100
+        },
+        {
+          "pc": "0x14",
+          "wrong": 1,
+          "retired": 1
+        }
+      ]
+    },
+    {
+      "case": "perf_qsort",
+      "cycles": 232542,
+      "ipc": 0.6016117518555788,
+      "dynamic_instructions": 139900,
+      "counts": {
+        "accepted_control_completions": 50819,
+        "accepted_control_mismatches": 10708,
+        "active_cycles": 197404,
+        "completion_width_0": 59578,
+        "completion_width_1": 83176,
+        "completion_width_2": 54650,
+        "control_conditional": 42554,
+        "control_jal": 8261,
+        "control_jalr": 4,
+        "cycles": 232542,
+        "dcache_array_conflict": 4075,
+        "dcache_nonrun": 20755,
+        "dcache_refills": 1037,
+        "dcache_writebacks": 12,
+        "dependent_load_present": 2131,
+        "detail_accepted_ram_stores": 13750,
+        "detail_hit_during_miss": 224,
+        "detail_load_misses": 1032,
+        "detail_load_responses": 45687,
+        "detail_posted_ram_stores": 13516,
+        "detail_refill_install": 1037,
+        "detail_retired_conditional": 37664,
+        "detail_retired_jal": 5323,
+        "detail_retired_jalr": 4,
+        "detail_retired_wrong_conditional": 10056,
+        "detail_retired_wrong_jal": 0,
+        "detail_retired_wrong_jalr": 4,
+        "detail_s1_same_line_lock": 6589,
+        "detail_s1_same_set_lock": 6746,
+        "detail_second_miss_stall": 384,
+        "detail_second_same_line": 0,
+        "detail_store_misses": 5,
+        "detail_store_no_hint": 234,
+        "detail_store_responses": 13750,
+        "dispatch_width_0": 45953,
+        "dispatch_width_1": 37629,
+        "dispatch_width_2": 113822,
+        "eligible_load_present": 79455,
+        "fetch_empty": 57915,
+        "fetch_empty_active": 32790,
+        "fetch_empty_with_rob_empty": 11130,
+        "fetch_path_corrections": 1472,
+        "icache_line_reads": 45,
+        "icache_nonrun": 822,
+        "inflight_full_cycles": 8686,
+        "inflight_samples": 334920,
+        "int_rs_full_active": 4722,
+        "issue_grants_0": 56366,
+        "issue_grants_1": 60150,
+        "issue_grants_2": 80888,
+        "issue_width_0": 56366,
+        "issue_width_1": 60150,
+        "issue_width_2": 80888,
+        "load_candidate_with_inflight": 68868,
+        "load_requests": 45687,
+        "load_stage_address": 4744,
+        "load_stage_eligible": 4959,
+        "load_stage_inflight": 51710,
+        "load_stage_request_queue": 7468,
+        "load_stage_writeback": 577,
+        "load_store_address_collision": 1745,
+        "lsq_full_active": 13904,
+        "lsq_occupancy_samples": 643702,
+        "mismatch_conditional": 10704,
+        "mismatch_jal": 0,
+        "mismatch_jalr": 4,
+        "multiple_inflight_cycles": 112477,
+        "partition_head_branch": 5494,
+        "partition_head_load": 69458,
+        "partition_head_other": 1102,
+        "partition_head_store_address": 6676,
+        "partition_head_store_response": 9053,
+        "partition_recovery": 35138,
+        "partition_retire": 85975,
+        "partition_rob_empty": 19646,
+        "prf_empty_active": 0,
+        "recovery_events": 10592,
+        "request_backpressure_cycles": 21399,
+        "retire_width_0": 146567,
+        "retire_width_1": 32051,
+        "retire_width_2": 53924,
+        "retired": 139899,
+        "retired_control": 42991,
+        "retired_integer": 52125,
+        "retired_load": 31033,
+        "retired_store": 13750,
+        "rob_full_active": 9274,
+        "rob_occupancy_samples": 2228405,
+        "rollback_entries": 125364,
+        "store_head_dcache_nonrun": 1572,
+        "store_requests": 13751,
+        "store_stage_inflight": 766,
+        "store_stage_prepare": 6667,
+        "store_stage_request_queue": 1620,
+        "unknown_store_present": 25439,
+        "unused_issue_grants": 0,
+        "writeback_backpressure": 903
+      },
+      "partition_percent": {
+        "head_branch": 2.362583963327055,
+        "head_load": 29.86901290949592,
+        "head_other": 0.4738928881664387,
+        "head_store_address": 2.870879239019188,
+        "head_store_response": 3.893060178376379,
+        "recovery": 15.11038866097307,
+        "retire": 36.971815844019574,
+        "rob_empty": 8.448366316622373
+      },
+      "unique_refill_lines": 1030,
+      "total_refills": 1037,
+      "load_latencies": {
+        "4": 29348,
+        "5": 2144,
+        "6": 3287,
+        "7": 3656,
+        "8": 3126,
+        "9": 1100,
+        "10": 574,
+        "11": 147,
+        "12": 48,
+        "13": 1,
+        "15": 1,
+        "17": 4,
+        "18": 1,
+        "21": 1,
+        "23": 950,
+        "24": 10,
+        "25": 1132,
+        "26": 8,
+        "28": 1,
+        "29": 3,
+        "30": 8,
+        "31": 69,
+        "33": 3,
+        "34": 7,
+        "35": 3,
+        "36": 12,
+        "37": 13,
+        "38": 7,
+        "39": 9,
+        "40": 4,
+        "42": 5,
+        "43": 1,
+        "46": 4
+      },
+      "store_latencies": {
+        "4": 10638,
+        "5": 749,
+        "6": 775,
+        "7": 1149,
+        "8": 334,
+        "9": 42,
+        "10": 21,
+        "11": 8,
+        "12": 11,
+        "13": 11,
+        "14": 5,
+        "19": 1,
+        "23": 4,
+        "24": 1,
+        "26": 1
+      },
+      "top_branch_errors": [
+        {
+          "pc": "0x174",
+          "wrong": 3700,
+          "retired": 11034
+        },
+        {
+          "pc": "0x164",
+          "wrong": 3207,
+          "retired": 8341
+        },
+        {
+          "pc": "0xb0",
+          "wrong": 1291,
+          "retired": 3799
+        },
+        {
+          "pc": "0xa8",
+          "wrong": 523,
+          "retired": 2723
+        },
+        {
+          "pc": "0xbc",
+          "wrong": 326,
+          "retired": 1461
+        }
+      ]
+    },
+    {
+      "case": "perf_rsort",
+      "cycles": 206839,
+      "ipc": 0.9462383786423256,
+      "dynamic_instructions": 195719,
+      "counts": {
+        "accepted_control_completions": 13856,
+        "accepted_control_mismatches": 36,
+        "active_cycles": 206798,
+        "completion_width_0": 73016,
+        "completion_width_1": 71821,
+        "completion_width_2": 61961,
+        "control_conditional": 11794,
+        "control_jal": 2058,
+        "control_jalr": 4,
+        "cycles": 206839,
+        "dcache_array_conflict": 7615,
+        "dcache_nonrun": 47559,
+        "dcache_refills": 2322,
+        "dcache_writebacks": 1116,
+        "dependent_load_present": 2731,
+        "detail_accepted_ram_stores": 28682,
+        "detail_hit_during_miss": 592,
+        "detail_load_misses": 1380,
+        "detail_load_responses": 37792,
+        "detail_posted_ram_stores": 19538,
+        "detail_refill_install": 2322,
+        "detail_retired_conditional": 11794,
+        "detail_retired_jal": 2051,
+        "detail_retired_jalr": 4,
+        "detail_retired_wrong_conditional": 32,
+        "detail_retired_wrong_jal": 0,
+        "detail_retired_wrong_jalr": 4,
+        "detail_s1_same_line_lock": 1420,
+        "detail_s1_same_set_lock": 1891,
+        "detail_second_miss_stall": 397,
+        "detail_second_same_line": 0,
+        "detail_store_misses": 942,
+        "detail_store_no_hint": 9129,
+        "detail_store_older_conflict": 15,
+        "detail_store_responses": 28682,
+        "dispatch_width_0": 100135,
+        "dispatch_width_1": 17533,
+        "dispatch_width_2": 89130,
+        "eligible_load_present": 71330,
+        "fetch_empty": 1463,
+        "fetch_empty_active": 1445,
+        "fetch_empty_with_rob_empty": 510,
+        "fetch_path_corrections": 6,
+        "icache_line_reads": 67,
+        "icache_nonrun": 1225,
+        "inflight_full_cycles": 5717,
+        "inflight_samples": 350111,
+        "int_rs_full_active": 1968,
+        "issue_grants_0": 85013,
+        "issue_grants_1": 47810,
+        "issue_grants_2": 73975,
+        "issue_width_0": 85013,
+        "issue_width_1": 47810,
+        "issue_width_2": 73975,
+        "load_candidate_with_inflight": 68604,
+        "load_requests": 37792,
+        "load_stage_address": 12,
+        "load_stage_eligible": 13,
+        "load_stage_inflight": 7567,
+        "load_stage_request_queue": 22,
+        "load_stage_writeback": 4,
+        "load_store_address_collision": 10178,
+        "lsq_full_active": 79795,
+        "lsq_occupancy_samples": 1381984,
+        "mismatch_conditional": 32,
+        "mismatch_jal": 0,
+        "mismatch_jalr": 4,
+        "multiple_inflight_cycles": 119196,
+        "partition_head_branch": 6,
+        "partition_head_load": 7618,
+        "partition_head_other": 102,
+        "partition_head_store_address": 2272,
+        "partition_head_store_response": 90031,
+        "partition_recovery": 41,
+        "partition_retire": 106212,
+        "partition_rob_empty": 557,
+        "prf_empty_active": 0,
+        "recovery_events": 36,
+        "request_backpressure_cycles": 29033,
+        "retire_width_0": 100627,
+        "retire_width_1": 16706,
+        "retire_width_2": 89506,
+        "retired": 195718,
+        "retired_control": 13849,
+        "retired_integer": 115285,
+        "retired_load": 37902,
+        "retired_store": 28682,
+        "rob_full_active": 56090,
+        "rob_occupancy_samples": 5702042,
+        "rollback_entries": 65,
+        "store_head_dcache_nonrun": 34571,
+        "store_requests": 28683,
+        "store_stage_inflight": 50926,
+        "store_stage_prepare": 17225,
+        "store_stage_request_queue": 21880,
+        "unknown_store_present": 49117,
+        "unused_issue_grants": 0,
+        "writeback_backpressure": 31
+      },
+      "partition_percent": {
+        "head_branch": 0.002900806907788183,
+        "head_load": 3.6830578372550633,
+        "head_other": 0.049313717432399116,
+        "head_store_address": 1.098438882415792,
+        "head_store_response": 43.52709111917965,
+        "recovery": 0.019822180536552585,
+        "retire": 51.35008388166642,
+        "rob_empty": 0.2692915746063363
+      },
+      "unique_refill_lines": 1605,
+      "total_refills": 2322,
+      "load_latencies": {
+        "4": 30826,
+        "5": 4090,
+        "6": 359,
+        "23": 535,
+        "24": 784,
+        "25": 153,
+        "26": 909,
+        "27": 83,
+        "30": 1,
+        "38": 1,
+        "39": 1,
+        "41": 1,
+        "42": 1,
+        "43": 1,
+        "44": 12,
+        "45": 24,
+        "46": 4,
+        "47": 4,
+        "64": 1,
+        "67": 1,
+        "68": 1
+      },
+      "store_latencies": {
+        "4": 25094,
+        "5": 2373,
+        "6": 2,
+        "7": 2,
+        "22": 67,
+        "23": 587,
+        "24": 401,
+        "25": 124,
+        "26": 20,
+        "27": 2,
+        "30": 1,
+        "35": 1,
+        "42": 2,
+        "44": 5,
+        "48": 1
+      },
+      "top_branch_errors": [
+        {
+          "pc": "0xe0",
+          "wrong": 6,
+          "retired": 1024
+        },
+        {
+          "pc": "0x174",
+          "wrong": 6,
+          "retired": 2048
+        },
+        {
+          "pc": "0x1dc",
+          "wrong": 6,
+          "retired": 508
+        },
+        {
+          "pc": "0x2a4",
+          "wrong": 6,
+          "retired": 2048
+        },
+        {
+          "pc": "0x180",
+          "wrong": 2,
+          "retired": 4
+        }
+      ]
+    },
+    {
+      "case": "perf_towers",
+      "cycles": 8023,
+      "ipc": 0.6578586563629565,
+      "dynamic_instructions": 5278,
+      "counts": {
+        "accepted_control_completions": 391,
+        "accepted_control_mismatches": 102,
+        "active_cycles": 7862,
+        "completion_width_0": 3693,
+        "completion_width_1": 2895,
+        "completion_width_2": 1274,
+        "control_conditional": 195,
+        "control_jal": 58,
+        "control_jalr": 138,
+        "cycles": 8023,
+        "dcache_array_conflict": 928,
+        "dcache_nonrun": 443,
+        "dcache_refills": 22,
+        "dependent_load_present": 0,
+        "detail_accepted_ram_stores": 1620,
+        "detail_hit_during_miss": 0,
+        "detail_load_responses": 1547,
+        "detail_posted_ram_stores": 1587,
+        "detail_refill_install": 22,
+        "detail_retired_conditional": 195,
+        "detail_retired_jal": 51,
+        "detail_retired_jalr": 137,
+        "detail_retired_wrong_conditional": 89,
+        "detail_retired_wrong_jal": 0,
+        "detail_retired_wrong_jalr": 12,
+        "detail_s1_same_line_lock": 0,
+        "detail_s1_same_set_lock": 0,
+        "detail_second_miss_stall": 0,
+        "detail_second_same_line": 0,
+        "detail_store_misses": 22,
+        "detail_store_no_hint": 33,
+        "detail_store_responses": 1620,
+        "dispatch_width_0": 4055,
+        "dispatch_width_1": 1958,
+        "dispatch_width_2": 1849,
+        "eligible_load_present": 2519,
+        "fetch_empty": 2032,
+        "fetch_empty_active": 1952,
+        "fetch_empty_with_rob_empty": 853,
+        "fetch_path_corrections": 9,
+        "icache_line_reads": 79,
+        "icache_nonrun": 1460,
+        "inflight_full_cycles": 312,
+        "inflight_samples": 14114,
+        "int_rs_full_active": 17,
+        "issue_grants_0": 3751,
+        "issue_grants_1": 2763,
+        "issue_grants_2": 1348,
+        "issue_width_0": 3751,
+        "issue_width_1": 2763,
+        "issue_width_2": 1348,
+        "load_candidate_with_inflight": 2451,
+        "load_requests": 1547,
+        "load_stage_address": 20,
+        "load_stage_eligible": 22,
+        "load_stage_inflight": 1175,
+        "load_stage_request_queue": 83,
+        "load_stage_writeback": 64,
+        "load_store_address_collision": 529,
+        "lsq_full_active": 2514,
+        "lsq_occupancy_samples": 43516,
+        "mismatch_conditional": 89,
+        "mismatch_jal": 0,
+        "mismatch_jalr": 13,
+        "multiple_inflight_cycles": 4866,
+        "partition_head_branch": 26,
+        "partition_head_load": 1364,
+        "partition_head_other": 68,
+        "partition_head_store_address": 157,
+        "partition_head_store_response": 1720,
+        "partition_recovery": 161,
+        "partition_retire": 3606,
+        "partition_rob_empty": 921,
+        "prf_empty_active": 0,
+        "recovery_events": 102,
+        "request_backpressure_cycles": 727,
+        "retire_width_0": 4417,
+        "retire_width_1": 1935,
+        "retire_width_2": 1671,
+        "retired": 5277,
+        "retired_control": 383,
+        "retired_integer": 1727,
+        "retired_load": 1547,
+        "retired_store": 1620,
+        "rob_full_active": 35,
+        "rob_occupancy_samples": 81309,
+        "rollback_entries": 369,
+        "store_head_dcache_nonrun": 420,
+        "store_requests": 1621,
+        "store_stage_inflight": 534,
+        "store_stage_prepare": 633,
+        "store_stage_request_queue": 553,
+        "unknown_store_present": 2032,
+        "unused_issue_grants": 0,
+        "writeback_backpressure": 32
+      },
+      "partition_percent": {
+        "head_branch": 0.3240683036270722,
+        "head_load": 17.00112177489717,
+        "head_other": 0.847563255640035,
+        "head_store_address": 1.956873987286551,
+        "head_store_response": 21.438364701483238,
+        "recovery": 2.006730649383024,
+        "retire": 44.94578087997009,
+        "rob_empty": 11.479496447712826
+      },
+      "unique_refill_lines": 22,
+      "total_refills": 22,
+      "load_latencies": {
+        "4": 1353,
+        "5": 96,
+        "6": 97,
+        "23": 1
+      },
+      "store_latencies": {
+        "4": 1058,
+        "5": 383,
+        "6": 153,
+        "7": 4,
+        "23": 20,
+        "25": 1,
+        "26": 1
+      },
+      "top_branch_errors": [
+        {
+          "pc": "0x2d0",
+          "wrong": 38,
+          "retired": 64
+        },
+        {
+          "pc": "0x35c",
+          "wrong": 32,
+          "retired": 63
+        },
+        {
+          "pc": "0x168",
+          "wrong": 3,
+          "retired": 7
+        },
+        {
+          "pc": "0x1ac",
+          "wrong": 3,
+          "retired": 7
+        },
+        {
+          "pc": "0x288",
+          "wrong": 3,
+          "retired": 7
+        }
+      ]
+    },
+    {
+      "case": "perf_vvadd",
+      "cycles": 8313,
+      "ipc": 0.5442078671959582,
+      "dynamic_instructions": 4524,
+      "counts": {
+        "accepted_control_completions": 910,
+        "accepted_control_mismatches": 9,
+        "active_cycles": 8303,
+        "completion_width_0": 5053,
+        "completion_width_1": 1963,
+        "completion_width_2": 1287,
+        "control_conditional": 901,
+        "control_jal": 7,
+        "control_jalr": 2,
+        "cycles": 8313,
+        "dcache_array_conflict": 149,
+        "dcache_nonrun": 6000,
+        "dcache_refills": 300,
+        "dependent_load_present": 0,
+        "detail_accepted_ram_stores": 300,
+        "detail_hit_during_miss": 73,
+        "detail_load_misses": 225,
+        "detail_load_responses": 1200,
+        "detail_posted_ram_stores": 225,
+        "detail_refill_install": 300,
+        "detail_retired_conditional": 901,
+        "detail_retired_jalr": 2,
+        "detail_retired_wrong_conditional": 7,
+        "detail_retired_wrong_jalr": 2,
+        "detail_s1_same_line_lock": 1314,
+        "detail_s1_same_set_lock": 1314,
+        "detail_second_miss_stall": 1350,
+        "detail_second_same_line": 0,
+        "detail_store_misses": 75,
+        "detail_store_no_hint": 75,
+        "detail_store_responses": 300,
+        "dispatch_width_0": 5870,
+        "dispatch_width_1": 315,
+        "dispatch_width_2": 2118,
+        "eligible_load_present": 5433,
+        "fetch_empty": 352,
+        "fetch_empty_active": 346,
+        "fetch_empty_with_rob_empty": 175,
+        "fetch_path_corrections": 2,
+        "icache_line_reads": 17,
+        "icache_nonrun": 289,
+        "inflight_full_cycles": 665,
+        "inflight_samples": 19232,
+        "int_rs_full_active": 0,
+        "issue_grants_0": 5641,
+        "issue_grants_1": 783,
+        "issue_grants_2": 1879,
+        "issue_width_0": 5641,
+        "issue_width_1": 783,
+        "issue_width_2": 1879,
+        "load_candidate_with_inflight": 5428,
+        "load_requests": 1200,
+        "load_stage_address": 3,
+        "load_stage_eligible": 3,
+        "load_stage_inflight": 1110,
+        "load_stage_request_queue": 3,
+        "load_store_address_collision": 0,
+        "lsq_full_active": 4291,
+        "lsq_occupancy_samples": 57320,
+        "mismatch_conditional": 7,
+        "mismatch_jal": 0,
+        "mismatch_jalr": 2,
+        "multiple_inflight_cycles": 7691,
+        "partition_head_branch": 2,
+        "partition_head_load": 1119,
+        "partition_head_other": 16,
+        "partition_head_store_address": 8,
+        "partition_head_store_response": 4703,
+        "partition_recovery": 10,
+        "partition_retire": 2270,
+        "partition_rob_empty": 185,
+        "prf_empty_active": 0,
+        "recovery_events": 9,
+        "request_backpressure_cycles": 5846,
+        "retire_width_0": 6043,
+        "retire_width_1": 17,
+        "retire_width_2": 2253,
+        "retired": 4523,
+        "retired_control": 903,
+        "retired_integer": 2120,
+        "retired_load": 1200,
+        "retired_store": 300,
+        "rob_full_active": 4077,
+        "rob_occupancy_samples": 241732,
+        "rollback_entries": 18,
+        "store_head_dcache_nonrun": 4088,
+        "store_requests": 301,
+        "store_stage_inflight": 1660,
+        "store_stage_prepare": 1506,
+        "store_stage_request_queue": 1537,
+        "unknown_store_present": 301,
+        "unused_issue_grants": 0,
+        "writeback_backpressure": 73
+      },
+      "partition_percent": {
+        "head_branch": 0.024058703235895585,
+        "head_load": 13.460844460483578,
+        "head_other": 0.19246962588716468,
+        "head_store_address": 0.09623481294358234,
+        "head_store_response": 56.57404065920847,
+        "recovery": 0.12029351617947792,
+        "retire": 27.306628172741487,
+        "rob_empty": 2.225430049320342
+      },
+      "unique_refill_lines": 300,
+      "total_refills": 300,
+      "load_latencies": {
+        "4": 605,
+        "5": 220,
+        "6": 1,
+        "7": 1,
+        "22": 73,
+        "23": 78,
+        "24": 74,
+        "43": 75,
+        "44": 73
+      },
+      "store_latencies": {
+        "4": 150,
+        "23": 148,
+        "25": 1,
+        "44": 1
+      },
+      "top_branch_errors": [
+        {
+          "pc": "0xc4",
+          "wrong": 3,
+          "retired": 300
+        },
+        {
+          "pc": "0xf0",
+          "wrong": 3,
+          "retired": 300
+        },
+        {
+          "pc": "0x14",
+          "wrong": 1,
+          "retired": 1
+        },
+        {
+          "pc": "0x28",
+          "wrong": 1,
+          "retired": 1
+        },
+        {
+          "pc": "0xfc",
+          "wrong": 1,
+          "retired": 1
+        }
+      ]
+    }
+  ],
+  "sensitivity": [
+    {
+      "variant": "baseline",
+      "ipc": 0.6816313861902019,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": 0.0,
+      "cycles": {
+        "perf_median": 14081,
+        "perf_multiply": 21820,
+        "perf_qsort": 232542,
+        "perf_rsort": 206839,
+        "perf_towers": 8023,
+        "perf_vvadd": 8313
+      }
+    },
+    {
+      "variant": "hints64",
+      "ipc": 0.683986758718083,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "STORE_HINTS": 64,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": 0.34554930650212423,
+      "cycles": {
+        "perf_median": 14081,
+        "perf_multiply": 21820,
+        "perf_qsort": 232558,
+        "perf_rsort": 203323,
+        "perf_towers": 7994,
+        "perf_vvadd": 8313
+      }
+    },
+    {
+      "variant": "be4",
+      "ipc": 0.709121789275259,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 4,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": 4.033030702812468,
+      "cycles": {
+        "perf_median": 13935,
+        "perf_multiply": 21785,
+        "perf_qsort": 228003,
+        "perf_rsort": 178714,
+        "perf_towers": 7838,
+        "perf_vvadd": 8019
+      }
+    },
+    {
+      "variant": "wide4",
+      "ipc": 0.7262693013217133,
+      "parameters": {
+        "FE_WIDTH": 4,
+        "BE_WIDTH": 4,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": 6.548688343270581,
+      "cycles": {
+        "perf_median": 13110,
+        "perf_multiply": 21036,
+        "perf_qsort": 221464,
+        "perf_rsort": 176616,
+        "perf_towers": 7750,
+        "perf_vvadd": 8058
+      }
+    },
+    {
+      "variant": "window",
+      "ipc": 0.6825574072124521,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 96,
+        "ROB_ENTRIES": 64,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": 0.13585363599906142,
+      "cycles": {
+        "perf_median": 14084,
+        "perf_multiply": 21735,
+        "perf_qsort": 232339,
+        "perf_rsort": 206746,
+        "perf_towers": 8023,
+        "perf_vvadd": 8287
+      }
+    },
+    {
+      "variant": "lsq16",
+      "ipc": 0.6948192733372576,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {
+        "LSQ_ENTRIES": 16,
+        "LSQ_INDEX_WIDTH": 4,
+        "LSQ_TAG_WIDTH": 6
+      },
+      "gain_percent": 1.9347535066960297,
+      "cycles": {
+        "perf_median": 14056,
+        "perf_multiply": 21820,
+        "perf_qsort": 232161,
+        "perf_rsort": 207000,
+        "perf_towers": 7296,
+        "perf_vvadd": 8170
+      }
+    },
+    {
+      "variant": "recovery8",
+      "ipc": 0.6823664740768892,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 8,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": 0.10784243530743698,
+      "cycles": {
+        "perf_median": 14074,
+        "perf_multiply": 21820,
+        "perf_qsort": 232464,
+        "perf_rsort": 206837,
+        "perf_towers": 7978,
+        "perf_vvadd": 8313
+      }
+    },
+    {
+      "variant": "predictor",
+      "ipc": 0.68255500746787,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 16384,
+        "DCACHE_NUM_SETS": 512,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {
+        "predictor": true
+      },
+      "gain_percent": 0.13550157700783494,
+      "cycles": {
+        "perf_median": 14081,
+        "perf_multiply": 21820,
+        "perf_qsort": 230657,
+        "perf_rsort": 206842,
+        "perf_towers": 8023,
+        "perf_vvadd": 8313
+      }
+    },
+    {
+      "variant": "d8",
+      "ipc": 0.6283526175410468,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 8192,
+        "DCACHE_NUM_SETS": 256,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": -7.816360826185353,
+      "cycles": {
+        "perf_median": 14081,
+        "perf_multiply": 21820,
+        "perf_qsort": 239294,
+        "perf_rsort": 327551,
+        "perf_towers": 8023,
+        "perf_vvadd": 8313
+      }
+    },
+    {
+      "variant": "d32",
+      "ipc": 0.6897837045720263,
+      "parameters": {
+        "FE_WIDTH": 2,
+        "BE_WIDTH": 2,
+        "PHYS_REGS": 64,
+        "ROB_ENTRIES": 32,
+        "RECOVERY_WIDTH": 4,
+        "ICACHE_SIZE_BYTES": 1024,
+        "ICACHE_NUM_SETS": 64,
+        "ICACHE_NUM_WAYS": 1,
+        "DCACHE_SIZE_BYTES": 32768,
+        "DCACHE_NUM_SETS": 1024,
+        "DCACHE_NUM_WAYS": 2
+      },
+      "snapshot_edits": {},
+      "gain_percent": 1.1960010273866173,
+      "cycles": {
+        "perf_median": 14081,
+        "perf_multiply": 21820,
+        "perf_qsort": 232418,
+        "perf_rsort": 192701,
+        "perf_towers": 8023,
+        "perf_vvadd": 8313
+      }
+    }
+  ],
+  "latency_sensitivity": [
+    {
+      "latency": 1,
+      "ipc": 0.7871671849645507,
+      "gain_percent": 15.482825602297034,
+      "cycles": {
+        "perf_median": 11992,
+        "perf_multiply": 20861,
+        "perf_qsort": 223649,
+        "perf_rsort": 185800,
+        "perf_towers": 7260,
+        "perf_vvadd": 5506
+      }
+    },
+    {
+      "latency": 5,
+      "ipc": 0.736030896325212,
+      "gain_percent": 7.980781289878935,
+      "cycles": {
+        "perf_median": 12830,
+        "perf_multiply": 21280,
+        "perf_qsort": 227407,
+        "perf_rsort": 195166,
+        "perf_towers": 7593,
+        "perf_vvadd": 6758
+      }
+    },
+    {
+      "latency": 20,
+      "ipc": 0.5992031033388417,
+      "gain_percent": -12.092794510544946,
+      "cycles": {
+        "perf_median": 16383,
+        "perf_multiply": 22924,
+        "perf_qsort": 243198,
+        "perf_rsort": 230455,
+        "perf_towers": 8883,
+        "perf_vvadd": 11423
+      }
+    }
+  ],
+  "probes": [
+    {
+      "probe": "alu-chain",
+      "cycles": 13224,
+      "ipc": 0.9988656987295825
+    },
+    {
+      "probe": "alu-four-chains",
+      "cycles": 7285,
+      "ipc": 1.8135895676046672
+    },
+    {
+      "probe": "load-chain",
+      "cycles": 76886,
+      "ipc": 0.17181281377624014
+    },
+    {
+      "probe": "load-independent",
+      "cycles": 13234,
+      "ipc": 0.9981109264016926
+    },
+    {
+      "probe": "hot-store",
+      "cycles": 25945,
+      "ipc": 0.5091154365002891
+    }
+  ],
+  "timing_paths": [
+    {
+      "start": {
+        "pin": "_53330_/QN",
+        "preserved_cell": "$auto$ff.cc:337:slice$529206",
+        "rtl_state": [
+          "bridge.parallel_adapter.response_locked"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+      },
+      "end": {
+        "pin": "_51874_/D",
+        "preserved_cell": "$auto$ff.cc:337:slice$527009",
+        "rtl_state": [
+          "core.int_rs.entry_lhs_value[2][31]"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_integer_reservation_station.v:529.5-726.8"
+      },
+      "arrival_ns": 3.407,
+      "combinational_stages": 104,
+      "buffers_inverters": 14,
+      "max_path_fanout": 8,
+      "largest_stages": [
+        {
+          "pin": "repair.g020315/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.08799999999999969,
+          "fanout": 7
+        },
+        {
+          "pin": "repair.g000977/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.08,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g016335/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.0745,
+          "fanout": 6
+        },
+        {
+          "pin": "repair.g016793/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.07300000000000006,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g115236/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.07099999999999985,
+          "fanout": 8
+        }
+      ]
+    },
+    {
+      "start": {
+        "pin": "_53330_/QN",
+        "preserved_cell": "$auto$ff.cc:337:slice$529206",
+        "rtl_state": [
+          "bridge.parallel_adapter.response_locked"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+      },
+      "end": {
+        "pin": "_51866_/D",
+        "preserved_cell": "$auto$ff.cc:337:slice$527001",
+        "rtl_state": [
+          "core.int_rs.entry_lhs_value[2][23]"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_integer_reservation_station.v:529.5-726.8"
+      },
+      "arrival_ns": 3.407,
+      "combinational_stages": 104,
+      "buffers_inverters": 14,
+      "max_path_fanout": 8,
+      "largest_stages": [
+        {
+          "pin": "repair.g020315/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.08799999999999969,
+          "fanout": 7
+        },
+        {
+          "pin": "repair.g000977/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.08,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g016335/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.0745,
+          "fanout": 6
+        },
+        {
+          "pin": "repair.g016793/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.07300000000000006,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g115236/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.07099999999999985,
+          "fanout": 8
+        }
+      ]
+    },
+    {
+      "start": {
+        "pin": "_53330_/QN",
+        "preserved_cell": "$auto$ff.cc:337:slice$529206",
+        "rtl_state": [
+          "bridge.parallel_adapter.response_locked"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+      },
+      "end": {
+        "pin": "_51843_/D",
+        "preserved_cell": "$auto$ff.cc:337:slice$526978",
+        "rtl_state": [
+          "core.int_rs.entry_lhs_value[2][0]"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_integer_reservation_station.v:529.5-726.8"
+      },
+      "arrival_ns": 3.407,
+      "combinational_stages": 104,
+      "buffers_inverters": 14,
+      "max_path_fanout": 8,
+      "largest_stages": [
+        {
+          "pin": "repair.g020315/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.08799999999999969,
+          "fanout": 7
+        },
+        {
+          "pin": "repair.g000977/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.08,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g016335/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.0745,
+          "fanout": 6
+        },
+        {
+          "pin": "repair.g016793/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.07300000000000006,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g115236/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.07099999999999985,
+          "fanout": 8
+        }
+      ]
+    },
+    {
+      "start": {
+        "pin": "_53330_/QN",
+        "preserved_cell": "$auto$ff.cc:337:slice$529206",
+        "rtl_state": [
+          "bridge.parallel_adapter.response_locked"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+      },
+      "end": {
+        "pin": "_51852_/D",
+        "preserved_cell": "$auto$ff.cc:337:slice$526987",
+        "rtl_state": [
+          "core.int_rs.entry_lhs_value[2][9]"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_integer_reservation_station.v:529.5-726.8"
+      },
+      "arrival_ns": 3.407,
+      "combinational_stages": 104,
+      "buffers_inverters": 14,
+      "max_path_fanout": 8,
+      "largest_stages": [
+        {
+          "pin": "repair.g020315/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.08799999999999969,
+          "fanout": 7
+        },
+        {
+          "pin": "repair.g000977/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.08,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g016335/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.0745,
+          "fanout": 6
+        },
+        {
+          "pin": "repair.g016793/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.07300000000000006,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g115236/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.07099999999999985,
+          "fanout": 8
+        }
+      ]
+    },
+    {
+      "start": {
+        "pin": "_53330_/QN",
+        "preserved_cell": "$auto$ff.cc:337:slice$529206",
+        "rtl_state": [
+          "bridge.parallel_adapter.response_locked"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_l1_cache_axi_bridge.v:615.5-710.8"
+      },
+      "end": {
+        "pin": "_51856_/D",
+        "preserved_cell": "$auto$ff.cc:337:slice$526991",
+        "rtl_state": [
+          "core.int_rs.entry_lhs_value[2][13]"
+        ],
+        "src": "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/input/rv32_integer_reservation_station.v:529.5-726.8"
+      },
+      "arrival_ns": 3.407,
+      "combinational_stages": 104,
+      "buffers_inverters": 14,
+      "max_path_fanout": 8,
+      "largest_stages": [
+        {
+          "pin": "repair.g020315/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.08799999999999969,
+          "fanout": 7
+        },
+        {
+          "pin": "repair.g000977/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.08,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g016335/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.0745,
+          "fanout": 6
+        },
+        {
+          "pin": "repair.g016793/Y",
+          "cell": "A2O1A1O1Ixp25_ASAP7_75t_R",
+          "delay_ns": 0.07300000000000006,
+          "fanout": 8
+        },
+        {
+          "pin": "repair.g115236/Y",
+          "cell": "OAI211xp5_ASAP7_75t_R",
+          "delay_ns": 0.07099999999999985,
+          "fanout": 8
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "official_performance_runs": 84,
+    "microbenchmarks": 5,
+    "new_full_correctness_matrix": false,
+    "formal_rtl_unchanged": true
+  },
+  "evidence_sha256": {
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/profile/results.json": "227dce098e32e21b9933d7266c4b5317b11a3e52179d6980d42807f48e32ea46",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/profile/input-audit.json": "11e004d99c5f4356e5ae5291bf6649265893bbc3f782ccb2dd857e1860ac5942",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/hum_20261014/results-summary.json": "65f9a80738a1e9e4a180427be728b53a5d2daedd534819a476d67ddadb27f1f7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/results.json": "58b9dd069a3bcec319f1f12c997f3540a85c5b4934c72bdcff811c148f50b2b7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/hold/margin1/report.json": "3f6295db1f3aa4ef6496f66940229cd77611b8e126544f229b19d8b9c696b9d3",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/latency/results.json": "34433dbd924369cc27d8f2ba0b03e875eefb1c447b8ca4ccbb16c45b7106450a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/probes/results.json": "87f8f5e204dc0be528b7ef9eb5f43d361b37f9583069031ca7898767a9a85c1f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/probes/alu-chain.log": "dafca8359b80637661f63d7297cedc31bcf463a3a6bab373d381c0f696cbd932",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/probes/alu-four-chains.log": "fea7c10da13a9d74b358bcdc5dcd619a3f1bd64ca02f943766bdd352531304ac",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/probes/load-chain.log": "4b3903b603afdc4ba6a62a233976ea4648660360450a2aa2809d3863d97e73f9",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/probes/load-independent.log": "5320c1cf22b0328b930d17e16663db188d25ea99be4445283f22ccdb137ff893",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/probes/hot-store.log": "242aee83fe27fcbc25633eb324aa4cf72102254150b4ac2e7122cb2672135cb7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/path-audit.json": "e99bd9c18de1292389d8c1fa58695cff9aa84d64e47728a30d4386010687cc15",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/response-mux/results.json": "d65258b32b0a9a3c7d82260e21e3ac525ba00f686aefda729815585ecc192c9a",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/upstream-update.json": "0cd25acbe4407a6dc95b1140a4484179e0e9bc9bc54f23c1461cfb34fa03a899",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/report.json": "ab3792fb8de8ec5e74750ca5b28b45e154dceed7da140aa1b0a03740b8a0a870",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/synth.ys": "ff7e075e7c6f060075210e6bd12f9a7ad5afd0557c4b637cb36efb5da30c2b27",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/synth.log": "8d926febbc1989eade831c068844d24ee6afde4ea9608cf608c4f160cdc8a999",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/abc.constr": "c87d2a2e9a8ec2a5f9fb631659a1cfcc7082b303a96d1f89cb7ce77be0407168",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/constraints.sdc": "aaa7ce509b5f0cf257533af8d10d17e83976892016371bdab25ca6a485c39986",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/design.json": "fab802bb455a1ba945a8ebb8af7615ed221c6cbd33e84ecd5ebe1a2412fd7927",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/mapped.v": "1fb106937374aa2afae0e5cc2e6f34a75b7a7ec0458ffa17eb18ab1395f284ed",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/timing.rpt": "18523fe5ac0f9f047c93ab24ca51c6921088fccafce10e621aa157190b42196c",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/timing_checks.rpt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-baseline/opt/critical_paths.json": "9d555e8d1078c7d33f9c7b279740d223e7da5f42831424101b69877c6a6ef03d",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/report.json": "da2d12e23946fd5100deacfe7425635be8e716a8a59d90541312e7f9ac8887ea",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/synth.ys": "5111323134645696899d4715ef86d4fb228923bc815fc069345198e8c5f24b18",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/synth.log": "8472dbde9aa585120f1e2de7279aea3d410b06dd5448392c8a999f5e035d0bba",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/abc.constr": "c87d2a2e9a8ec2a5f9fb631659a1cfcc7082b303a96d1f89cb7ce77be0407168",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/constraints.sdc": "b97142ef8e1811f2732c19cda27e5898435d460434b0abb0fa5bc19a96b70202",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/design.json": "dac6de2a99351aa3dd86926e96cb5eea14858200099fe2bd6b6e214431d0ce38",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/mapped.v": "15787e248a05124b43a4fdb37501a1f96a5ca9e64f0a88f54881ae5b8e01efda",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/timing.rpt": "325a25096fa89c1826df072bd9a4ba3b8f3e2285c9c443eb046d9c5e443a1342",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/timing_checks.rpt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/tier3-20261014/official-updated-mux/opt/critical_paths.json": "7677a610007b8766878b5e0789daed25136228c3e90d31819c25912733a66727",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/hum-20261014/ppa-v6/mapping/opt/report.json": "18b77d459a0e0f557989515c5b248822cd31dccac4ec012ac5f7a22d967a1f83"
+  }
+}
