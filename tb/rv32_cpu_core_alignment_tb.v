@@ -33,6 +33,7 @@ module rv32_cpu_core_alignment_tb;
         .icache_response_pc_i(i_response_pc),
         .icache_response_line_i(i_response_line), .icache_response_error_i(1'b0),
         .dcache_request_valid_o(d_valid), .dcache_request_ready_i(1'b1),
+        .dcache_request_irrevocable_i(1'b0),
         .dcache_request_write_o(), .dcache_request_address_o(),
         .dcache_request_write_data_o(), .dcache_request_byte_enable_o(),
         .dcache_request_mmio_o(), .dcache_response_valid_i(1'b0),

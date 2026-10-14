@@ -5,6 +5,9 @@ module rv32_l1_data_cache_tb;
     reg reset_i;
     reg request_valid_i;
     wire request_ready_o;
+    wire request_irrevocable;
+    reg expected_posted [0:2047];
+    integer posted_count;
     reg request_write_i;
     reg [31:0] request_address_i;
     reg [31:0] request_write_data_i;
@@ -62,6 +65,7 @@ module rv32_l1_data_cache_tb;
         .clk_i(clk_i), .reset_i(reset_i),
         .request_valid_i(request_valid_i),
         .request_ready_o(request_ready_o),
+        .request_irrevocable_o(request_irrevocable),
         .request_write_i(request_write_i),
         .request_address_i(request_address_i),
         .request_write_data_i(request_write_data_i),
@@ -146,6 +150,8 @@ module rv32_l1_data_cache_tb;
                     $fatal(1, "ERROR unaligned line transaction");
             end
             if (response_valid_o && response_ready_i) begin
+                if (expected_posted[head] && response_error_o)
+                    $fatal(1, "ERROR irrevocable store failed");
                 if (head >= tail)
                     $fatal(1, "ERROR unsolicited response");
                 if (response_read_data_o !== expected_data[head] ||
@@ -169,6 +175,12 @@ module rv32_l1_data_cache_tb;
                     force_expected_error;
                 expected_data[tail] = expected_error[tail] ||
                     request_write_i ? 32'd0 : model_word(request_address_i);
+                expected_posted[tail] = request_irrevocable;
+                if (request_irrevocable) begin
+                    if (!request_write_i || expected_error[tail])
+                        $fatal(1, "ERROR invalid irrevocable grant");
+                    posted_count = posted_count + 1;
+                end
                 expected_strict[tail] = strict_latency;
                 expected_cycle[tail] = cycle;
                 expected_seen[tail] = 1'b0;
@@ -250,7 +262,7 @@ module rv32_l1_data_cache_tb;
         head = 0;
         tail = 0;
         cycle = 0;
-        hit_count = 0;
+        hit_count = 0; posted_count = 0;
         miss_count = 0;
         valid_count = 0;
         memory_write_count = 0;
@@ -411,6 +423,7 @@ module rv32_l1_data_cache_tb;
             $fatal(1, "ERROR event count %0d != %0d",
                 hit_count + miss_count, valid_count);
 
+        if (posted_count < 3) $fatal(1, "ERROR missing posted store coverage");
         $display("PASS rv32_l1_data_cache_tb hits=%0d misses=%0d",
             hit_count, miss_count);
         $finish;

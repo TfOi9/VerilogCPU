@@ -49,6 +49,7 @@ module rv32_cpu_core_dual_issue_tb;
         .icache_response_error_i(1'b0),
         .dcache_request_valid_o(dcache_request_valid),
         .dcache_request_ready_i(dcache_request_ready),
+        .dcache_request_irrevocable_i(1'b0),
         .dcache_request_write_o(dcache_request_write),
         .dcache_request_address_o(dcache_request_address),
         .dcache_request_write_data_o(dcache_request_write_data),

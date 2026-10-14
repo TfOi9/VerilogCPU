@@ -5,7 +5,9 @@ module rv32_completion_writeback_network #(
     parameter SOURCE_COUNT = BE_WIDTH + 2,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
-    parameter ROB_TAG_WIDTH = 7
+    parameter ROB_TAG_WIDTH = 7,
+    parameter FALLTHROUGH = 0,
+    parameter SOURCE_AUTH = 0
 ) (
     input  wire                                             clk_i,
     input  wire                                             reset_i,
@@ -22,6 +24,10 @@ module rv32_completion_writeback_network #(
     input  wire [SOURCE_COUNT-1:0]                          source_exception_valid_i,
     input  wire [(SOURCE_COUNT*4)-1:0]                      source_exception_cause_i,
     input  wire [(SOURCE_COUNT*32)-1:0]                     source_exception_tval_i,
+
+    output wire [(SOURCE_COUNT*ROB_TAG_WIDTH)-1:0]          source_lookup_tag_o,
+    input  wire [SOURCE_COUNT-1:0]                          source_lookup_write_valid_i,
+    input  wire [(SOURCE_COUNT*PHYS_REG_ADDR_WIDTH)-1:0]   source_lookup_phys_i,
 
     output wire [BE_WIDTH-1:0]                              completion_valid_o,
     output wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              completion_tag_o,
@@ -45,6 +51,8 @@ module rv32_completion_writeback_network #(
     localparam [PHYS_REG_ADDR_WIDTH:0] PHYS_REGS_LIMIT =
         PHYS_REGS[PHYS_REG_ADDR_WIDTH:0];
 
+    localparam TREE_SLOT_WIDTH = SOURCE_COUNT <= 1 ? 1 : address_width_for_count(SOURCE_COUNT);
+
     reg buffer_valid [0:SOURCE_COUNT-1];
     reg [ROB_TAG_WIDTH-1:0] buffer_rob_tag [0:SOURCE_COUNT-1];
     reg [31:0] buffer_value [0:SOURCE_COUNT-1];
@@ -60,6 +68,9 @@ module rv32_completion_writeback_network #(
     reg [(BE_WIDTH*SOURCE_COUNT)-1:0] selected_source_lane_reg;
     reg [SOURCE_COUNT-1:0] source_pop_mask_reg;
     reg [SOURCE_COUNT-1:0] source_ready_reg;
+    reg [BE_WIDTH-1:0] stalled_lane;
+    reg [(BE_WIDTH*TREE_SLOT_WIDTH)-1:0] stalled_slot;
+    wire [(BE_WIDTH*TREE_SLOT_WIDTH)-1:0] selected_slot;
 
     reg [BE_WIDTH-1:0] completion_valid_reg;
     reg [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] completion_tag_reg;
@@ -82,6 +93,10 @@ module rv32_completion_writeback_network #(
     integer pop_selected_index;
     integer ready_source_index;
     integer writeback_lane_index;
+    integer writeback_prior_lane;
+    reg writeback_duplicate;
+    reg [BE_WIDTH-1:0] selected_write_valid;
+    reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] selected_phys;
     integer round_robin_lane_index;
     integer round_robin_selected_index;
     integer sequential_source_index;
@@ -146,40 +161,55 @@ module rv32_completion_writeback_network #(
         end
     end
 
-    localparam TREE_SLOT_WIDTH = SOURCE_COUNT <= 1 ? 1 : address_width_for_count(SOURCE_COUNT);
-    localparam TREE_DATA_WIDTH = ROB_TAG_WIDTH + 103;
+    localparam TREE_DATA_WIDTH = ROB_TAG_WIDTH + 104 + PHYS_REG_ADDR_WIDTH;
     wire [SOURCE_COUNT-1:0] tree_valid;
     wire [(SOURCE_COUNT*TREE_SLOT_WIDTH)-1:0] tree_age;
     wire [(SOURCE_COUNT*TREE_DATA_WIDTH)-1:0] tree_input;
     wire [(BE_WIDTH*TREE_DATA_WIDTH)-1:0] tree_output;
     wire [BE_WIDTH-1:0] tree_selected_valid;
     wire [(BE_WIDTH*SOURCE_COUNT)-1:0] tree_selected_mask;
-    wire [(BE_WIDTH*TREE_SLOT_WIDTH)-1:0] unused_tree_slot;
+
     genvar tree_source;
     generate
         for (tree_source = 0; tree_source < SOURCE_COUNT;
                 tree_source = tree_source + 1) begin: tree_source_data
             wire [31:0] unused_age_full;
-            assign tree_valid[tree_source] = buffer_valid[tree_source];
+            assign tree_valid[tree_source] = buffer_valid[tree_source] ||
+                (FALLTHROUGH != 0 && source_valid_i[tree_source]);
             assign unused_age_full =
                 tree_source >= arb_start_index ? tree_source-arb_start_index :
                 tree_source+SOURCE_COUNT-arb_start_index;
             assign tree_age[tree_source*TREE_SLOT_WIDTH +: TREE_SLOT_WIDTH] =
                 unused_age_full[TREE_SLOT_WIDTH-1:0];
+            assign source_lookup_tag_o[tree_source*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] =
+                buffer_valid[tree_source] ? buffer_rob_tag[tree_source] :
+                source_rob_tag_i[tree_source*ROB_TAG_WIDTH +: ROB_TAG_WIDTH];
             assign tree_input[tree_source*TREE_DATA_WIDTH +: TREE_DATA_WIDTH] =
+                {SOURCE_AUTH != 0 && source_lookup_write_valid_i[tree_source],
+                 SOURCE_AUTH != 0 ? source_lookup_phys_i[
+                    tree_source*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH] :
+                    {PHYS_REG_ADDR_WIDTH{1'b0}},
+                 (FALLTHROUGH != 0 && !buffer_valid[tree_source]) ?
+                {source_exception_tval_i[tree_source*32 +: 32],
+                 source_exception_cause_i[tree_source*4 +: 4],
+                 source_exception_valid_i[tree_source],
+                 source_next_pc_i[tree_source*32 +: 32],
+                 source_control_taken_i[tree_source], source_control_valid_i[tree_source],
+                 source_value_i[tree_source*32 +: 32],
+                 source_rob_tag_i[tree_source*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]} :
                 {buffer_exception_tval[tree_source], buffer_exception_cause[tree_source],
                  buffer_exception_valid[tree_source], buffer_next_pc[tree_source],
                  buffer_control_taken[tree_source], buffer_control_valid[tree_source],
-                 buffer_value[tree_source], buffer_rob_tag[tree_source]};
+                 buffer_value[tree_source], buffer_rob_tag[tree_source]}};
         end
     endgenerate
     rv32_ranked_select #(.ENTRIES(SOURCE_COUNT), .PORTS(BE_WIDTH),
         .SLOT_WIDTH(TREE_SLOT_WIDTH), .AGE_WIDTH(TREE_SLOT_WIDTH),
         .DATA_WIDTH(TREE_DATA_WIDTH)) tree_completion (
         .enable_i(!reset_i && !flush_i && !recover_i), .valid_i(tree_valid),
-        .age_i(tree_age), .data_i(tree_input), .locked_i({BE_WIDTH{1'b0}}),
-        .locked_slot_i({(BE_WIDTH*TREE_SLOT_WIDTH){1'b0}}),
-        .valid_o(tree_selected_valid), .slot_o(unused_tree_slot),
+        .age_i(tree_age), .data_i(tree_input), .locked_i(stalled_lane),
+        .locked_slot_i(stalled_slot),
+        .valid_o(tree_selected_valid), .slot_o(selected_slot),
         .mask_o(tree_selected_mask), .data_o(tree_output));
 
     always @* begin
@@ -195,7 +225,9 @@ module rv32_completion_writeback_network #(
         selected_source_lane_reg = tree_selected_mask;
         for (arb_scan_offset = 0; arb_scan_offset < BE_WIDTH;
                 arb_scan_offset = arb_scan_offset + 1) begin
-            {completion_exception_tval_reg[arb_scan_offset*32 +: 32],
+            {selected_write_valid[arb_scan_offset],
+             selected_phys[arb_scan_offset*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH],
+             completion_exception_tval_reg[arb_scan_offset*32 +: 32],
              completion_exception_cause_reg[arb_scan_offset*4 +: 4],
              completion_exception_valid_reg[arb_scan_offset],
              completion_next_pc_reg[arb_scan_offset*32 +: 32],
@@ -249,10 +281,33 @@ module rv32_completion_writeback_network #(
             {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
         writeback_value_reg = {(BE_WIDTH*32){1'b0}};
         writeback_lane_index = 0;
+        writeback_prior_lane = 0;
+        writeback_duplicate = 1'b0;
         for (writeback_lane_index = 0;
                 writeback_lane_index < BE_WIDTH;
                 writeback_lane_index = writeback_lane_index + 1) begin
-            if (completion_valid_reg[writeback_lane_index] &&
+            writeback_duplicate = 1'b0;
+            for (writeback_prior_lane = 0; writeback_prior_lane < writeback_lane_index;
+                    writeback_prior_lane = writeback_prior_lane + 1)
+                if (completion_valid_reg[writeback_prior_lane] &&
+                        completion_tag_reg[writeback_prior_lane*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] ==
+                        completion_tag_reg[writeback_lane_index*ROB_TAG_WIDTH +: ROB_TAG_WIDTH])
+                    writeback_duplicate = 1'b1;
+            if (SOURCE_AUTH != 0) begin
+                if (completion_valid_reg[writeback_lane_index] &&
+                        completion_ready_i[writeback_lane_index] &&
+                        selected_write_valid[writeback_lane_index] && !writeback_duplicate &&
+                        !completion_exception_valid_reg[writeback_lane_index] &&
+                        selected_phys[writeback_lane_index*PHYS_REG_ADDR_WIDTH +:
+                            PHYS_REG_ADDR_WIDTH] != 0) begin
+                    writeback_valid_reg[writeback_lane_index] = 1'b1;
+                    writeback_phys_reg[writeback_lane_index*PHYS_REG_ADDR_WIDTH +:
+                        PHYS_REG_ADDR_WIDTH] = selected_phys[
+                        writeback_lane_index*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH];
+                    writeback_value_reg[writeback_lane_index*32 +: 32] =
+                        completion_value_reg[writeback_lane_index*32 +: 32];
+                end
+            end else if (completion_valid_reg[writeback_lane_index] &&
                     completion_ready_i[writeback_lane_index] &&
                     completion_accept_i[writeback_lane_index] &&
                     completion_writes_rd_i[writeback_lane_index] &&
@@ -310,28 +365,26 @@ module rv32_completion_writeback_network #(
     always @(posedge clk_i) begin
         if (reset_i || flush_i) begin
             round_robin_start_reg <= {{(SOURCE_COUNT-1){1'b0}}, 1'b1};
+            stalled_lane <= 0;
+            stalled_slot <= 0;
             for (sequential_source_index = 0;
                     sequential_source_index < SOURCE_COUNT;
                     sequential_source_index = sequential_source_index + 1) begin
                 buffer_valid[sequential_source_index] <= 1'b0;
-                buffer_rob_tag[sequential_source_index] <=
-                    {ROB_TAG_WIDTH{1'b0}};
-                buffer_value[sequential_source_index] <= 32'd0;
-                buffer_control_valid[sequential_source_index] <= 1'b0;
-                buffer_control_taken[sequential_source_index] <= 1'b0;
-                buffer_next_pc[sequential_source_index] <= 32'd0;
-                buffer_exception_valid[sequential_source_index] <= 1'b0;
-                buffer_exception_cause[sequential_source_index] <= 4'd0;
-                buffer_exception_tval[sequential_source_index] <= 32'd0;
             end
         end else if (!recover_i) begin
             round_robin_start_reg <= round_robin_next_reg;
+            stalled_lane <= (FALLTHROUGH != 0) ?
+                completion_valid_reg & ~completion_ready_i : {BE_WIDTH{1'b0}};
+            stalled_slot <= selected_slot;
             for (sequential_source_index = 0;
                     sequential_source_index < SOURCE_COUNT;
                     sequential_source_index = sequential_source_index + 1) begin
                 if (source_ready_reg[sequential_source_index] &&
                         source_valid_i[sequential_source_index]) begin
-                    buffer_valid[sequential_source_index] <= 1'b1;
+                    buffer_valid[sequential_source_index] <= !(FALLTHROUGH != 0 &&
+                        !buffer_valid[sequential_source_index] &&
+                        source_pop_mask_reg[sequential_source_index]);
                     buffer_rob_tag[sequential_source_index] <=
                         source_rob_tag_i[
                             sequential_source_index*ROB_TAG_WIDTH +:
@@ -355,15 +408,6 @@ module rv32_completion_writeback_network #(
                             sequential_source_index*32 +: 32];
                 end else if (source_pop_mask_reg[sequential_source_index]) begin
                     buffer_valid[sequential_source_index] <= 1'b0;
-                    buffer_rob_tag[sequential_source_index] <=
-                        {ROB_TAG_WIDTH{1'b0}};
-                    buffer_value[sequential_source_index] <= 32'd0;
-                    buffer_control_valid[sequential_source_index] <= 1'b0;
-                    buffer_control_taken[sequential_source_index] <= 1'b0;
-                    buffer_next_pc[sequential_source_index] <= 32'd0;
-                    buffer_exception_valid[sequential_source_index] <= 1'b0;
-                    buffer_exception_cause[sequential_source_index] <= 4'd0;
-                    buffer_exception_tval[sequential_source_index] <= 32'd0;
                 end
             end
         end
@@ -385,6 +429,15 @@ module rv32_completion_writeback_network #(
             for (assertion_lane_index = 0;
                     assertion_lane_index < BE_WIDTH;
                     assertion_lane_index = assertion_lane_index + 1) begin
+                if (SOURCE_AUTH != 0 && writeback_valid_reg[assertion_lane_index] &&
+                        (!completion_accept_i[assertion_lane_index] ||
+                         !completion_writes_rd_i[assertion_lane_index] ||
+                         writeback_phys_reg[assertion_lane_index*PHYS_REG_ADDR_WIDTH +:
+                            PHYS_REG_ADDR_WIDTH] != completion_phys_i[
+                            assertion_lane_index*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH])) begin
+                    $display("ERROR rv32_completion_writeback_network source authorization mismatch");
+                    $stop;
+                end
                 if (completion_accept_i[assertion_lane_index] &&
                         (!completion_valid_reg[assertion_lane_index] ||
                          !completion_ready_i[assertion_lane_index])) begin

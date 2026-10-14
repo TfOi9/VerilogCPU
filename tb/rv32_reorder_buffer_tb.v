@@ -155,6 +155,8 @@ module rv32_reorder_buffer_tb;
         .alloc_tag_o(alloc_tag_o),
         .occupancy_o(occupancy_o),
         .head_index_o(head_index_o),
+        .source_lookup_tag_i({ROB_TAG_WIDTH{1'b0}}),
+        .source_lookup_write_valid_o(), .source_lookup_phys_o(),
         .completion_valid_i(completion_valid_i),
         .completion_tag_i(completion_tag_i),
         .completion_value_i(completion_value_i),

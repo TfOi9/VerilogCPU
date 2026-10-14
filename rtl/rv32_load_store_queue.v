@@ -12,7 +12,9 @@ module rv32_load_store_queue #(
     parameter ROB_INDEX_WIDTH = 5,
     parameter ROB_TAG_WIDTH = 7,
     parameter MEMORY_BYTES = 268435456,
-    parameter MAX_INFLIGHT = 4
+    parameter MAX_INFLIGHT = 4,
+    parameter POSTED_STORES = 0,
+    parameter LOAD_FALLTHROUGH = 0
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -63,6 +65,7 @@ module rv32_load_store_queue #(
     output reg [BE_WIDTH-1:0] commit_ready_o,
     output wire cache_request_valid_o,
     input  wire cache_request_ready_i,
+    input  wire cache_request_irrevocable_i,
     output wire cache_request_write_o,
     output wire [31:0] cache_request_address_o,
     output wire [31:0] cache_request_write_data_o,
@@ -99,6 +102,8 @@ module rv32_load_store_queue #(
     reg late_error [0:LSQ_ENTRIES-1];
     reg late_error_sent [0:LSQ_ENTRIES-1];
 
+    wire response_bypass;
+    wire [31:0] response_value;
     reg source_valid;
     reg [ROB_TAG_WIDTH-1:0] source_rob_tag;
     reg [LSQ_TAG_WIDTH-1:0] source_lsq_tag;
@@ -121,6 +126,7 @@ module rv32_load_store_queue #(
     reg [INFLIGHT_INDEX_WIDTH-1:0] inflight_tail;
     reg [INFLIGHT_INDEX_WIDTH:0] inflight_count;
     reg pending_write [0:MAX_INFLIGHT-1];
+    reg pending_posted [0:MAX_INFLIGHT-1];
     reg pending_mmio [0:MAX_INFLIGHT-1];
     reg pending_discard [0:MAX_INFLIGHT-1];
     reg [ROB_TAG_WIDTH-1:0] pending_rob_tag [0:MAX_INFLIGHT-1];
@@ -299,13 +305,23 @@ module rv32_load_store_queue #(
         end
     end
 
+    assign response_bypass = LOAD_FALLTHROUGH != 0 && !source_valid &&
+        inflight && !inflight_write && !inflight_discard && inflight_match &&
+        cache_response_valid_i;
+    assign response_value = cache_response_error_i ? 32'd0 :
+        extend_value(cache_response_read_data_i >> (inflight_address[1:0]*8),
+            width[inflight_slot], load_unsigned[inflight_slot]);
+
     assign completion_valid_o = !reset_i && !flush_i && !recover_i &&
-        source_valid;
-    assign completion_rob_tag_o = source_rob_tag;
-    assign completion_value_o = source_value;
-    assign completion_exception_valid_o = source_exception_valid;
-    assign completion_exception_cause_o = source_exception_cause;
-    assign completion_exception_tval_o = source_exception_tval;
+        (source_valid || response_bypass);
+    assign completion_rob_tag_o = response_bypass ? inflight_rob_tag : source_rob_tag;
+    assign completion_value_o = response_bypass ? response_value : source_value;
+    assign completion_exception_valid_o = response_bypass ?
+        cache_response_error_i : source_exception_valid;
+    assign completion_exception_cause_o = response_bypass ?
+        (cache_response_error_i ? 4'd5 : 4'd0) : source_exception_cause;
+    assign completion_exception_tval_o = response_bypass ?
+        (cache_response_error_i ? inflight_address : 32'd0) : source_exception_tval;
     assign cache_request_valid_o = !reset_i && !flush_i && !recover_i &&
         request_valid && (inflight_count < MAX_INFLIGHT || response_fire) &&
         (request_mmio ? !inflight : !(inflight && inflight_mmio));
@@ -517,6 +533,13 @@ module rv32_load_store_queue #(
                         commit_ready_o[i] = i == 0 &&
                             (fault_valid[commit_slot] ||
                                 write_done[commit_slot] ||
+                                (POSTED_STORES != 0 && request_fire &&
+                                    request_write && !request_mmio &&
+                                    cache_request_irrevocable_i &&
+                                    request_lsq_tag == commit_lsq_tag_i[
+                                        i*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] &&
+                                    request_rob_tag == commit_rob_tag_i[
+                                        i*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]) ||
                                 (response_fire && inflight_write &&
                                     !inflight_mmio && !inflight_discard &&
                                     inflight_match && !cache_response_error_i &&
@@ -574,6 +597,7 @@ module rv32_load_store_queue #(
             for (pending_index = 0; pending_index < MAX_INFLIGHT;
                     pending_index = pending_index + 1) begin
                 pending_write[pending_index] <= 1'b0;
+                pending_posted[pending_index] <= 1'b0;
                 pending_mmio[pending_index] <= 1'b0;
                 pending_discard[pending_index] <= 1'b0;
                 pending_rob_tag[pending_index] <= 0;
@@ -590,6 +614,8 @@ module rv32_load_store_queue #(
                 inflight_tail <= (MAX_INFLIGHT == 1) ? 0 :
                     inflight_tail + 1'b1;
                 pending_write[inflight_tail] <= request_write;
+                pending_posted[inflight_tail] <= POSTED_STORES != 0 &&
+                    request_write && !request_mmio && cache_request_irrevocable_i;
                 pending_mmio[inflight_tail] <= request_mmio;
                 pending_discard[inflight_tail] <= 1'b0;
                 pending_rob_tag[inflight_tail] <= request_rob_tag;
@@ -705,7 +731,9 @@ module rv32_load_store_queue #(
                             else
                                 write_done[inflight_slot] <= 1'b1;
                         end else begin
-                            source_valid <= 1'b1;
+                            source_valid <= !(response_bypass && completion_ready_i);
+                            if (response_bypass && completion_ready_i)
+                                busy[inflight_slot] <= 1'b0;
                             source_rob_tag <= inflight_rob_tag;
                             source_lsq_tag <= inflight_lsq_tag;
                             raw_value = cache_response_read_data_i >>
@@ -858,6 +886,11 @@ module rv32_load_store_queue #(
 
 `ifndef SYNTHESIS
     always @(posedge clk_i) begin
+        if (!reset_i && response_fire && pending_posted[inflight_head] &&
+                cache_response_error_i) begin
+            $display("ERROR rv32_load_store_queue posted store returned an error");
+            $stop;
+        end
         if (!reset_i && alloc_fire_i && !alloc_ready_o) begin
             $display("ERROR rv32_load_store_queue allocation without ready");
             $finish(1);

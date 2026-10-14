@@ -3,12 +3,14 @@
 module rv32_l1_data_cache #(
     parameter integer CACHE_SIZE_BYTES = 4096,
     parameter integer NUM_SETS = 256,
-    parameter integer NUM_WAYS = 1
+    parameter integer NUM_WAYS = 1,
+    parameter integer STORE_HINTS = 4
 ) (
     input  wire clk_i,
     input  wire reset_i,
     input  wire request_valid_i,
     output wire request_ready_o,
+    output wire request_irrevocable_o,
     input  wire request_write_i,
     input  wire [31:0] request_address_i,
     input  wire [31:0] request_write_data_i,
@@ -71,8 +73,23 @@ module rv32_l1_data_cache #(
     wire tag_ram_write [0:NUM_WAYS-1];
     wire [TAG_WIDTH-1:0] tag_ram_write_data [0:NUM_WAYS-1];
 
+    localparam HINT_WIDTH = (STORE_HINTS > 1) ? cache_clog2(STORE_HINTS) : 1;
+    localparam integer LAST_HINT_VALUE = STORE_HINTS-1;
+    localparam [HINT_WIDTH-1:0] LAST_HINT = LAST_HINT_VALUE[HINT_WIDTH-1:0];
+    reg [STORE_HINTS-1:0] hint_valid;
+    reg [27:0] hint_line [0:STORE_HINTS-1];
+    reg [HINT_WIDTH-1:0] hint_next;
+    reg hint_match;
+    reg hint_update_match;
+    integer hint_index;
+    integer hint_update;
+    wire older_conflict;
+
     reg [2:0] mode;
     reg s0_valid;
+    reg s0_irrevocable;
+    reg s1_irrevocable;
+    reg s2_irrevocable;
     reg s0_write;
     reg [31:0] s0_address;
     reg [31:0] s0_write_data;
@@ -180,6 +197,29 @@ module rv32_l1_data_cache #(
         (s1_can_advance && !array_read_conflict);
     assign request_ready_o = !reset_i && (mode == RUN) &&
         !s2_miss && s0_ready;
+    // FIFO ownership protects an accepted hit from younger replacements.
+    assign older_conflict =
+        (s0_valid && s0_set == request_address_i[4 +: INDEX_WIDTH] &&
+            s0_address[31:4] != request_address_i[31:4]) ||
+        (s1_valid && s1_set == request_address_i[4 +: INDEX_WIDTH] &&
+            s1_address[31:4] != request_address_i[31:4]) ||
+        (s2_valid && s2_set == request_address_i[4 +: INDEX_WIDTH] &&
+            s2_address[31:4] != request_address_i[31:4]);
+    always @* begin
+        hint_match = 1'b0;
+        hint_update_match = 1'b0;
+        for (hint_index = 0; hint_index < STORE_HINTS; hint_index = hint_index + 1) begin
+            if (hint_valid[hint_index] &&
+                    hint_line[hint_index] == request_address_i[31:4])
+                hint_match = 1'b1;
+            if (hint_valid[hint_index] && hint_line[hint_index] == s2_address[31:4])
+                hint_update_match = 1'b1;
+        end
+    end
+    assign request_irrevocable_o = request_ready_o && request_write_i &&
+        request_address_i[1:0] == 0 && request_address_i <= 32'h0ffffffc &&
+        hint_match && !older_conflict;
+
     assign response_valid_o = !reset_i && r_valid;
     assign response_read_data_o = r_data;
     assign response_error_o = r_error;
@@ -308,8 +348,33 @@ module rv32_l1_data_cache #(
 
     always @(posedge clk_i) begin
         if (reset_i) begin
+            hint_valid <= 0;
+            hint_next <= 0;
+            for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
+                hint_line[hint_update] <= 0;
+        end else begin
+            if (mode == RUN && s2_miss)
+                for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
+                    if (hint_line[hint_update][INDEX_WIDTH-1:0] == s2_set)
+                        hint_valid[hint_update] <= 1'b0;
+            if ((mode == RUN && s2_valid && !s2_bad_address && s2_hit && r_ready) ||
+                    refill_install) begin
+                if (!hint_update_match || refill_install) begin
+                hint_valid[hint_next] <= 1'b1;
+                hint_line[hint_next] <= s2_address[31:4];
+                hint_next <= hint_next == LAST_HINT ? {HINT_WIDTH{1'b0}} : hint_next + 1'b1;
+                end
+            end
+        end
+    end
+
+    always @(posedge clk_i) begin
+        if (reset_i) begin
             mode <= RUN;
             s0_valid <= 1'b0;
+            s0_irrevocable <= 1'b0;
+            s1_irrevocable <= 1'b0;
+            s2_irrevocable <= 1'b0;
             s1_valid <= 1'b0;
             s2_valid <= 1'b0;
             r_valid <= 1'b0;
@@ -406,6 +471,7 @@ module rv32_l1_data_cache #(
                         if (s2_ready) begin
                             s2_valid <= s1_valid;
                             if (s1_valid) begin
+                                s2_irrevocable <= s1_irrevocable;
                                 s2_write <= s1_write;
                                 s2_address <= s1_address;
                                 s2_write_data <= s1_write_data;
@@ -427,6 +493,7 @@ module rv32_l1_data_cache #(
                             s1_valid <= s0_valid &&
                                 !array_read_conflict;
                             if (s0_valid && !array_read_conflict) begin
+                                s1_irrevocable <= s0_irrevocable;
                                 s1_address <= s0_address;
                                 s1_write <= s0_write;
                                 s1_write_data <= s0_write_data;
@@ -456,6 +523,7 @@ module rv32_l1_data_cache #(
                         if (s0_ready) begin
                             s0_valid <= request_valid_i && request_ready_o;
                             if (request_valid_i && request_ready_o) begin
+                                s0_irrevocable <= request_irrevocable_o;
                                 s0_write <= request_write_i;
                                 s0_address <= request_address_i;
                                 s0_write_data <= request_write_data_i;
@@ -522,4 +590,13 @@ module rv32_l1_data_cache #(
                 NUM_SETS * NUM_WAYS * LINE_BYTES)
             $display("ERROR invalid data cache parameters");
     end
+`ifndef SYNTHESIS
+    always @(posedge clk_i) begin
+        if (!reset_i && mode == RUN && s2_valid && s2_irrevocable &&
+                (s2_bad_address || !s2_hit)) begin
+            $display("ERROR rv32_l1_data_cache irrevocable store lost its line");
+            $stop;
+        end
+    end
+`endif
 endmodule

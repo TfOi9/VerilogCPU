@@ -23,6 +23,8 @@ module rv32_cpu_core #(
     parameter LSQ_ENTRIES = 8,
     parameter LSQ_INDEX_WIDTH = 3,
     parameter LSQ_TAG_WIDTH = 5,
+    parameter POSTED_STORES = 0,
+    parameter RESULT_FALLTHROUGH = 1,
     parameter FETCH_QUEUE_ENTRIES = 8,
     parameter FETCH_QUEUE_INDEX_WIDTH = 3
 ) (
@@ -41,6 +43,7 @@ module rv32_cpu_core #(
 
     output wire dcache_request_valid_o,
     input  wire dcache_request_ready_i,
+    input  wire dcache_request_irrevocable_i,
     output wire dcache_request_write_o,
     output wire [31:0] dcache_request_address_o,
     output wire [31:0] dcache_request_write_data_o,
@@ -69,6 +72,10 @@ module rv32_cpu_core #(
     /* verilator lint_off PINCONNECTEMPTY */
     /* verilator lint_off UNUSEDSIGNAL */
     localparam COMPLETION_SOURCES = BE_WIDTH + 3;
+
+    wire [(COMPLETION_SOURCES*ROB_TAG_WIDTH)-1:0] source_lookup_tag;
+    wire [COMPLETION_SOURCES-1:0] source_lookup_write_valid;
+    wire [(COMPLETION_SOURCES*PHYS_REG_ADDR_WIDTH)-1:0] source_lookup_phys;
 
     localparam ISSUE_CANDIDATES = BE_WIDTH + 4;
     wire [ISSUE_CANDIDATES-1:0] issue_candidate_valid;
@@ -474,7 +481,7 @@ module rv32_cpu_core #(
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH)
+        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .LOOKUP_PORTS(COMPLETION_SOURCES)
     ) rob (
         .clk_i(clk_i), .reset_i(reset_i),
         .alloc_valid_i(rob_alloc_valid), .alloc_fire_i(dispatch_fire),
@@ -493,6 +500,9 @@ module rv32_cpu_core #(
         .alloc_exception_tval_i(rob_alloc_exception_tval),
         .alloc_ready_o(rob_alloc_ready), .alloc_tag_o(rob_alloc_tag),
         .occupancy_o(rob_occupancy), .head_index_o(rob_head_index),
+        .source_lookup_tag_i(source_lookup_tag),
+        .source_lookup_write_valid_o(source_lookup_write_valid),
+        .source_lookup_phys_o(source_lookup_phys),
         .completion_valid_i(completion_valid),
         .completion_tag_i(completion_tag),
         .completion_value_i(completion_value),
@@ -761,7 +771,7 @@ module rv32_cpu_core #(
 
     rv32_load_store_queue #(
         .LSQ_ENTRIES(LSQ_ENTRIES), .LSQ_INDEX_WIDTH(LSQ_INDEX_WIDTH),
-        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
+        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .POSTED_STORES(POSTED_STORES), .LOAD_FALLTHROUGH(RESULT_FALLTHROUGH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH)
     ) lsq (
@@ -805,6 +815,7 @@ module rv32_cpu_core #(
         .commit_fire_i(commit_fire), .commit_ready_o(lsq_commit_ready),
         .cache_request_valid_o(dcache_request_valid_o),
         .cache_request_ready_i(dcache_request_ready_i),
+        .cache_request_irrevocable_i(dcache_request_irrevocable_i),
         .cache_request_write_o(dcache_request_write_o),
         .cache_request_address_o(dcache_request_address_o),
         .cache_request_write_data_o(dcache_request_write_data_o),
@@ -820,7 +831,7 @@ module rv32_cpu_core #(
         .BE_WIDTH(BE_WIDTH), .SOURCE_COUNT(COMPLETION_SOURCES),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .ROB_TAG_WIDTH(ROB_TAG_WIDTH)
+        .ROB_TAG_WIDTH(ROB_TAG_WIDTH), .FALLTHROUGH(RESULT_FALLTHROUGH), .SOURCE_AUTH(1)
     ) writeback_network (
         .clk_i(clk_i), .reset_i(reset_i), .flush_i(1'b0),
         .recover_i(pipeline_hold), .source_valid_i(source_valid),
@@ -832,6 +843,9 @@ module rv32_cpu_core #(
         .source_exception_valid_i(source_exception_valid),
         .source_exception_cause_i(source_exception_cause),
         .source_exception_tval_i(source_exception_tval),
+        .source_lookup_tag_o(source_lookup_tag),
+        .source_lookup_write_valid_i(source_lookup_write_valid),
+        .source_lookup_phys_i(source_lookup_phys),
         .completion_valid_o(completion_valid),
         .completion_tag_o(completion_tag),
         .completion_value_o(completion_value),

@@ -9,7 +9,8 @@ module rv32_reorder_buffer #(
     parameter BE_WIDTH = 1,
     parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REG_ADDR_WIDTH = 6,
-    parameter LSQ_TAG_WIDTH = 5
+    parameter LSQ_TAG_WIDTH = 5,
+    parameter LOOKUP_PORTS = 1
 ) (
     input  wire                                             clk_i,
     input  wire                                             reset_i,
@@ -34,6 +35,10 @@ module rv32_reorder_buffer #(
     output wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              alloc_tag_o,
     output wire [ROB_INDEX_WIDTH:0]                         occupancy_o,
     output wire [ROB_INDEX_WIDTH-1:0]                       head_index_o,
+
+    input  wire [(LOOKUP_PORTS*ROB_TAG_WIDTH)-1:0]           source_lookup_tag_i,
+    output wire [LOOKUP_PORTS-1:0]                          source_lookup_write_valid_o,
+    output wire [(LOOKUP_PORTS*PHYS_REG_ADDR_WIDTH)-1:0]    source_lookup_phys_o,
 
     input  wire [BE_WIDTH-1:0]                              completion_valid_i,
     input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              completion_tag_i,
@@ -324,6 +329,23 @@ module rv32_reorder_buffer #(
             $finish(1);
         end
     end
+
+    genvar lookup_port;
+    generate
+        for (lookup_port = 0; lookup_port < LOOKUP_PORTS;
+                lookup_port = lookup_port + 1) begin: source_lookup
+            wire [ROB_INDEX_WIDTH-1:0] slot;
+            wire [ROB_GENERATION_WIDTH-1:0] generation_value;
+            assign slot = source_lookup_tag_i[lookup_port*ROB_TAG_WIDTH +: ROB_INDEX_WIDTH];
+            assign generation_value = source_lookup_tag_i[
+                lookup_port*ROB_TAG_WIDTH+ROB_INDEX_WIDTH +: ROB_GENERATION_WIDTH];
+            assign source_lookup_write_valid_o[lookup_port] = !reset_i &&
+                !recovery_busy_reg && entry_busy[slot] && !entry_complete[slot] &&
+                entry_generation[slot] == generation_value && entry_writes_rd[slot];
+            assign source_lookup_phys_o[lookup_port*PHYS_REG_ADDR_WIDTH +:
+                PHYS_REG_ADDR_WIDTH] = entry_new_phys[slot];
+        end
+    endgenerate
 
     always @* begin
         alloc_count = 0;

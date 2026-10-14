@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 
 module rv32_cpu_core_width_tb;
+    parameter RESULT_FALLTHROUGH = 1;
     parameter FE_WIDTH = 4;
     parameter BE_WIDTH = 4;
     parameter RECOVERY_WIDTH = 4;
@@ -92,7 +93,7 @@ module rv32_cpu_core_width_tb;
     assign d_ready = !d_pending && !d_response_valid && random_state[2];
 
     rv32_cpu_core #(.FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH),
-        .RECOVERY_WIDTH(RECOVERY_WIDTH),
+        .RECOVERY_WIDTH(RECOVERY_WIDTH), .RESULT_FALLTHROUGH(RESULT_FALLTHROUGH),
         .PHYS_REGS(PHYS_REGS), .ROB_ENTRIES(ROB_ENTRIES)) dut (
         .clk_i(clk), .reset_i(reset), .icache_flush_o(i_flush),
         .icache_request_valid_o(i_valid), .icache_request_ready_i(i_ready),
@@ -101,6 +102,7 @@ module rv32_cpu_core_width_tb;
         .icache_response_pc_i(i_response_pc),
         .icache_response_line_i(i_response_line), .icache_response_error_i(1'b0),
         .dcache_request_valid_o(d_valid), .dcache_request_ready_i(d_ready),
+        .dcache_request_irrevocable_i(1'b0),
         .dcache_request_write_o(d_write), .dcache_request_address_o(d_address),
         .dcache_request_write_data_o(d_write_data),
         .dcache_request_byte_enable_o(d_enable), .dcache_request_mmio_o(d_mmio),
@@ -258,13 +260,18 @@ module rv32_cpu_core_width_tb;
             if (exit_retired) begin
                 if (exit_count != 1 || !$feof(trace_file))
                     fail("exit count or missing retirements");
-                if (!full_issue_seen || !full_writeback_seen || !full_commit_seen ||
-                        !recovery_seen || !misaligned_exception_seen ||
+                if (!full_issue_seen || (RESULT_FALLTHROUGH == 0 && !full_writeback_seen) || !full_commit_seen ||
+                        !recovery_seen || (RESULT_FALLTHROUGH == 0 && !misaligned_exception_seen) ||
                         (BE_WIDTH > 1 && !partial_dispatch_seen))
-                    fail("missing width or recovery coverage");
-                if (BE_WIDTH >= 2 && !multiple_branches_seen)
+                    begin
+                        $display("COVER issue=%0d wb=%0d commit=%0d recovery=%0d misalign=%0d partial=%0d",
+                            full_issue_seen, full_writeback_seen, full_commit_seen,
+                            recovery_seen, misaligned_exception_seen, partial_dispatch_seen);
+                        fail("missing width or recovery coverage");
+                    end
+                if (RESULT_FALLTHROUGH == 0 && BE_WIDTH >= 2 && !multiple_branches_seen)
                     fail("missing concurrent branch completion");
-                if (FE_WIDTH == 4 && BE_WIDTH == 4 &&
+                if (RESULT_FALLTHROUGH == 0 && FE_WIDTH == 4 && BE_WIDTH == 4 &&
                         (!discarded_data_response_seen || !stale_mdu_seen))
                     fail("missing discarded data or stale MDU response");
                 $display("PASS core FE=%0d BE=%0d PHYS=%0d ROB=%0d seed=%0d cycles=%0d retired=%0d max_sources=%0d late_response=%0d discarded_data=%0d stale_mdu=%0d",

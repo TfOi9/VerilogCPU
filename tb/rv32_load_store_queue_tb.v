@@ -3,6 +3,8 @@
 
 module rv32_load_store_queue_tb;
     parameter BE_WIDTH = 1;
+    parameter POSTED_STORES = 0;
+    parameter LOAD_FALLTHROUGH = 0;
     parameter LSQ_ENTRIES = 8;
     parameter LSQ_INDEX_WIDTH = 3;
     parameter ROB_ENTRIES = 32;
@@ -77,6 +79,7 @@ module rv32_load_store_queue_tb;
     reg [LSQ_TAG_WIDTH-1:0] filled_tags [0:LSQ_ENTRIES-1];
 
     rv32_load_store_queue #(
+        .POSTED_STORES(POSTED_STORES), .LOAD_FALLTHROUGH(LOAD_FALLTHROUGH),
         .BE_WIDTH(BE_WIDTH), .LSQ_ENTRIES(LSQ_ENTRIES),
         .LSQ_INDEX_WIDTH(LSQ_INDEX_WIDTH),
         .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH),
@@ -132,6 +135,7 @@ module rv32_load_store_queue_tb;
         .commit_ready_o(commit_ready_o),
         .cache_request_valid_o(cache_request_valid_o),
         .cache_request_ready_i(cache_request_ready_i),
+        .cache_request_irrevocable_i(1'b0),
         .cache_request_write_o(cache_request_write_o),
         .cache_request_address_o(cache_request_address_o),
         .cache_request_write_data_o(cache_request_write_data_o),
@@ -335,7 +339,7 @@ module rv32_load_store_queue_tb;
             cache_response_read_data_i = value;
             cache_response_error_i = error_value;
             #1; check(cache_response_ready_o, "response ready");
-            tick(); cache_response_valid_i = 0;
+            tick(); cache_response_valid_i = 0; #1;
         end
     endtask
 

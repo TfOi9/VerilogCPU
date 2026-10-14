@@ -88,6 +88,7 @@ module rv32_l1_cache_parameter_tb;
         .clk_i(clk_i), .reset_i(reset_i),
         .request_valid_i(d_request_valid),
         .request_ready_o(d_request_ready),
+        .request_irrevocable_o(),
         .request_write_i(d_request_write),
         .request_address_i(d_request_address),
         .request_write_data_i(d_request_write_data),

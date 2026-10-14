@@ -4,6 +4,9 @@ module student_top #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
     parameter RECOVERY_WIDTH = 4,
+    parameter POSTED_STORES = 1,
+    parameter RESULT_FALLTHROUGH = 1,
+    parameter STORE_HINTS = 16,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
@@ -75,6 +78,7 @@ module student_top #(
 
     wire dcache_request_valid;
     wire dcache_request_ready;
+    wire dcache_request_irrevocable;
     wire dcache_response_valid;
     wire dcache_response_ready;
     wire [31:0] dcache_response_read_data;
@@ -135,7 +139,8 @@ module student_top #(
     end
 
     rv32_cpu_core #(
-        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
+        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH), .POSTED_STORES(POSTED_STORES),
+        .RESULT_FALLTHROUGH(RESULT_FALLTHROUGH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
@@ -152,6 +157,7 @@ module student_top #(
         .icache_response_error_i(core_i_response_error),
         .dcache_request_valid_o(core_d_request_valid),
         .dcache_request_ready_i(core_d_request_ready),
+        .dcache_request_irrevocable_i(!core_d_request_mmio && dcache_request_irrevocable),
         .dcache_request_write_o(core_d_request_write),
         .dcache_request_address_o(core_d_request_address),
         .dcache_request_write_data_o(core_d_request_write_data),
@@ -188,11 +194,13 @@ module student_top #(
 
     rv32_l1_data_cache #(
         .CACHE_SIZE_BYTES(DCACHE_SIZE_BYTES),
-        .NUM_SETS(DCACHE_NUM_SETS), .NUM_WAYS(DCACHE_NUM_WAYS)
+        .NUM_SETS(DCACHE_NUM_SETS), .NUM_WAYS(DCACHE_NUM_WAYS),
+        .STORE_HINTS(STORE_HINTS)
     ) dcache (
         .clk_i(clock), .reset_i(reset),
         .request_valid_i(dcache_request_valid),
         .request_ready_o(dcache_request_ready),
+        .request_irrevocable_o(dcache_request_irrevocable),
         .request_write_i(core_d_request_write),
         .request_address_i(core_d_request_address),
         .request_write_data_i(core_d_request_write_data),
