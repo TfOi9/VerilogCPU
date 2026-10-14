@@ -377,14 +377,16 @@ module rv32_fetch_pipeline_tb;
             32'h00000044, 32'h00000060, 1'b1);
         pulse_redirect(32'h00000040);
         accept_request(32'h00000040);
+        accept_request(32'h00000060);
         send_response(32'h00000040, line_value, 1'b0);
         check(fetch_occupancy_o == 1,
             "taken branch did not truncate at first lane");
         check(fetch_predicted_next_pc_o[0 +: 32] == 32'h00000060,
             "taken branch target mismatch");
-        wait_internal_flush;
+        check(!icache_flush_o, "correct early branch flushed target request");
         consume_count(1);
-        accept_request(32'h00000060);
+        send_response(32'h00000060, sequential_line(12'h044), 1'b0);
+        consume_count(FE_WIDTH);
 
         pulse_redirect(32'h00000080);
         accept_request(32'h00000080);
@@ -398,13 +400,16 @@ module rv32_fetch_pipeline_tb;
             32'h00000084, 32'h00000100, 1'b1);
         pulse_redirect(32'h00000080);
         accept_request(32'h00000080);
+        accept_request(32'h00000100);
         send_response(32'h00000080, line_value, 1'b0);
         check(fetch_occupancy_o == 1,
             "BTB-hit JALR did not truncate bundle");
         check(fetch_predicted_next_pc_o[0 +: 32] == 32'h00000100,
             "BTB target mismatch");
-        wait_internal_flush;
+        check(!icache_flush_o, "correct early JALR flushed target request");
         consume_count(1);
+        send_response(32'h00000100, sequential_line(12'h054), 1'b0);
+        consume_count(FE_WIDTH);
 
         pulse_redirect(32'h00000120);
         accept_request(32'h00000120);
@@ -555,6 +560,47 @@ module rv32_fetch_pipeline_tb;
             "JALR predictor statistics mismatch");
         check(control_total_o == 3,
             "control predictor statistics mismatch");
+
+        update_predictor(`RV32_OP_JAL, 32'h00000900,
+            32'h00000904, 32'h00000940, 1'b1);
+        pulse_redirect(32'h00000900);
+        accept_request(32'h00000900);
+        accept_request(32'h00000940);
+        send_response(32'h00000900, sequential_line(12'h100), 1'b0);
+        wait_internal_flush;
+        consume_count(FE_WIDTH);
+        accept_request(32'h00000900 + FE_WIDTH*4);
+
+        update_predictor(`RV32_OP_BEQ, 32'h00000a00,
+            32'h00000a04, 32'h00000a40, 1'b1);
+        update_predictor(`RV32_OP_BEQ, 32'h00000a00,
+            32'h00000a04, 32'h00000a40, 1'b1);
+        pulse_redirect(32'h00000a00);
+        accept_request(32'h00000a00);
+        accept_request(32'h00000a40);
+        update_predictor(`RV32_OP_BEQ, 32'h00000a00,
+            32'h00000a40, 32'h00000a04, 1'b0);
+        update_predictor(`RV32_OP_BEQ, 32'h00000a00,
+            32'h00000a40, 32'h00000a04, 1'b0);
+        line_value = sequential_line(12'h104);
+        line_value[0 +: 32] = branch_instruction(13'h040);
+        send_response(32'h00000a00, line_value, 1'b0);
+        wait_internal_flush;
+        check(fetch_predicted_next_pc_o[0 +: 32] == 32'h00000a04,
+            "changed direction did not reconcile prediction");
+        consume_count(FE_WIDTH);
+        accept_request(32'h00000a00 + FE_WIDTH*4);
+
+        update_predictor(`RV32_OP_JALR, 32'h00000b00,
+            32'h00000b04, 32'h00000b02, 1'b1);
+        pulse_redirect(32'h00000b00);
+        accept_request(32'h00000b00);
+        accept_request(32'h00000b00 + FE_WIDTH*4);
+        line_value = sequential_line(12'h108);
+        line_value[0 +: 32] = 32'h00008067;
+        send_response(32'h00000b00, line_value, 1'b0);
+        check(!icache_flush_o, "unaligned early target was used");
+        consume_count(FE_WIDTH);
 
         $display("PASS rv32_fetch_pipeline FE_WIDTH=%0d BE_WIDTH=%0d checks=%0d",
             FE_WIDTH, BE_WIDTH, checks);

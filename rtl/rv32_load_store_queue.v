@@ -10,7 +10,8 @@ module rv32_load_store_queue #(
     parameter ROB_ENTRIES = 32,
     parameter ROB_INDEX_WIDTH = 5,
     parameter ROB_TAG_WIDTH = 7,
-    parameter MEMORY_BYTES = 268435456
+    parameter MEMORY_BYTES = 268435456,
+    parameter MAX_INFLIGHT = 4
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -113,12 +114,28 @@ module rv32_load_store_queue #(
     reg [31:0] request_write_data;
     reg [3:0] request_byte_enable;
     reg request_mmio;
-    reg inflight;
-    reg inflight_write;
-    reg inflight_discard;
-    reg [ROB_TAG_WIDTH-1:0] inflight_rob_tag;
-    reg [LSQ_TAG_WIDTH-1:0] inflight_lsq_tag;
-    reg [31:0] inflight_address;
+    localparam INFLIGHT_INDEX_WIDTH = (MAX_INFLIGHT > 1) ?
+        index_width_for_count(MAX_INFLIGHT) : 1;
+    reg [INFLIGHT_INDEX_WIDTH-1:0] inflight_head;
+    reg [INFLIGHT_INDEX_WIDTH-1:0] inflight_tail;
+    reg [INFLIGHT_INDEX_WIDTH:0] inflight_count;
+    reg pending_write [0:MAX_INFLIGHT-1];
+    reg pending_mmio [0:MAX_INFLIGHT-1];
+    reg pending_discard [0:MAX_INFLIGHT-1];
+    reg [ROB_TAG_WIDTH-1:0] pending_rob_tag [0:MAX_INFLIGHT-1];
+    reg [LSQ_TAG_WIDTH-1:0] pending_lsq_tag [0:MAX_INFLIGHT-1];
+    reg [31:0] pending_address [0:MAX_INFLIGHT-1];
+    wire inflight = inflight_count != 0;
+    wire inflight_write = pending_write[inflight_head];
+    wire inflight_mmio = pending_mmio[inflight_head];
+    wire inflight_discard = pending_discard[inflight_head];
+    wire [ROB_TAG_WIDTH-1:0] inflight_rob_tag = pending_rob_tag[inflight_head];
+    wire [LSQ_TAG_WIDTH-1:0] inflight_lsq_tag = pending_lsq_tag[inflight_head];
+    wire [31:0] inflight_address = pending_address[inflight_head];
+    wire request_fire = cache_request_valid_o && cache_request_ready_i;
+    wire response_fire = cache_response_valid_i && cache_response_ready_o;
+    integer pending_index;
+    integer pending_lane;
 
     reg [LSQ_ENTRIES-1:0] reserved_slots;
     reg [LSQ_INDEX_WIDTH-1:0] alloc_slot [0:BE_WIDTH-1];
@@ -139,6 +156,10 @@ module rv32_load_store_queue #(
     reg [LSQ_INDEX_WIDTH-1:0] sequential_commit_slot;
     integer source_candidate;
     integer request_candidate;
+    integer store_request_candidate;
+    integer store_request_lane;
+    reg store_request_prefix;
+    reg [LSQ_INDEX_WIDTH-1:0] store_request_slot;
     integer candidate_distance;
     integer best_distance;
     integer best_store_distance;
@@ -269,7 +290,9 @@ module rv32_load_store_queue #(
                 ROB_INDEX_WIDTH != index_width_for_count(ROB_ENTRIES) ||
                 ROB_TAG_WIDTH <= ROB_INDEX_WIDTH ||
                 (ROB_ENTRIES & (ROB_ENTRIES-1)) != 0 ||
-                MEMORY_BYTES < 4 || (MEMORY_BYTES & 3) != 0) begin
+                MEMORY_BYTES < 4 || (MEMORY_BYTES & 3) != 0 ||
+                MAX_INFLIGHT < 1 ||
+                (MAX_INFLIGHT & (MAX_INFLIGHT-1)) != 0) begin
             $display("ERROR rv32_load_store_queue invalid parameters");
             $finish(1);
         end
@@ -283,7 +306,8 @@ module rv32_load_store_queue #(
     assign completion_exception_cause_o = source_exception_cause;
     assign completion_exception_tval_o = source_exception_tval;
     assign cache_request_valid_o = !reset_i && !flush_i && !recover_i &&
-        request_valid;
+        request_valid && (inflight_count < MAX_INFLIGHT || response_fire) &&
+        (request_mmio ? !inflight : !(inflight && inflight_mmio));
     assign cache_request_write_o = request_write;
     assign cache_request_address_o = request_address;
     assign cache_request_write_data_o = request_write_data;
@@ -293,7 +317,8 @@ module rv32_load_store_queue #(
         store_data_valid_i && data_match && !data_valid[data_slot];
     assign cache_response_ready_o = !reset_i && !flush_i &&
         !recover_i && inflight &&
-        (inflight_write || inflight_discard || !inflight_match || !source_valid);
+        (inflight_write || inflight_discard || !inflight_match ||
+            !source_valid || completion_ready_i);
 
     always @* begin
         for (precompute_index = 0; precompute_index < LSQ_ENTRIES;
@@ -491,6 +516,10 @@ module rv32_load_store_queue #(
                         commit_ready_o[i] = i == 0 &&
                             (fault_valid[commit_slot] ||
                                 write_done[commit_slot] ||
+                                (response_fire && inflight_write &&
+                                    !inflight_mmio && !inflight_discard &&
+                                    inflight_match && !cache_response_error_i &&
+                                    inflight_slot == commit_slot) ||
                                 (late_error[commit_slot] &&
                                     commit_exception_valid_i[i]));
                     end
@@ -500,10 +529,92 @@ module rv32_load_store_queue #(
     end
 
     always @* begin
+        store_request_candidate = -1;
+        store_request_prefix = 1'b1;
+        store_request_slot = 0;
+        for (store_request_lane = 0; store_request_lane < BE_WIDTH;
+                store_request_lane = store_request_lane + 1) begin
+            store_request_slot = commit_lsq_tag_i[
+                store_request_lane*LSQ_TAG_WIDTH +: LSQ_INDEX_WIDTH];
+            if (store_request_prefix && commit_valid_i[store_request_lane] &&
+                    commit_lsq_valid_i[store_request_lane] &&
+                    !commit_exception_valid_i[store_request_lane] &&
+                    is_store_op(commit_op_i[
+                        store_request_lane*`RV32_OP_WIDTH +: `RV32_OP_WIDTH]) &&
+                    busy[store_request_slot] && is_store[store_request_slot] &&
+                    {generation[store_request_slot], store_request_slot} ==
+                        commit_lsq_tag_i[store_request_lane*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] &&
+                    rob_tag[store_request_slot] ==
+                        commit_rob_tag_i[store_request_lane*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] &&
+                    address_valid[store_request_slot] && data_valid[store_request_slot] &&
+                    !fault_valid[store_request_slot] && !write_requested[store_request_slot] &&
+                    (store_request_lane == 0 || !is_mmio_store(
+                        address[store_request_slot], width[store_request_slot])))
+                store_request_candidate = store_request_slot;
+            // A later store is prepared only when every older lane retires now.
+            store_request_prefix = store_request_prefix &&
+                commit_fire_i[store_request_lane] &&
+                !commit_exception_valid_i[store_request_lane];
+        end
+    end
+
+    always @* begin
         occupancy_o = 0;
         for (occupancy_index = 0; occupancy_index < LSQ_ENTRIES;
                 occupancy_index = occupancy_index + 1)
             if (busy[occupancy_index]) occupancy_o = occupancy_o + 1'b1;
+    end
+
+    always @(posedge clk_i) begin
+        if (reset_i) begin
+            inflight_head <= 0;
+            inflight_tail <= 0;
+            inflight_count <= 0;
+            for (pending_index = 0; pending_index < MAX_INFLIGHT;
+                    pending_index = pending_index + 1) begin
+                pending_write[pending_index] <= 1'b0;
+                pending_mmio[pending_index] <= 1'b0;
+                pending_discard[pending_index] <= 1'b0;
+                pending_rob_tag[pending_index] <= 0;
+                pending_lsq_tag[pending_index] <= 0;
+                pending_address[pending_index] <= 0;
+            end
+        end else begin
+            case ({request_fire, response_fire})
+                2'b10: inflight_count <= inflight_count + 1'b1;
+                2'b01: inflight_count <= inflight_count - 1'b1;
+                default: inflight_count <= inflight_count;
+            endcase
+            if (request_fire) begin
+                inflight_tail <= (MAX_INFLIGHT == 1) ? 0 :
+                    inflight_tail + 1'b1;
+                pending_write[inflight_tail] <= request_write;
+                pending_mmio[inflight_tail] <= request_mmio;
+                pending_discard[inflight_tail] <= 1'b0;
+                pending_rob_tag[inflight_tail] <= request_rob_tag;
+                pending_lsq_tag[inflight_tail] <= request_lsq_tag;
+                pending_address[inflight_tail] <=
+                    address[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
+            end
+            if (response_fire)
+                inflight_head <= (MAX_INFLIGHT == 1) ? 0 :
+                    inflight_head + 1'b1;
+            // Accepted requests survive flush until their ordered responses drain.
+            for (pending_index = 0; pending_index < MAX_INFLIGHT;
+                    pending_index = pending_index + 1) begin
+                if (flush_i)
+                    pending_discard[pending_index] <= 1'b1;
+                else if (recover_i)
+                    for (pending_lane = 0; pending_lane < BE_WIDTH;
+                            pending_lane = pending_lane + 1)
+                        if (rollback_valid_i[pending_lane] &&
+                                pending_lsq_tag[pending_index] == rollback_lsq_tag_i[
+                                    pending_lane*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] &&
+                                pending_rob_tag[pending_index] == rollback_rob_tag_i[
+                                    pending_lane*ROB_TAG_WIDTH +: ROB_TAG_WIDTH])
+                            pending_discard[pending_index] <= 1'b1;
+            end
+        end
     end
 
     always @(posedge clk_i) begin
@@ -545,12 +656,6 @@ module rv32_load_store_queue #(
             request_write_data <= 0;
             request_byte_enable <= 0;
             request_mmio <= 1'b0;
-            inflight <= 1'b0;
-            inflight_write <= 1'b0;
-            inflight_discard <= 1'b0;
-            inflight_rob_tag <= 0;
-            inflight_lsq_tag <= 0;
-            inflight_address <= 0;
         end else begin
             if (recover_i) begin
                 for (sequential_index = 0; sequential_index < LSQ_ENTRIES;
@@ -576,10 +681,6 @@ module rv32_load_store_queue #(
                                     {generation[sequential_index],
                                         sequential_index[LSQ_INDEX_WIDTH-1:0]})
                                 request_valid <= 1'b0;
-                            if (inflight && inflight_lsq_tag ==
-                                    {generation[sequential_index],
-                                        sequential_index[LSQ_INDEX_WIDTH-1:0]})
-                                inflight_discard <= 1'b1;
                         end
                     end
                 end
@@ -593,18 +694,9 @@ module rv32_load_store_queue #(
                                 source_lsq_tag)
                         busy[source_lsq_tag[LSQ_INDEX_WIDTH-1:0]] <= 1'b0;
                 end
-                if (cache_request_valid_o && cache_request_ready_i) begin
+                if (request_fire)
                     request_valid <= 1'b0;
-                    inflight <= 1'b1;
-                    inflight_write <= request_write;
-                    inflight_discard <= 1'b0;
-                    inflight_rob_tag <= request_rob_tag;
-                    inflight_lsq_tag <= request_lsq_tag;
-                    inflight_address <= address[
-                        request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
-                end
                 if (cache_response_valid_i && cache_response_ready_o) begin
-                    inflight <= 1'b0;
                     if (!inflight_discard && inflight_match) begin
                         if (inflight_write) begin
                             if (cache_response_error_i)
@@ -628,7 +720,8 @@ module rv32_load_store_queue #(
                             report_sent[inflight_slot] <= 1'b1;
                         end
                     end
-                end else if (!source_valid && source_candidate >= 0) begin
+                end else if ((!source_valid || completion_ready_i) &&
+                        source_candidate >= 0) begin
                     source_valid <= 1'b1;
                     source_rob_tag <= rob_tag[source_candidate];
                     source_lsq_tag <= {generation[source_candidate],
@@ -652,64 +745,31 @@ module rv32_load_store_queue #(
                     end
                 end
 
-                if (!request_valid && !inflight &&
-                        !(cache_request_valid_o && cache_request_ready_i)) begin
-                    if (commit_valid_i[0] && commit_lsq_valid_i[0] &&
-                            is_store_op(commit_op_i[0 +: `RV32_OP_WIDTH])) begin
-                        sequential_commit_slot = commit_lsq_tag_i[
-                            0 +: LSQ_INDEX_WIDTH];
-                        if (busy[sequential_commit_slot] &&
-                                is_store[sequential_commit_slot] &&
-                                {generation[sequential_commit_slot],
-                                    sequential_commit_slot} ==
-                                    commit_lsq_tag_i[0 +: LSQ_TAG_WIDTH] &&
-                                rob_tag[sequential_commit_slot] ==
-                                    commit_rob_tag_i[0 +: ROB_TAG_WIDTH] &&
-                                address_valid[sequential_commit_slot] &&
-                                data_valid[sequential_commit_slot] &&
-                                !fault_valid[sequential_commit_slot] &&
-                                !write_requested[sequential_commit_slot]) begin
-                            request_valid <= 1'b1;
-                            request_write <= 1'b1;
-                            request_rob_tag <= rob_tag[sequential_commit_slot];
-                            request_lsq_tag <= {
-                                generation[sequential_commit_slot],
-                                sequential_commit_slot};
-                            request_address <= {
-                                address[sequential_commit_slot][31:2],
-                                2'b00};
-                            request_write_data <=
-                                store_data[sequential_commit_slot] <<
-                                (address[sequential_commit_slot][1:0]*8);
-                            request_byte_enable <=
-                                (4'b1111 >> (4-size_bytes(
-                                    width[sequential_commit_slot])))
-                                    << address[sequential_commit_slot][1:0];
-                            request_mmio <= is_mmio_store(
-                                address[sequential_commit_slot],
-                                width[sequential_commit_slot]);
-                            write_requested[sequential_commit_slot] <= 1'b1;
-                        end else if (request_candidate >= 0) begin
-                            request_valid <= 1'b1;
-                            request_write <= 1'b0;
-                            request_rob_tag <= rob_tag[request_candidate];
-                            request_lsq_tag <= {generation[request_candidate],
-                                request_candidate[LSQ_INDEX_WIDTH-1:0]};
-                            request_address <= {address[request_candidate][31:2],
-                                2'b00};
-                            request_write_data <= 0;
-                            request_byte_enable <= 0;
-                            request_mmio <= 1'b0;
-                            started[request_candidate] <= 1'b1;
-                        end
+                if ((!request_valid || request_fire) &&
+                        !(request_valid && request_mmio) &&
+                        !(inflight && inflight_mmio)) begin
+                    if (store_request_candidate >= 0) begin
+                        request_valid <= 1'b1;
+                        request_write <= 1'b1;
+                        request_rob_tag <= rob_tag[store_request_candidate];
+                        request_lsq_tag <= {generation[store_request_candidate],
+                            store_request_candidate[LSQ_INDEX_WIDTH-1:0]};
+                        request_address <= {address[store_request_candidate][31:2], 2'b00};
+                        request_write_data <= store_data[store_request_candidate] <<
+                            (address[store_request_candidate][1:0]*8);
+                        request_byte_enable <= (4'b1111 >>
+                            (4-size_bytes(width[store_request_candidate]))) <<
+                            address[store_request_candidate][1:0];
+                        request_mmio <= is_mmio_store(address[store_request_candidate],
+                            width[store_request_candidate]);
+                        write_requested[store_request_candidate] <= 1'b1;
                     end else if (request_candidate >= 0) begin
                         request_valid <= 1'b1;
                         request_write <= 1'b0;
                         request_rob_tag <= rob_tag[request_candidate];
                         request_lsq_tag <= {generation[request_candidate],
                             request_candidate[LSQ_INDEX_WIDTH-1:0]};
-                        request_address <= {address[request_candidate][31:2],
-                            2'b00};
+                        request_address <= {address[request_candidate][31:2], 2'b00};
                         request_write_data <= 0;
                         request_byte_enable <= 0;
                         request_mmio <= 1'b0;

@@ -65,6 +65,7 @@ module rv32_fetch_pipeline #(
     reg [FETCH_QUEUE_INDEX_WIDTH:0] queue_occupancy_reg;
 
     reg [31:0] request_pc [0:REQUEST_TRACK_ENTRIES-1];
+    reg [31:0] request_next_pc [0:REQUEST_TRACK_ENTRIES-1];
     reg [1:0] request_head_reg;
     reg [1:0] request_tail_reg;
     reg [2:0] request_count_reg;
@@ -80,6 +81,16 @@ module rv32_fetch_pipeline #(
     wire [FE_WIDTH-1:0] prediction_valid;
     wire [FE_WIDTH-1:0] prediction_taken;
     wire [(FE_WIDTH*32)-1:0] prediction_next_pc;
+    reg [FE_WIDTH-1:0] early_query_valid;
+    reg [(FE_WIDTH*32)-1:0] early_query_pc;
+    wire [FE_WIDTH-1:0] early_taken;
+    wire [(FE_WIDTH*32)-1:0] early_target;
+    reg [31:0] next_request_prediction;
+    reg early_redirect_found;
+    integer early_lane_index;
+    integer early_select_index;
+    wire [31:0] response_next_pc;
+    wire response_path_mismatch;
 
     reg [FE_WIDTH-1:0] fetch_valid_reg;
     reg [(FE_WIDTH*32)-1:0] fetch_pc_reg;
@@ -101,7 +112,6 @@ module rv32_fetch_pipeline #(
     integer enqueue_count;
     integer dequeue_count;
     integer available_count;
-    integer request_advance_count;
     reg redirect_found;
     reg predicted_redirect;
     reg [31:0] predicted_redirect_pc;
@@ -190,6 +200,10 @@ module rv32_fetch_pipeline #(
         .prediction_taken_o(prediction_taken),
         .prediction_btb_hit_o(),
         .prediction_next_pc_o(prediction_next_pc),
+        .early_query_valid_i(early_query_valid),
+        .early_query_pc_i(early_query_pc),
+        .early_taken_o(early_taken),
+        .early_target_o(early_target),
         .update_valid_i(predictor_update_valid_i),
         .update_op_i(predictor_update_op_i),
         .update_pc_i(predictor_update_pc_i),
@@ -208,6 +222,34 @@ module rv32_fetch_pipeline #(
     );
     /* verilator lint_on PINCONNECTEMPTY */
 
+    always @* begin
+        early_query_valid = 0;
+        early_query_pc = 0;
+        for (early_lane_index = 0; early_lane_index < FE_WIDTH;
+                early_lane_index = early_lane_index + 1) begin
+            early_query_valid[early_lane_index] =
+                early_lane_index < words_from_offset(next_request_pc_reg[3:2]);
+            early_query_pc[early_lane_index*32 +: 32] =
+                next_request_pc_reg + early_lane_index*4;
+        end
+    end
+
+    always @* begin
+        next_request_prediction = next_request_pc_reg +
+            words_from_offset(next_request_pc_reg[3:2])*4;
+        early_redirect_found = 1'b0;
+        for (early_select_index = 0; early_select_index < FE_WIDTH;
+                early_select_index = early_select_index + 1) begin
+            if (!early_redirect_found && early_taken[early_select_index]) begin
+                early_redirect_found = 1'b1;
+                next_request_prediction = early_target[early_select_index*32 +: 32];
+            end
+        end
+    end
+
+    assign response_next_pc = predicted_redirect ? predicted_redirect_pc :
+        icache_response_pc_i + candidate_count*4;
+    assign response_path_mismatch = response_next_pc != request_next_pc[request_head_reg];
     assign icache_flush_o = !reset_i &&
         (redirect_valid_i || icache_flush_reg);
     assign icache_request_valid_o = !reset_i && !redirect_valid_i &&
@@ -362,7 +404,6 @@ module rv32_fetch_pipeline #(
             icache_response_ready_o && response_matches_head;
         request_pop_fire = response_enqueue_fire;
         request_fire = icache_request_valid_o && icache_request_ready_i;
-        request_advance_count = words_from_offset(next_request_pc_reg[3:2]);
     end
 
     always @(posedge clk_i) begin
@@ -387,8 +428,10 @@ module rv32_fetch_pipeline #(
             end
             for (sequential_lane_index = 0;
                     sequential_lane_index < REQUEST_TRACK_ENTRIES;
-                    sequential_lane_index = sequential_lane_index + 1)
+                    sequential_lane_index = sequential_lane_index + 1) begin
                 request_pc[sequential_lane_index] <= 32'd0;
+                request_next_pc[sequential_lane_index] <= 32'd0;
+            end
         end else if (redirect_valid_i) begin
             queue_head_reg <= {FETCH_QUEUE_INDEX_WIDTH{1'b0}};
             queue_tail_reg <= {FETCH_QUEUE_INDEX_WIDTH{1'b0}};
@@ -444,9 +487,9 @@ module rv32_fetch_pipeline #(
 
             if (request_fire) begin
                 request_pc[request_tail_reg] <= next_request_pc_reg;
+                request_next_pc[request_tail_reg] <= next_request_prediction;
                 request_tail_reg <= request_tail_reg + 1'b1;
-                next_request_pc_reg <= next_request_pc_reg +
-                    request_advance_count*4;
+                next_request_pc_reg <= next_request_prediction;
             end
 
             if (request_pop_fire) begin
@@ -460,13 +503,12 @@ module rv32_fetch_pipeline #(
             endcase
 
             if (response_enqueue_fire &&
-                    (predicted_redirect || icache_response_error_i)) begin
+                    (response_path_mismatch || icache_response_error_i)) begin
                 request_head_reg <= 2'd0;
                 request_tail_reg <= 2'd0;
                 request_count_reg <= 3'd0;
                 icache_flush_reg <= 1'b1;
-                if (predicted_redirect)
-                    next_request_pc_reg <= predicted_redirect_pc;
+                next_request_pc_reg <= response_next_pc;
                 if (icache_response_error_i)
                     fault_block_reg <= 1'b1;
             end

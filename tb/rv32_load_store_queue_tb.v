@@ -602,6 +602,161 @@ module rv32_load_store_queue_tb;
         check(occupancy_o == 0, "full queue rollback");
         allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
         check(first_tag != filled_tags[0], "reused slot generation");
+
+        reset_case();
+        for (lane = 0; lane < 5; lane = lane + 1) begin
+            allocate_one(0, tag(lane), `RV32_MEMORY_WORD, 0,
+                filled_tags[lane]);
+            load_address(tag(lane), filled_tags[lane], 32'h100 + lane*4);
+            if (lane < 4)
+                expect_request(0, 32'h100 + lane*4, 0);
+        end
+        repeat (3) tick();
+        check(!cache_request_valid_o, "inflight capacity backpressure");
+        send_response(32'h11111111, 0);
+        expect_request(0, 32'h110, 0);
+        cache_response_valid_i = 1;
+        cache_response_read_data_i = 32'h22222222;
+        #1; check(!cache_response_ready_o, "completion backpressure");
+        completion_ready_i = 1;
+        #1; check(cache_response_ready_o, "completion turnover ready");
+        check(completion_rob_tag_o == tag(0), "first queued response tag");
+        check(completion_value_o == 32'h11111111, "first queued response data");
+        tick();
+        cache_response_valid_i = 0;
+        completion_ready_i = 0;
+        expect_completion(tag(1), 32'h22222222, 0, 0);
+        for (lane = 2; lane < 5; lane = lane + 1) begin
+            send_response(32'h12340000 + lane, lane == 3);
+            expect_completion(tag(lane), lane == 3 ? 0 : 32'h12340000 + lane,
+                lane == 3, lane == 3 ? 5 : 0);
+        end
+        check(occupancy_o == 0, "multiple loads drained");
+
+        reset_case();
+        allocate_one(0, tag(0), `RV32_MEMORY_BYTE, 0, first_tag);
+        allocate_one(0, tag(1), `RV32_MEMORY_HALF, 1, second_tag);
+        load_address(tag(0), first_tag, 32'h101);
+        expect_request(0, 32'h100, 0);
+        load_address(tag(1), second_tag, 32'h106);
+        expect_request(0, 32'h104, 0);
+        send_response(32'h00008000, 0);
+        expect_completion(tag(0), 32'hffffff80, 0, 0);
+        send_response(32'hfedc0000, 0);
+        expect_completion(tag(1), 32'h0000fedc, 0, 0);
+
+        reset_case();
+        for (lane = 0; lane < 2; lane = lane + 1) begin
+            allocate_one(0, tag(lane), `RV32_MEMORY_WORD, 0, filled_tags[lane]);
+            load_address(tag(lane), filled_tags[lane], 32'h100 + lane*4);
+            expect_request(0, 32'h100 + lane*4, 0);
+        end
+        for (lane = 0; lane < 2; lane = lane + 1) begin
+            recover_i = 1;
+            rollback_valid_i[0] = 1;
+            rollback_rob_tag_i[0 +: ROB_TAG_WIDTH] = tag(lane);
+            rollback_lsq_tag_i[0 +: LSQ_TAG_WIDTH] = filled_tags[lane];
+            tick();
+        end
+        recover_i = 0; rollback_valid_i = 0;
+        allocate_one(0, tag(6), `RV32_MEMORY_WORD, 0, third_tag);
+        load_address(tag(6), third_tag, 32'h200);
+        expect_request(0, 32'h200, 0);
+        send_response(32'hbad00000, 1);
+        send_response(32'hbad00001, 0);
+        check(!completion_valid_o, "all rolled back responses discarded");
+        send_response(32'h76543210, 0);
+        expect_completion(tag(6), 32'h76543210, 0, 0);
+
+        reset_case();
+        allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        load_address(tag(0), first_tag, 32'h100);
+        expect_request(0, 32'h100, 0);
+        flush_i = 1; tick(); flush_i = 0;
+        allocate_one(0, tag(0), `RV32_MEMORY_WORD, 0, second_tag);
+        load_address(tag(0), second_tag, 32'h200);
+        expect_request(0, 32'h200, 0);
+        send_response(32'hbad00002, 0);
+        check(!completion_valid_o, "flush drains old generation response");
+        send_response(32'habcd1234, 0);
+        expect_completion(tag(0), 32'habcd1234, 0, 0);
+
+        if (BE_WIDTH > 1) begin
+            for (lane = 0; lane < 2; lane = lane + 1) begin
+                reset_case();
+                allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+                allocate_one(1, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+                store_address(tag(0), first_tag, 32'h100);
+                store_data(tag(0), first_tag, 32'h11223344);
+                expect_completion(tag(0), 0, 0, 0);
+                store_address(tag(1), second_tag, 32'h104);
+                store_data(tag(1), second_tag, 32'h55667788);
+                expect_completion(tag(1), 0, 0, 0);
+                commit_valid_i = 3;
+                commit_lsq_valid_i = 3;
+                commit_op_i[0 +: `RV32_OP_WIDTH] = `RV32_OP_SW;
+                commit_op_i[`RV32_OP_WIDTH +: `RV32_OP_WIDTH] = `RV32_OP_SW;
+                commit_rob_tag_i[0 +: ROB_TAG_WIDTH] = tag(0);
+                commit_rob_tag_i[ROB_TAG_WIDTH +: ROB_TAG_WIDTH] = tag(1);
+                commit_lsq_tag_i[0 +: LSQ_TAG_WIDTH] = first_tag;
+                commit_lsq_tag_i[LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] = second_tag;
+                expect_request(1, 32'h100, 4'hf);
+                repeat (2) tick();
+                check(!cache_request_valid_o, "younger store waits for success");
+                cache_response_valid_i = 1;
+                cache_response_error_i = lane != 0;
+                #1;
+                check(commit_ready_o[0] == (lane == 0), "store response commit bypass");
+                commit_fire_i[0] = lane == 0;
+                tick();
+                cache_response_valid_i = 0;
+                commit_fire_i = 0;
+                if (lane == 0) begin
+                    commit_valid_i = 1;
+                    commit_lsq_valid_i = 1;
+                    commit_rob_tag_i[0 +: ROB_TAG_WIDTH] = tag(1);
+                    commit_lsq_tag_i[0 +: LSQ_TAG_WIDTH] = second_tag;
+                    #1;
+                    check(cache_request_valid_o, "next head store prepared without bubble");
+                    expect_request(1, 32'h104, 4'hf);
+                    send_response(0, 0);
+                end else begin
+                    repeat (2) tick();
+                    check(!cache_request_valid_o, "write error blocks younger store");
+                    check(!commit_ready_o[0], "write error not retired early");
+                    expect_completion(tag(0), 0, 1, 7);
+                end
+            end
+        end
+
+        reset_case();
+        allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+        store_address(tag(0), first_tag, 32'h80000000);
+        store_data(tag(0), first_tag, 32'd42);
+        expect_completion(tag(0), 0, 0, 0);
+        allocate_one(0, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+        load_address(tag(1), second_tag, 32'h100);
+        expect_request(0, 32'h100, 0);
+        commit_valid_i = 1; commit_lsq_valid_i = 1;
+        commit_op_i[0 +: `RV32_OP_WIDTH] = `RV32_OP_SW;
+        commit_rob_tag_i[0 +: ROB_TAG_WIDTH] = tag(0);
+        commit_lsq_tag_i[0 +: LSQ_TAG_WIDTH] = first_tag;
+        repeat (3) tick();
+        check(!cache_request_valid_o, "MMIO waits for older cache responses");
+        send_response(32'd99, 0);
+        expect_completion(tag(1), 32'd99, 0, 0);
+        expect_mmio_request(32'd42);
+        allocate_one(0, tag(2), `RV32_MEMORY_WORD, 0, third_tag);
+        load_address(tag(2), third_tag, 32'h104);
+        repeat (3) tick();
+        check(!cache_request_valid_o, "RAM waits while MMIO is active");
+        send_response(0, 0);
+        commit_fire_i = 1; tick();
+        commit_fire_i = 0; commit_valid_i = 0;
+        expect_request(0, 32'h104, 0);
+        send_response(32'd100, 0);
+        expect_completion(tag(2), 32'd100, 0, 0);
+
         $display("PASS rv32_load_store_queue_tb width=%0d checks=%0d",
             BE_WIDTH, checks);
         $finish;

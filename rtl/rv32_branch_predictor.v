@@ -17,6 +17,11 @@ module rv32_branch_predictor #(
     output reg  [FE_WIDTH-1:0]                          prediction_btb_hit_o,
     output reg  [(FE_WIDTH*32)-1:0]                     prediction_next_pc_o,
 
+    input  wire [FE_WIDTH-1:0]                          early_query_valid_i,
+    input  wire [(FE_WIDTH*32)-1:0]                     early_query_pc_i,
+    output reg  [FE_WIDTH-1:0]                          early_taken_o,
+    output reg  [(FE_WIDTH*32)-1:0]                     early_target_o,
+
     input  wire [BE_WIDTH-1:0]                          update_valid_i,
     input  wire [(BE_WIDTH*`RV32_OP_WIDTH)-1:0]         update_op_i,
     input  wire [(BE_WIDTH*32)-1:0]                     update_pc_i,
@@ -39,6 +44,7 @@ module rv32_branch_predictor #(
     reg       btb_valid [0:15];
     reg [31:0] btb_pc [0:15];
     reg [31:0] btb_target [0:15];
+    reg btb_conditional [0:15];
 
     reg [31:0] conditional_correct_reg;
     reg [31:0] conditional_total_reg;
@@ -69,6 +75,9 @@ module rv32_branch_predictor #(
     reg       update_correct;
 
     integer query_lane_index;
+    integer early_lane_index;
+    reg [31:0] early_pc;
+    reg [3:0] early_index;
     integer update_lane_index;
     integer bht_comb_index;
     integer sequential_state_index;
@@ -127,6 +136,25 @@ module rv32_branch_predictor #(
             $display("ERROR rv32_branch_predictor invalid BE_WIDTH=%0d",
                 BE_WIDTH);
             $finish(1);
+        end
+    end
+
+    always @* begin
+        early_taken_o = 0;
+        early_target_o = 0;
+        early_pc = 0;
+        early_index = 0;
+        for (early_lane_index = 0; early_lane_index < FE_WIDTH;
+                early_lane_index = early_lane_index + 1) begin
+            early_pc = early_query_pc_i[early_lane_index*32 +: 32];
+            early_index = early_pc[5:2];
+            if (!reset_i && early_query_valid_i[early_lane_index] &&
+                    btb_valid[early_index] && btb_pc[early_index] == early_pc &&
+                    btb_target[early_index][1:0] == 2'b00 &&
+                    (!btb_conditional[early_index] || bht[early_pc[7:2]][1])) begin
+                early_taken_o[early_lane_index] = 1'b1;
+                early_target_o[early_lane_index*32 +: 32] = btb_target[early_index];
+            end
         end
     end
 
@@ -247,6 +275,7 @@ module rv32_branch_predictor #(
                 btb_valid[sequential_state_index] <= 1'b0;
                 btb_pc[sequential_state_index] <= 32'd0;
                 btb_target[sequential_state_index] <= 32'd0;
+                btb_conditional[sequential_state_index] <= 1'b0;
             end
             conditional_correct_reg <= 32'd0;
             conditional_total_reg <= 32'd0;
@@ -267,9 +296,10 @@ module rv32_branch_predictor #(
                     sequential_update_lane_index =
                         sequential_update_lane_index + 1) begin
                 if (update_valid_i[sequential_update_lane_index] &&
-                        (update_op_i[
+                        update_actual_taken_i[sequential_update_lane_index] &&
+                        is_control(update_op_i[
                             sequential_update_lane_index*`RV32_OP_WIDTH +:
-                            `RV32_OP_WIDTH] == `RV32_OP_JALR)) begin
+                            `RV32_OP_WIDTH])) begin
                     btb_valid[update_pc_i[
                         sequential_update_lane_index*32 + 2 +: 4]] <= 1'b1;
                     btb_pc[update_pc_i[
@@ -280,6 +310,11 @@ module rv32_branch_predictor #(
                         sequential_update_lane_index*32 + 2 +: 4]] <=
                         update_actual_next_pc_i[
                             sequential_update_lane_index*32 +: 32];
+                    btb_conditional[update_pc_i[
+                        sequential_update_lane_index*32 + 2 +: 4]] <=
+                        is_conditional_branch(update_op_i[
+                            sequential_update_lane_index*`RV32_OP_WIDTH +:
+                            `RV32_OP_WIDTH]);
                 end
             end
 
