@@ -7,6 +7,7 @@ module rv32_mdu_reservation_station_core #(
     parameter RS_ENTRIES = 4,
     parameter RS_INDEX_WIDTH = 2,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
     parameter ROB_ENTRIES = 32,
@@ -37,8 +38,8 @@ module rv32_mdu_reservation_station_core #(
     input  wire [(BE_WIDTH*32)-1:0]                         broadcast_value_i,
 
     input  wire [ROB_INDEX_WIDTH-1:0]                       rob_head_index_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
-    input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_valid_i,
+    input  wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
 
     output wire                                             request_valid_o,
     input  wire                                             request_ready_i,
@@ -79,7 +80,6 @@ module rv32_mdu_reservation_station_core #(
     reg [31:0] request_lhs_reg;
     reg [31:0] request_rhs_reg;
     reg [ROB_TAG_WIDTH-1:0] request_rob_tag_reg;
-    reg request_slot_valid_reg;
     reg [RS_INDEX_WIDTH-1:0] request_slot_reg;
     reg [RS_ENTRIES-1:0] issue_remove_mask_reg;
 
@@ -95,7 +95,6 @@ module rv32_mdu_reservation_station_core #(
     integer effective_broadcast_index;
     integer capture_lane_index;
     integer capture_broadcast_index;
-    integer selection_entry_index;
     integer dispatch_lane_index;
     integer allocation_entry_index;
     integer allocation_winner_slot;
@@ -105,9 +104,6 @@ module rv32_mdu_reservation_station_core #(
     integer rollback_entry_index;
     integer rollback_lane_index;
     integer rollback_remove_count;
-    integer selection_winner_slot;
-    integer selection_winner_distance;
-    integer selection_candidate_distance;
     integer busy_entry_index;
     integer busy_count;
     integer sequential_entry_index;
@@ -328,61 +324,46 @@ module rv32_mdu_reservation_station_core #(
         end
     end
 
-    always @* begin
-        selection_entry_index = 0;
-        request_valid_reg = 1'b0;
-        request_op_reg = `RV32_OP_INVALID;
-        request_lhs_reg = 32'd0;
-        request_rhs_reg = 32'd0;
-        request_rob_tag_reg = {ROB_TAG_WIDTH{1'b0}};
-        request_slot_valid_reg = 1'b0;
-        request_slot_reg = {RS_INDEX_WIDTH{1'b0}};
-        selection_winner_slot = 0;
-        selection_winner_distance = ROB_ENTRIES;
-        selection_candidate_distance = ROB_ENTRIES;
-
-        if (!reset_i && !flush_i && !recover_i) begin
-            if (request_locked) begin
-                request_slot_valid_reg = 1'b1;
-                request_slot_reg = request_locked_slot;
-            end else begin
-                for (selection_entry_index = 0;
-                        selection_entry_index < RS_ENTRIES;
-                        selection_entry_index = selection_entry_index + 1) begin
-                    selection_candidate_distance = rob_distance(
-                        entry_rob_tag[selection_entry_index][
-                            ROB_INDEX_WIDTH-1:0],
-                        rob_head_index_i);
-                    if (entry_busy[selection_entry_index] &&
-                            effective_lhs_ready[selection_entry_index] &&
-                            effective_rhs_ready[selection_entry_index] &&
-                            ((selection_winner_distance == ROB_ENTRIES) ||
-                             (selection_candidate_distance <
-                                selection_winner_distance) ||
-                             ((selection_candidate_distance ==
-                                selection_winner_distance) &&
-                              (selection_entry_index <
-                                selection_winner_slot)))) begin
-                        selection_winner_slot = selection_entry_index;
-                        selection_winner_distance =
-                            selection_candidate_distance;
-                    end
-                end
-                if (selection_winner_distance != ROB_ENTRIES) begin
-                    request_slot_valid_reg = 1'b1;
-                    request_slot_reg =
-                        selection_winner_slot[RS_INDEX_WIDTH-1:0];
-                end
-            end
-
-            if (request_slot_valid_reg) begin
-                request_valid_reg = 1'b1;
-                request_op_reg = entry_op[request_slot_reg];
-                request_lhs_reg = effective_lhs_value[request_slot_reg];
-                request_rhs_reg = effective_rhs_value[request_slot_reg];
-                request_rob_tag_reg = entry_rob_tag[request_slot_reg];
-            end
+    localparam TREE_SLOT_WIDTH = RS_INDEX_WIDTH;
+    localparam TREE_ENTRIES = RS_ENTRIES;
+    localparam TREE_PORTS = 1;
+    localparam TREE_DATA_WIDTH = `RV32_OP_WIDTH + 64 + ROB_TAG_WIDTH;
+    wire [TREE_ENTRIES-1:0] tree_valid;
+    wire [(TREE_ENTRIES*ROB_INDEX_WIDTH)-1:0] tree_age;
+    wire [(TREE_ENTRIES*TREE_DATA_WIDTH)-1:0] tree_input;
+    wire [(TREE_PORTS*TREE_DATA_WIDTH)-1:0] tree_output;
+    wire [TREE_PORTS-1:0] tree_selected_valid;
+    wire [(TREE_PORTS*TREE_SLOT_WIDTH)-1:0] tree_selected_slot;
+    wire [(TREE_PORTS*TREE_ENTRIES)-1:0] unused_tree_mask;
+    wire [TREE_PORTS-1:0] tree_locked;
+    wire [(TREE_PORTS*TREE_SLOT_WIDTH)-1:0] tree_locked_slot;
+    genvar tree_entry, tree_port;
+    generate
+        for (tree_entry = 0; tree_entry < TREE_ENTRIES;
+                tree_entry = tree_entry + 1) begin: tree_candidate
+            assign tree_valid[tree_entry] = entry_busy[tree_entry] &&
+                effective_lhs_ready[tree_entry] && effective_rhs_ready[tree_entry];
+            assign tree_age[tree_entry*ROB_INDEX_WIDTH +: ROB_INDEX_WIDTH] =
+                rob_distance(entry_rob_tag[tree_entry][ROB_INDEX_WIDTH-1:0], rob_head_index_i);
+            assign tree_input[tree_entry*TREE_DATA_WIDTH +: TREE_DATA_WIDTH] = {entry_rob_tag[tree_entry], effective_rhs_value[tree_entry], effective_lhs_value[tree_entry], entry_op[tree_entry]};
         end
+        for (tree_port = 0; tree_port < TREE_PORTS;
+                tree_port = tree_port + 1) begin: tree_lock
+            assign tree_locked[tree_port] = request_locked;
+            assign tree_locked_slot[tree_port*TREE_SLOT_WIDTH +: TREE_SLOT_WIDTH] = request_locked_slot;
+        end
+    endgenerate
+    rv32_ranked_select #(.ENTRIES(TREE_ENTRIES), .PORTS(TREE_PORTS),
+        .SLOT_WIDTH(TREE_SLOT_WIDTH), .AGE_WIDTH(ROB_INDEX_WIDTH),
+        .DATA_WIDTH(TREE_DATA_WIDTH)) tree_issue (
+        .enable_i(!reset_i && !flush_i && !recover_i), .valid_i(tree_valid),
+        .age_i(tree_age), .data_i(tree_input), .locked_i(tree_locked),
+        .locked_slot_i(tree_locked_slot), .valid_o(tree_selected_valid),
+        .slot_o(tree_selected_slot), .mask_o(unused_tree_mask), .data_o(tree_output));
+    always @* begin
+        request_valid_reg = tree_selected_valid[0];
+        request_slot_reg = tree_selected_slot;
+        {request_rob_tag_reg, request_rhs_reg, request_lhs_reg, request_op_reg} = tree_output;
     end
 
     always @* begin
@@ -416,8 +397,7 @@ module rv32_mdu_reservation_station_core #(
                 allocation_entry_index < RS_ENTRIES;
                 allocation_entry_index = allocation_entry_index + 1) begin
             entry_allocate_valid_reg[allocation_entry_index] = 1'b0;
-            if (!entry_busy[allocation_entry_index] ||
-                    issue_remove_mask_reg[allocation_entry_index]) begin
+            if (!entry_busy[allocation_entry_index]) begin
                 available_slot_mask_reg[allocation_entry_index] = 1'b1;
                 available_count = available_count + 1;
             end
@@ -462,7 +442,7 @@ module rv32_mdu_reservation_station_core #(
                     rollback_entry_index < RS_ENTRIES;
                     rollback_entry_index = rollback_entry_index + 1) begin
                 for (rollback_lane_index = 0;
-                        rollback_lane_index < BE_WIDTH;
+                        rollback_lane_index < RECOVERY_WIDTH;
                         rollback_lane_index = rollback_lane_index + 1) begin
                     if (entry_busy[rollback_entry_index] &&
                             rollback_valid_i[rollback_lane_index] &&
@@ -717,6 +697,7 @@ module rv32_multiply_reservation_station #(
     parameter MUL_RS_ENTRIES = 4,
     parameter MUL_RS_INDEX_WIDTH = 2,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
     parameter ROB_ENTRIES = 32,
@@ -743,8 +724,8 @@ module rv32_multiply_reservation_station #(
     input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        broadcast_phys_i,
     input  wire [(BE_WIDTH*32)-1:0]                         broadcast_value_i,
     input  wire [ROB_INDEX_WIDTH-1:0]                       rob_head_index_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
-    input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_valid_i,
+    input  wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
     input  wire                                             issue_grant_i,
     output wire                                             issue_valid_o,
     output wire                                             issue_ready_o,
@@ -780,7 +761,7 @@ module rv32_multiply_reservation_station #(
     rv32_mdu_reservation_station_core #(
         .RS_ENTRIES(MUL_RS_ENTRIES),
         .RS_INDEX_WIDTH(MUL_RS_INDEX_WIDTH),
-        .BE_WIDTH(BE_WIDTH),
+        .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES),
@@ -842,6 +823,7 @@ module rv32_divide_reservation_station #(
     parameter DIV_RS_ENTRIES = 4,
     parameter DIV_RS_INDEX_WIDTH = 2,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
     parameter ROB_ENTRIES = 32,
@@ -868,8 +850,8 @@ module rv32_divide_reservation_station #(
     input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        broadcast_phys_i,
     input  wire [(BE_WIDTH*32)-1:0]                         broadcast_value_i,
     input  wire [ROB_INDEX_WIDTH-1:0]                       rob_head_index_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
-    input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_valid_i,
+    input  wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
     input  wire                                             issue_grant_i,
     output wire                                             issue_valid_o,
     output wire                                             issue_ready_o,
@@ -905,7 +887,7 @@ module rv32_divide_reservation_station #(
     rv32_mdu_reservation_station_core #(
         .RS_ENTRIES(DIV_RS_ENTRIES),
         .RS_INDEX_WIDTH(DIV_RS_INDEX_WIDTH),
-        .BE_WIDTH(BE_WIDTH),
+        .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES),

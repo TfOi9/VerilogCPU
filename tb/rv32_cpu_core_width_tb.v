@@ -3,6 +3,7 @@
 module rv32_cpu_core_width_tb;
     parameter FE_WIDTH = 4;
     parameter BE_WIDTH = 4;
+    parameter RECOVERY_WIDTH = 4;
     parameter PHYS_REGS = 64;
     parameter ROB_ENTRIES = 32;
     localparam ROB_INDEX_WIDTH = address_width_for_count(ROB_ENTRIES);
@@ -91,6 +92,7 @@ module rv32_cpu_core_width_tb;
     assign d_ready = !d_pending && !d_response_valid && random_state[2];
 
     rv32_cpu_core #(.FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS), .ROB_ENTRIES(ROB_ENTRIES)) dut (
         .clk_i(clk), .reset_i(reset), .icache_flush_o(i_flush),
         .icache_request_valid_o(i_valid), .icache_request_ready_i(i_ready),

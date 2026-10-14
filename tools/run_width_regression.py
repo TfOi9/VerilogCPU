@@ -24,6 +24,8 @@ def main():
     parser.add_argument("--sim", type=Path)
     parser.add_argument("--mode", choices=("smoke", "test", "all"), default="all")
     parser.add_argument("--case")
+    parser.add_argument("--all-performance", action="store_true",
+                        help="run all six official performance cases as functional checks")
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--appimage", default="")
     parser.add_argument("--max-cycles", type=int, default=30000000)
@@ -44,7 +46,9 @@ def main():
     cases = []
     if args.mode in ("test", "all"):
         directories = sorted(args.testcases.glob("correctness_*"))
-        directories += [args.testcases / name for name in ("perf_multiply", "perf_vvadd")]
+        performance = ("perf_median", "perf_multiply", "perf_qsort", "perf_rsort",
+                       "perf_towers", "perf_vvadd") if args.all_performance else ("perf_multiply", "perf_vvadd")
+        directories += [args.testcases / name for name in performance]
         if args.case:
             directories = [args.testcases / args.case]
         for case in directories:
@@ -76,6 +80,7 @@ def main():
                 "phys_regs": args.phys_regs, "rob_entries": args.rob_entries, "latency": args.latency,
                 "max_cycles": args.max_cycles, "wall_timeout_seconds": 1800,
                 "watchdog_cycles": 100000, "mode": args.mode, "case_filter": args.case,
+                "all_performance": args.all_performance,
                 "completed": False, "results": records}
 
     def save():

@@ -5,6 +5,7 @@ module rv32_integer_reservation_station #(
     parameter INT_RS_ENTRIES = 8,
     parameter INT_RS_INDEX_WIDTH = 3,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
     parameter ROB_ENTRIES = 32,
@@ -36,8 +37,8 @@ module rv32_integer_reservation_station #(
     input  wire [(BE_WIDTH*32)-1:0]                         broadcast_value_i,
 
     input  wire [ROB_INDEX_WIDTH-1:0]                       rob_head_index_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
-    input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_valid_i,
+    input  wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_i,
 
     output wire [BE_WIDTH-1:0]                              issue_valid_o,
     input  wire [BE_WIDTH-1:0]                              issue_ready_i,
@@ -90,7 +91,6 @@ module rv32_integer_reservation_station #(
     reg [BE_WIDTH-1:0] issue_fire_reg;
     reg issue_slot_valid_reg [0:BE_WIDTH-1];
     reg [INT_RS_INDEX_WIDTH-1:0] issue_slot_reg [0:BE_WIDTH-1];
-    reg [INT_RS_ENTRIES-1:0] issue_reserved_mask_reg;
     reg [INT_RS_ENTRIES-1:0] issue_remove_mask_reg;
 
     reg dispatch_ready_reg;
@@ -108,11 +108,6 @@ module rv32_integer_reservation_station #(
     integer capture_lane_index;
     integer capture_broadcast_index;
     integer selection_port_index;
-    integer selection_entry_index;
-    integer selection_locked_index;
-    integer selection_winner_slot;
-    integer selection_winner_distance;
-    integer selection_candidate_distance;
     integer issue_count;
     integer fire_port_index;
     integer dispatch_lane_index;
@@ -363,109 +358,57 @@ module rv32_integer_reservation_station #(
         end
     end
 
-    always @* begin
-        selection_port_index = 0;
-        selection_entry_index = 0;
-        selection_locked_index = 0;
-        issue_valid_reg = {BE_WIDTH{1'b0}};
-        issue_op_reg = {(BE_WIDTH*`RV32_OP_WIDTH){1'b0}};
-        issue_lhs_reg = {(BE_WIDTH*32){1'b0}};
-        issue_rhs_reg = {(BE_WIDTH*32){1'b0}};
-        issue_pc_reg = {(BE_WIDTH*32){1'b0}};
-        issue_immediate_reg = {(BE_WIDTH*32){1'b0}};
-        issue_rob_tag_reg = {(BE_WIDTH*ROB_TAG_WIDTH){1'b0}};
-        issue_reserved_mask_reg = {INT_RS_ENTRIES{1'b0}};
-        selection_winner_slot = 0;
-        selection_winner_distance = ROB_ENTRIES;
-        selection_candidate_distance = ROB_ENTRIES;
-
-        for (selection_port_index = 0;
-                selection_port_index < BE_WIDTH;
-                selection_port_index = selection_port_index + 1) begin
-            issue_slot_valid_reg[selection_port_index] = 1'b0;
-            issue_slot_reg[selection_port_index] =
-                {INT_RS_INDEX_WIDTH{1'b0}};
+    localparam TREE_SLOT_WIDTH = INT_RS_INDEX_WIDTH;
+    localparam TREE_ENTRIES = INT_RS_ENTRIES;
+    localparam TREE_PORTS = BE_WIDTH;
+    localparam TREE_DATA_WIDTH = `RV32_OP_WIDTH + 128 + ROB_TAG_WIDTH;
+    wire [TREE_ENTRIES-1:0] tree_valid;
+    wire [(TREE_ENTRIES*ROB_INDEX_WIDTH)-1:0] tree_age;
+    wire [(TREE_ENTRIES*TREE_DATA_WIDTH)-1:0] tree_input;
+    wire [(TREE_PORTS*TREE_DATA_WIDTH)-1:0] tree_output;
+    wire [TREE_PORTS-1:0] tree_selected_valid;
+    wire [(TREE_PORTS*TREE_SLOT_WIDTH)-1:0] tree_selected_slot;
+    wire [(TREE_PORTS*TREE_ENTRIES)-1:0] unused_tree_mask;
+    wire [TREE_PORTS-1:0] tree_locked;
+    wire [(TREE_PORTS*TREE_SLOT_WIDTH)-1:0] tree_locked_slot;
+    genvar tree_entry, tree_port;
+    generate
+        for (tree_entry = 0; tree_entry < TREE_ENTRIES;
+                tree_entry = tree_entry + 1) begin: tree_candidate
+            assign tree_valid[tree_entry] = entry_busy[tree_entry] &&
+                effective_lhs_ready[tree_entry] && effective_rhs_ready[tree_entry];
+            assign tree_age[tree_entry*ROB_INDEX_WIDTH +: ROB_INDEX_WIDTH] =
+                rob_distance(entry_rob_tag[tree_entry][ROB_INDEX_WIDTH-1:0], rob_head_index_i);
+            assign tree_input[tree_entry*TREE_DATA_WIDTH +: TREE_DATA_WIDTH] = {entry_rob_tag[tree_entry], entry_immediate[tree_entry], entry_pc[tree_entry], effective_rhs_value[tree_entry], effective_lhs_value[tree_entry], entry_op[tree_entry]};
         end
-
-        if (!reset_i && !flush_i && !recover_i) begin
-            for (selection_locked_index = 0;
-                    selection_locked_index < BE_WIDTH;
-                    selection_locked_index = selection_locked_index + 1) begin
-                if (issue_locked[selection_locked_index]) begin
-                    issue_slot_valid_reg[selection_locked_index] = 1'b1;
-                    issue_slot_reg[selection_locked_index] =
-                        issue_locked_slot[selection_locked_index];
-                    issue_reserved_mask_reg[
-                        issue_locked_slot[selection_locked_index]] = 1'b1;
-                end
-            end
-
-            for (selection_port_index = 0;
-                    selection_port_index < BE_WIDTH;
-                    selection_port_index = selection_port_index + 1) begin
-                if (!issue_locked[selection_port_index]) begin
-                    selection_winner_slot = 0;
-                    selection_winner_distance = ROB_ENTRIES;
-                    for (selection_entry_index = 0;
-                            selection_entry_index < INT_RS_ENTRIES;
-                            selection_entry_index =
-                                selection_entry_index + 1) begin
-                        selection_candidate_distance = rob_distance(
-                            entry_rob_tag[selection_entry_index][
-                                ROB_INDEX_WIDTH-1:0],
-                            rob_head_index_i);
-                        if (entry_busy[selection_entry_index] &&
-                                effective_lhs_ready[selection_entry_index] &&
-                                effective_rhs_ready[selection_entry_index] &&
-                                !issue_reserved_mask_reg[
-                                    selection_entry_index] &&
-                                ((selection_winner_distance == ROB_ENTRIES) ||
-                                 (selection_candidate_distance <
-                                    selection_winner_distance) ||
-                                 ((selection_candidate_distance ==
-                                    selection_winner_distance) &&
-                                  (selection_entry_index <
-                                    selection_winner_slot)))) begin
-                            selection_winner_slot = selection_entry_index;
-                            selection_winner_distance =
-                                selection_candidate_distance;
-                        end
-                    end
-                    if (selection_winner_distance != ROB_ENTRIES) begin
-                        issue_slot_valid_reg[selection_port_index] = 1'b1;
-                        issue_slot_reg[selection_port_index] =
-                            selection_winner_slot[
-                                INT_RS_INDEX_WIDTH-1:0];
-                        issue_reserved_mask_reg[
-                            selection_winner_slot] = 1'b1;
-                    end
-                end
-
-                if (issue_slot_valid_reg[selection_port_index]) begin
-                    issue_valid_reg[selection_port_index] = 1'b1;
-                    issue_op_reg[
-                        selection_port_index*`RV32_OP_WIDTH +:
-                        `RV32_OP_WIDTH] =
-                        entry_op[issue_slot_reg[selection_port_index]];
-                    issue_lhs_reg[selection_port_index*32 +: 32] =
-                        effective_lhs_value[
-                            issue_slot_reg[selection_port_index]];
-                    issue_rhs_reg[selection_port_index*32 +: 32] =
-                        effective_rhs_value[
-                            issue_slot_reg[selection_port_index]];
-                    issue_pc_reg[selection_port_index*32 +: 32] =
-                        entry_pc[issue_slot_reg[selection_port_index]];
-                    issue_immediate_reg[
-                        selection_port_index*32 +: 32] =
-                        entry_immediate[
-                            issue_slot_reg[selection_port_index]];
-                    issue_rob_tag_reg[
-                        selection_port_index*ROB_TAG_WIDTH +:
-                        ROB_TAG_WIDTH] =
-                        entry_rob_tag[
-                            issue_slot_reg[selection_port_index]];
-                end
-            end
+        for (tree_port = 0; tree_port < TREE_PORTS;
+                tree_port = tree_port + 1) begin: tree_lock
+            assign tree_locked[tree_port] = issue_locked[tree_port];
+            assign tree_locked_slot[tree_port*TREE_SLOT_WIDTH +: TREE_SLOT_WIDTH] =
+                issue_locked_slot[tree_port];
+        end
+    endgenerate
+    rv32_ranked_select #(.ENTRIES(TREE_ENTRIES), .PORTS(TREE_PORTS),
+        .SLOT_WIDTH(TREE_SLOT_WIDTH), .AGE_WIDTH(ROB_INDEX_WIDTH),
+        .DATA_WIDTH(TREE_DATA_WIDTH)) tree_issue (
+        .enable_i(!reset_i && !flush_i && !recover_i), .valid_i(tree_valid),
+        .age_i(tree_age), .data_i(tree_input), .locked_i(tree_locked),
+        .locked_slot_i(tree_locked_slot), .valid_o(tree_selected_valid),
+        .slot_o(tree_selected_slot), .mask_o(unused_tree_mask), .data_o(tree_output));
+    always @* begin
+        issue_valid_reg = tree_selected_valid;
+        for (selection_port_index = 0; selection_port_index < BE_WIDTH;
+                selection_port_index = selection_port_index + 1) begin
+            issue_slot_valid_reg[selection_port_index] = tree_selected_valid[selection_port_index];
+            issue_slot_reg[selection_port_index] =
+                tree_selected_slot[selection_port_index*TREE_SLOT_WIDTH +: TREE_SLOT_WIDTH];
+            {issue_rob_tag_reg[selection_port_index*ROB_TAG_WIDTH +: ROB_TAG_WIDTH],
+             issue_immediate_reg[selection_port_index*32 +: 32],
+             issue_pc_reg[selection_port_index*32 +: 32],
+             issue_rhs_reg[selection_port_index*32 +: 32],
+             issue_lhs_reg[selection_port_index*32 +: 32],
+             issue_op_reg[selection_port_index*`RV32_OP_WIDTH +: `RV32_OP_WIDTH]} =
+                tree_output[selection_port_index*TREE_DATA_WIDTH +: TREE_DATA_WIDTH];
         end
     end
 
@@ -506,8 +449,7 @@ module rv32_integer_reservation_station #(
                 allocation_entry_index < INT_RS_ENTRIES;
                 allocation_entry_index = allocation_entry_index + 1) begin
             entry_allocate_valid_reg[allocation_entry_index] = 1'b0;
-            if (!entry_busy[allocation_entry_index] ||
-                    issue_remove_mask_reg[allocation_entry_index]) begin
+            if (!entry_busy[allocation_entry_index]) begin
                 available_slot_mask_reg[allocation_entry_index] = 1'b1;
                 available_count = available_count + 1;
             end
@@ -554,7 +496,7 @@ module rv32_integer_reservation_station #(
                     rollback_entry_index < INT_RS_ENTRIES;
                     rollback_entry_index = rollback_entry_index + 1) begin
                 for (rollback_lane_index = 0;
-                        rollback_lane_index < BE_WIDTH;
+                        rollback_lane_index < RECOVERY_WIDTH;
                         rollback_lane_index = rollback_lane_index + 1) begin
                     if (entry_busy[rollback_entry_index] &&
                             rollback_valid_i[rollback_lane_index] &&

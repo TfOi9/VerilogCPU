@@ -5,6 +5,7 @@ module rv32_memory_reservation_station #(
     parameter RS_ENTRIES = 8,
     parameter RS_INDEX_WIDTH = 3,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
     parameter ROB_ENTRIES = 32,
@@ -33,8 +34,8 @@ module rv32_memory_reservation_station #(
     input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] broadcast_phys_i,
     input  wire [(BE_WIDTH*32)-1:0] broadcast_value_i,
     input  wire [ROB_INDEX_WIDTH-1:0] rob_head_index_i,
-    input  wire [BE_WIDTH-1:0] rollback_valid_i,
-    input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag_i,
+    input  wire [RECOVERY_WIDTH-1:0] rollback_valid_i,
+    input  wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag_i,
     output reg address_valid_o,
     input  wire address_ready_i,
     output reg [31:0] address_o,
@@ -299,7 +300,7 @@ module rv32_memory_reservation_station #(
             data_locked <= 1'b0;
             for (sequential_index = 0; sequential_index < RS_ENTRIES;
                     sequential_index = sequential_index + 1) begin
-                for (sequential_lane = 0; sequential_lane < BE_WIDTH;
+                for (sequential_lane = 0; sequential_lane < RECOVERY_WIDTH;
                         sequential_lane = sequential_lane + 1) begin
                     if (rollback_valid_i[sequential_lane] &&
                             busy[sequential_index] &&

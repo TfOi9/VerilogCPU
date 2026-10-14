@@ -3,7 +3,8 @@
 module rv32_rename_unit #(
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
-    parameter BE_WIDTH = 1
+    parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH
 ) (
     input  wire                                             clk_i,
     input  wire                                             reset_i,
@@ -29,11 +30,11 @@ module rv32_rename_unit #(
     input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        commit_new_phys_i,
 
     input  wire                                             recover_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_writes_rd_i,
-    input  wire [(BE_WIDTH*5)-1:0]                          rollback_rd_i,
-    input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_new_phys_i,
-    input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_old_phys_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_valid_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_writes_rd_i,
+    input  wire [(RECOVERY_WIDTH*5)-1:0]                          rollback_rd_i,
+    input  wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_new_phys_i,
+    input  wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_old_phys_i,
 
     input  wire [BE_WIDTH-1:0]                              writeback_valid_i,
     input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        writeback_phys_i
@@ -164,6 +165,9 @@ module rv32_rename_unit #(
                     (commit_rd_i[count_lane_index*5 +: 5] != 5'd0)) begin
                 commit_writer_count = commit_writer_count + 1;
             end
+        end
+        for (count_lane_index = 0; count_lane_index < RECOVERY_WIDTH;
+                count_lane_index = count_lane_index + 1) begin
             if (rollback_valid_i[count_lane_index] &&
                     rollback_writes_rd_i[count_lane_index] &&
                     (rollback_rd_i[count_lane_index*5 +: 5] != 5'd0)) begin
@@ -309,7 +313,7 @@ module rv32_rename_unit #(
             /* verilator lint_off BLKSEQ */
             release_ordinal = 0;
             for (sequential_lane_index = 0;
-                    sequential_lane_index < BE_WIDTH;
+                    sequential_lane_index < RECOVERY_WIDTH;
                     sequential_lane_index = sequential_lane_index + 1) begin
                 if (rollback_valid_i[sequential_lane_index] &&
                         rollback_writes_rd_i[sequential_lane_index] &&
@@ -465,6 +469,10 @@ module rv32_rename_unit #(
                         $finish(1);
                     end
                 end
+            end
+            for (assertion_lane_index = 0;
+                    assertion_lane_index < RECOVERY_WIDTH;
+                    assertion_lane_index = assertion_lane_index + 1) begin
                 if (recover_i && rollback_valid_i[assertion_lane_index] &&
                         rollback_writes_rd_i[assertion_lane_index] &&
                         (rollback_rd_i[assertion_lane_index*5 +: 5] !=
@@ -514,6 +522,14 @@ module rv32_rename_unit #(
                         $display("ERROR rv32_rename_unit duplicate commit release");
                         $finish(1);
                     end
+                end
+            end
+            for (assertion_lane_index = 0;
+                    assertion_lane_index < RECOVERY_WIDTH;
+                    assertion_lane_index = assertion_lane_index + 1) begin
+                for (assertion_other_lane_index = assertion_lane_index + 1;
+                        assertion_other_lane_index < RECOVERY_WIDTH;
+                        assertion_other_lane_index = assertion_other_lane_index + 1) begin
                     if (recover_i &&
                             rollback_valid_i[assertion_lane_index] &&
                             rollback_writes_rd_i[assertion_lane_index] &&

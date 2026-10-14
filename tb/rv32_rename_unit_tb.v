@@ -3,7 +3,8 @@
 module rv32_rename_unit_tb #(
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
-    parameter BE_WIDTH = 1
+    parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH
 );
 
     localparam FREE_CAPACITY = PHYS_REGS - 32;
@@ -32,11 +33,11 @@ module rv32_rename_unit_tb #(
     reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] commit_new_phys_i;
 
     reg recover_i;
-    reg [BE_WIDTH-1:0] rollback_valid_i;
-    reg [BE_WIDTH-1:0] rollback_writes_rd_i;
-    reg [(BE_WIDTH*5)-1:0] rollback_rd_i;
-    reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys_i;
-    reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys_i;
+    reg [RECOVERY_WIDTH-1:0] rollback_valid_i;
+    reg [RECOVERY_WIDTH-1:0] rollback_writes_rd_i;
+    reg [(RECOVERY_WIDTH*5)-1:0] rollback_rd_i;
+    reg [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys_i;
+    reg [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys_i;
 
     reg [BE_WIDTH-1:0] writeback_valid_i;
     reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] writeback_phys_i;
@@ -81,7 +82,7 @@ module rv32_rename_unit_tb #(
     rv32_rename_unit #(
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .BE_WIDTH(BE_WIDTH)
+        .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH)
     ) dut (
         .clk_i(clk_i),
         .reset_i(reset_i),
@@ -161,9 +162,9 @@ module rv32_rename_unit_tb #(
             commit_new_phys_i =
                 {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
             recover_i = 1'b0;
-            rollback_valid_i = {BE_WIDTH{1'b0}};
-            rollback_writes_rd_i = {BE_WIDTH{1'b0}};
-            rollback_rd_i = {(BE_WIDTH*5){1'b0}};
+            rollback_valid_i = {RECOVERY_WIDTH{1'b0}};
+            rollback_writes_rd_i = {RECOVERY_WIDTH{1'b0}};
+            rollback_rd_i = {(RECOVERY_WIDTH*5){1'b0}};
             rollback_new_phys_i =
                 {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
             rollback_old_phys_i =
@@ -415,7 +416,7 @@ module rv32_rename_unit_tb #(
         begin
             if (recover_i) begin
                 release_ordinal = 0;
-                for (lane_index = 0; lane_index < BE_WIDTH;
+                for (lane_index = 0; lane_index < RECOVERY_WIDTH;
                         lane_index = lane_index + 1) begin
                     if (rollback_valid_i[lane_index] &&
                             rollback_writes_rd_i[lane_index] &&
@@ -565,8 +566,8 @@ module rv32_rename_unit_tb #(
         begin
             recover_i = 1'b1;
             action_count = requested_count;
-            if (action_count > BE_WIDTH) begin
-                action_count = BE_WIDTH;
+            if (action_count > RECOVERY_WIDTH) begin
+                action_count = RECOVERY_WIDTH;
             end
             if (action_count > history_count) begin
                 action_count = history_count;
@@ -641,7 +642,26 @@ module rv32_rename_unit_tb #(
     endtask
 
     task test_commit_and_rollback;
+        integer repeat_index;
         begin
+            reset_dut;
+            for (repeat_index = 0; repeat_index < RECOVERY_WIDTH + 1 &&
+                    repeat_index < FREE_CAPACITY; repeat_index = repeat_index + 1) begin
+                clear_inputs;
+                rename_valid_i[0] = 1'b1;
+                rename_writes_rd_i[0] = 1'b1;
+                rename_rd_i[0 +: 5] = 5'd9;
+                rename_fire_i = 1'b1;
+                run_cycle;
+            end
+            clear_inputs;
+            while (history_count > 0) begin
+                prepare_rollback(RECOVERY_WIDTH);
+                run_cycle;
+            end
+            if (model_rat[9] != 9 || model_count != FREE_CAPACITY)
+                fail("wide rollback did not restore repeated destination");
+
             reset_dut;
             rename_valid_i[0] = 1'b1;
             rename_writes_rd_i[0] = 1'b1;
@@ -671,8 +691,10 @@ module rv32_rename_unit_tb #(
             rename_fire_i = 1'b1;
             run_cycle;
             clear_inputs;
-            prepare_rollback(BE_WIDTH);
-            run_cycle;
+            while (history_count > 0) begin
+                prepare_rollback(RECOVERY_WIDTH);
+                run_cycle;
+            end
             if ((model_rat[9] != 9) ||
                     (model_rrat[9] != 9)) begin
                 fail("rollback did not restore RAT or changed RRAT");
@@ -724,7 +746,7 @@ module rv32_rename_unit_tb #(
                 random_value = $random(seed) & 32'h7fffffff;
                 random_action = random_value % 10;
                 if ((random_action < 2) && (history_count > 0)) begin
-                    prepare_rollback((random_value % BE_WIDTH) + 1);
+                    prepare_rollback((random_value % RECOVERY_WIDTH) + 1);
                 end else begin
                     if ((random_action < 6) && (history_count > 0)) begin
                         prepare_commit((random_value % BE_WIDTH) + 1);
@@ -768,7 +790,7 @@ module rv32_rename_unit_tb #(
             end
 
             while (history_count > 0) begin
-                prepare_rollback(BE_WIDTH);
+                prepare_rollback(RECOVERY_WIDTH);
                 run_cycle;
             end
             if (model_count != FREE_CAPACITY) begin

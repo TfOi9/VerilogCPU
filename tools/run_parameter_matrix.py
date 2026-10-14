@@ -71,6 +71,8 @@ def main():
     parser.add_argument("--report", type=Path, default=Path("reports/parameter-matrix.json"))
     parser.add_argument("--phase", choices=("all", "lint", "functional"), default="all")
     parser.add_argument("--config", help="focused FE,BE,PHYS,ROB configuration")
+    parser.add_argument("--all-performance", action="store_true",
+                        help="include all six official performance cases in every functional run")
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--lint-jobs", type=int, default=2)
     parser.add_argument("--appimage", default="")
@@ -105,6 +107,7 @@ def main():
     hashes = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in dependencies}
     metadata = {"schema_version": 1, "started_at": datetime.now(timezone.utc).isoformat(),
                 "phase": args.phase, "focused_config": args.config,
+                "all_performance": args.all_performance,
                 "testcases_revision": subprocess.check_output(
                     ["git", "-C", str(args.testcases), "rev-parse", "HEAD"], text=True).strip(),
                 "source_sha256": hashes, "max_cycles": args.max_cycles,
@@ -208,6 +211,8 @@ def main():
                        "--build-root", str(out), "--sim", str(out / "official/sim"),
                        "--report", str(case_report), "--max-cycles", str(args.max_cycles),
                        "--latency", str(args.latency)] + configured_options(config)
+            if args.all_performance:
+                command.append("--all-performance")
             record(config, "functional", command, out / "functional.log", 43200)
             if case_report.exists():
                 metadata["functional"].append(json.loads(case_report.read_text()))

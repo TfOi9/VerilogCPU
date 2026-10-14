@@ -8,6 +8,7 @@ module rv32_reorder_buffer_tb;
     parameter ROB_GENERATION_WIDTH = 2;
     parameter ROB_TAG_WIDTH = ROB_INDEX_WIDTH + ROB_GENERATION_WIDTH;
     parameter BE_WIDTH = 1;
+    parameter RECOVERY_WIDTH = BE_WIDTH;
     parameter PHYS_REG_ADDR_WIDTH = 7;
     parameter LSQ_TAG_WIDTH = 6;
 
@@ -73,14 +74,14 @@ module rv32_reorder_buffer_tb;
     wire recover_busy_o;
     wire recover_redirect_valid_o;
     wire [31:0] recover_redirect_pc_o;
-    wire [BE_WIDTH-1:0] rollback_valid_o;
-    wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag_o;
-    wire [BE_WIDTH-1:0] rollback_writes_rd_o;
-    wire [(BE_WIDTH*5)-1:0] rollback_rd_o;
-    wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys_o;
-    wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys_o;
-    wire [BE_WIDTH-1:0] rollback_lsq_valid_o;
-    wire [(BE_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag_o;
+    wire [RECOVERY_WIDTH-1:0] rollback_valid_o;
+    wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag_o;
+    wire [RECOVERY_WIDTH-1:0] rollback_writes_rd_o;
+    wire [(RECOVERY_WIDTH*5)-1:0] rollback_rd_o;
+    wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys_o;
+    wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys_o;
+    wire [RECOVERY_WIDTH-1:0] rollback_lsq_valid_o;
+    wire [(RECOVERY_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag_o;
 
     reg [ROB_TAG_WIDTH-1:0] saved_tags [0:ROB_ENTRIES-1];
     reg [31:0] reference_pc [0:4095];
@@ -128,7 +129,7 @@ module rv32_reorder_buffer_tb;
         .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
         .ROB_GENERATION_WIDTH(ROB_GENERATION_WIDTH),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH),
-        .BE_WIDTH(BE_WIDTH),
+        .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH)
     ) dut (
@@ -483,7 +484,7 @@ module rv32_reorder_buffer_tb;
             item_index = 1;
             allocate_one(32'h7004, 1'b0);
             alloc_predicted_next_pc_i[31:0] = 32'h7100;
-            initial_younger = BE_WIDTH;
+            initial_younger = RECOVERY_WIDTH + 1;
             for (item_index = 2; item_index < 2 + initial_younger;
                     item_index = item_index + 1) begin
                 allocate_one(32'h7000 + item_index*4, 1'b0);
@@ -522,7 +523,7 @@ module rv32_reorder_buffer_tb;
             rollback_seen = 0;
             expected_rollback_index = total_entries - 1;
             while (recover_busy_o) begin
-                for (lane_index = 0; lane_index < BE_WIDTH;
+                for (lane_index = 0; lane_index < RECOVERY_WIDTH;
                         lane_index = lane_index + 1) begin
                     if (rollback_valid_o[lane_index]) begin
                         check(rollback_tag_o[
@@ -549,7 +550,7 @@ module rv32_reorder_buffer_tb;
             reset_dut;
             item_index = 0;
             allocate_one(32'h7c00, 1'b0);
-            for (item_index = 1; item_index <= BE_WIDTH;
+            for (item_index = 1; item_index <= RECOVERY_WIDTH;
                     item_index = item_index + 1) begin
                 allocate_one(32'h7c00 + item_index*4, 1'b0);
             end
@@ -561,7 +562,7 @@ module rv32_reorder_buffer_tb;
             completion_valid_i = {BE_WIDTH{1'b0}};
             #1;
             check(recover_busy_o &&
-                (rollback_valid_o == {BE_WIDTH{1'b1}}), 124);
+                (rollback_valid_o == {RECOVERY_WIDTH{1'b1}}), 124);
             clock_edge;
             check(!recover_busy_o && (occupancy_o == 1), 125);
             clear_inputs;

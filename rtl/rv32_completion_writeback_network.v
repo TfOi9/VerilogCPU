@@ -77,9 +77,7 @@ module rv32_completion_writeback_network #(
 
     integer arb_source_index;
     integer arb_scan_offset;
-    integer arb_scan_index;
     integer arb_start_index;
-    integer arb_selected_count;
     integer pop_lane_index;
     integer pop_selected_index;
     integer ready_source_index;
@@ -148,67 +146,64 @@ module rv32_completion_writeback_network #(
         end
     end
 
-    always @* begin
-        completion_valid_reg = {BE_WIDTH{1'b0}};
-        completion_tag_reg = {(BE_WIDTH*ROB_TAG_WIDTH){1'b0}};
-        completion_value_reg = {(BE_WIDTH*32){1'b0}};
-        completion_control_valid_reg = {BE_WIDTH{1'b0}};
-        completion_control_taken_reg = {BE_WIDTH{1'b0}};
-        completion_next_pc_reg = {(BE_WIDTH*32){1'b0}};
-        completion_exception_valid_reg = {BE_WIDTH{1'b0}};
-        completion_exception_cause_reg = {(BE_WIDTH*4){1'b0}};
-        completion_exception_tval_reg = {(BE_WIDTH*32){1'b0}};
-        selected_source_lane_reg = {(BE_WIDTH*SOURCE_COUNT){1'b0}};
-        arb_source_index = 0;
-        arb_scan_offset = 0;
-        arb_scan_index = 0;
-        arb_start_index = 0;
-        arb_selected_count = 0;
-
-        for (arb_source_index = 0; arb_source_index < SOURCE_COUNT;
-                arb_source_index = arb_source_index + 1) begin
-            if (round_robin_start_reg[arb_source_index]) begin
-                arb_start_index = arb_source_index;
-            end
+    localparam TREE_SLOT_WIDTH = SOURCE_COUNT <= 1 ? 1 : address_width_for_count(SOURCE_COUNT);
+    localparam TREE_DATA_WIDTH = ROB_TAG_WIDTH + 103;
+    wire [SOURCE_COUNT-1:0] tree_valid;
+    wire [(SOURCE_COUNT*TREE_SLOT_WIDTH)-1:0] tree_age;
+    wire [(SOURCE_COUNT*TREE_DATA_WIDTH)-1:0] tree_input;
+    wire [(BE_WIDTH*TREE_DATA_WIDTH)-1:0] tree_output;
+    wire [BE_WIDTH-1:0] tree_selected_valid;
+    wire [(BE_WIDTH*SOURCE_COUNT)-1:0] tree_selected_mask;
+    wire [(BE_WIDTH*TREE_SLOT_WIDTH)-1:0] unused_tree_slot;
+    genvar tree_source;
+    generate
+        for (tree_source = 0; tree_source < SOURCE_COUNT;
+                tree_source = tree_source + 1) begin: tree_source_data
+            wire [31:0] unused_age_full;
+            assign tree_valid[tree_source] = buffer_valid[tree_source];
+            assign unused_age_full =
+                tree_source >= arb_start_index ? tree_source-arb_start_index :
+                tree_source+SOURCE_COUNT-arb_start_index;
+            assign tree_age[tree_source*TREE_SLOT_WIDTH +: TREE_SLOT_WIDTH] =
+                unused_age_full[TREE_SLOT_WIDTH-1:0];
+            assign tree_input[tree_source*TREE_DATA_WIDTH +: TREE_DATA_WIDTH] =
+                {buffer_exception_tval[tree_source], buffer_exception_cause[tree_source],
+                 buffer_exception_valid[tree_source], buffer_next_pc[tree_source],
+                 buffer_control_taken[tree_source], buffer_control_valid[tree_source],
+                 buffer_value[tree_source], buffer_rob_tag[tree_source]};
         end
+    endgenerate
+    rv32_ranked_select #(.ENTRIES(SOURCE_COUNT), .PORTS(BE_WIDTH),
+        .SLOT_WIDTH(TREE_SLOT_WIDTH), .AGE_WIDTH(TREE_SLOT_WIDTH),
+        .DATA_WIDTH(TREE_DATA_WIDTH)) tree_completion (
+        .enable_i(!reset_i && !flush_i && !recover_i), .valid_i(tree_valid),
+        .age_i(tree_age), .data_i(tree_input), .locked_i({BE_WIDTH{1'b0}}),
+        .locked_slot_i({(BE_WIDTH*TREE_SLOT_WIDTH){1'b0}}),
+        .valid_o(tree_selected_valid), .slot_o(unused_tree_slot),
+        .mask_o(tree_selected_mask), .data_o(tree_output));
 
-        if (!reset_i && !flush_i && !recover_i) begin
-            for (arb_scan_offset = 0; arb_scan_offset < SOURCE_COUNT;
-                    arb_scan_offset = arb_scan_offset + 1) begin
-                arb_scan_index = arb_start_index + arb_scan_offset;
-                if (arb_scan_index >= SOURCE_COUNT) begin
-                    arb_scan_index = arb_scan_index - SOURCE_COUNT;
-                end
-                if (buffer_valid[arb_scan_index] &&
-                        (arb_selected_count < BE_WIDTH)) begin
-                    completion_valid_reg[arb_selected_count] = 1'b1;
-                    completion_tag_reg[
-                        arb_selected_count*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] =
-                        buffer_rob_tag[arb_scan_index];
-                    completion_value_reg[
-                        arb_selected_count*32 +: 32] =
-                        buffer_value[arb_scan_index];
-                    completion_control_valid_reg[arb_selected_count] =
-                        buffer_control_valid[arb_scan_index];
-                    completion_control_taken_reg[arb_selected_count] =
-                        buffer_control_taken[arb_scan_index];
-                    completion_next_pc_reg[
-                        arb_selected_count*32 +: 32] =
-                        buffer_next_pc[arb_scan_index];
-                    completion_exception_valid_reg[arb_selected_count] =
-                        buffer_exception_valid[arb_scan_index];
-                    completion_exception_cause_reg[
-                        arb_selected_count*4 +: 4] =
-                        buffer_exception_cause[arb_scan_index];
-                    completion_exception_tval_reg[
-                        arb_selected_count*32 +: 32] =
-                        buffer_exception_tval[arb_scan_index];
-                    selected_source_lane_reg[
-                        arb_selected_count*SOURCE_COUNT +
-                        arb_scan_index] = 1'b1;
-                    arb_selected_count = arb_selected_count + 1;
-                end
-            end
+    always @* begin
+        arb_start_index = 0;
+        for (arb_source_index = 0; arb_source_index < SOURCE_COUNT;
+                arb_source_index = arb_source_index + 1)
+            if (round_robin_start_reg[arb_source_index])
+                arb_start_index = arb_source_index;
+    end
+
+    always @* begin
+        completion_valid_reg = tree_selected_valid;
+        selected_source_lane_reg = tree_selected_mask;
+        for (arb_scan_offset = 0; arb_scan_offset < BE_WIDTH;
+                arb_scan_offset = arb_scan_offset + 1) begin
+            {completion_exception_tval_reg[arb_scan_offset*32 +: 32],
+             completion_exception_cause_reg[arb_scan_offset*4 +: 4],
+             completion_exception_valid_reg[arb_scan_offset],
+             completion_next_pc_reg[arb_scan_offset*32 +: 32],
+             completion_control_taken_reg[arb_scan_offset],
+             completion_control_valid_reg[arb_scan_offset],
+             completion_value_reg[arb_scan_offset*32 +: 32],
+             completion_tag_reg[arb_scan_offset*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]} =
+                tree_output[arb_scan_offset*TREE_DATA_WIDTH +: TREE_DATA_WIDTH];
         end
     end
 

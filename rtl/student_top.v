@@ -3,6 +3,7 @@
 module student_top #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = 4,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
@@ -134,7 +135,7 @@ module student_top #(
     end
 
     rv32_cpu_core #(
-        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),

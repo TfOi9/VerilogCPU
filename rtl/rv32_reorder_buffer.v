@@ -7,6 +7,7 @@ module rv32_reorder_buffer #(
     parameter ROB_GENERATION_WIDTH = 2,
     parameter ROB_TAG_WIDTH = 7,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REG_ADDR_WIDTH = 6,
     parameter LSQ_TAG_WIDTH = 5
 ) (
@@ -82,14 +83,14 @@ module rv32_reorder_buffer #(
     output wire                                             recover_busy_o,
     output wire                                             recover_redirect_valid_o,
     output wire [31:0]                                      recover_redirect_pc_o,
-    output wire [BE_WIDTH-1:0]                              rollback_valid_o,
-    output wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_o,
-    output wire [BE_WIDTH-1:0]                              rollback_writes_rd_o,
-    output wire [(BE_WIDTH*5)-1:0]                          rollback_rd_o,
-    output wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_new_phys_o,
-    output wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_old_phys_o,
-    output wire [BE_WIDTH-1:0]                              rollback_lsq_valid_o,
-    output wire [(BE_WIDTH*LSQ_TAG_WIDTH)-1:0]              rollback_lsq_tag_o
+    output wire [RECOVERY_WIDTH-1:0]                              rollback_valid_o,
+    output wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0]              rollback_tag_o,
+    output wire [RECOVERY_WIDTH-1:0]                              rollback_writes_rd_o,
+    output wire [(RECOVERY_WIDTH*5)-1:0]                          rollback_rd_o,
+    output wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_new_phys_o,
+    output wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_old_phys_o,
+    output wire [RECOVERY_WIDTH-1:0]                              rollback_lsq_valid_o,
+    output wire [(RECOVERY_WIDTH*LSQ_TAG_WIDTH)-1:0]              rollback_lsq_tag_o
 );
 
     /* verilator lint_off WIDTHEXPAND */
@@ -154,15 +155,15 @@ module rv32_reorder_buffer #(
     reg [(BE_WIDTH*4)-1:0] commit_exception_cause_reg;
     reg [(BE_WIDTH*32)-1:0] commit_exception_tval_reg;
 
-    reg [BE_WIDTH-1:0] rollback_valid_reg;
-    reg [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag_reg;
-    reg [BE_WIDTH-1:0] rollback_writes_rd_reg;
-    reg [(BE_WIDTH*5)-1:0] rollback_rd_reg;
-    reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys_reg;
-    reg [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys_reg;
-    reg [BE_WIDTH-1:0] rollback_lsq_valid_reg;
-    reg [(BE_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag_reg;
-    reg [(BE_WIDTH*ROB_INDEX_WIDTH)-1:0] rollback_slot_reg;
+    reg [RECOVERY_WIDTH-1:0] rollback_valid_reg;
+    reg [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag_reg;
+    reg [RECOVERY_WIDTH-1:0] rollback_writes_rd_reg;
+    reg [(RECOVERY_WIDTH*5)-1:0] rollback_rd_reg;
+    reg [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys_reg;
+    reg [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys_reg;
+    reg [RECOVERY_WIDTH-1:0] rollback_lsq_valid_reg;
+    reg [(RECOVERY_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag_reg;
+    reg [(RECOVERY_WIDTH*ROB_INDEX_WIDTH)-1:0] rollback_slot_reg;
 
     reg mispredict_found_reg;
     reg [ROB_TAG_WIDTH-1:0] mispredict_tag_reg;
@@ -284,6 +285,10 @@ module rv32_reorder_buffer #(
     assign rollback_lsq_tag_o = rollback_lsq_tag_reg;
 
     initial begin
+        if (RECOVERY_WIDTH < 1 || RECOVERY_WIDTH > ROB_ENTRIES) begin
+            $display("ERROR rv32_reorder_buffer invalid recovery width");
+            $finish(1);
+        end
         if ((BE_WIDTH != 1) && (BE_WIDTH != 2) && (BE_WIDTH != 4)) begin
             $display("ERROR rv32_reorder_buffer invalid BE_WIDTH=%0d",
                 BE_WIDTH);
@@ -556,24 +561,24 @@ module rv32_reorder_buffer #(
     end
 
     always @* begin
-        rollback_valid_reg = {BE_WIDTH{1'b0}};
-        rollback_tag_reg = {(BE_WIDTH*ROB_TAG_WIDTH){1'b0}};
-        rollback_writes_rd_reg = {BE_WIDTH{1'b0}};
-        rollback_rd_reg = {(BE_WIDTH*5){1'b0}};
+        rollback_valid_reg = {RECOVERY_WIDTH{1'b0}};
+        rollback_tag_reg = {(RECOVERY_WIDTH*ROB_TAG_WIDTH){1'b0}};
+        rollback_writes_rd_reg = {RECOVERY_WIDTH{1'b0}};
+        rollback_rd_reg = {(RECOVERY_WIDTH*5){1'b0}};
         rollback_new_phys_reg =
-            {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
+            {(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
         rollback_old_phys_reg =
-            {(BE_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
-        rollback_lsq_valid_reg = {BE_WIDTH{1'b0}};
-        rollback_lsq_tag_reg = {(BE_WIDTH*LSQ_TAG_WIDTH){1'b0}};
-        rollback_slot_reg = {(BE_WIDTH*ROB_INDEX_WIDTH){1'b0}};
+            {(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH){1'b0}};
+        rollback_lsq_valid_reg = {RECOVERY_WIDTH{1'b0}};
+        rollback_lsq_tag_reg = {(RECOVERY_WIDTH*LSQ_TAG_WIDTH){1'b0}};
+        rollback_slot_reg = {(RECOVERY_WIDTH*ROB_INDEX_WIDTH){1'b0}};
         rollback_count = 0;
         recovery_stop_reg = 1'b0;
         recovery_done_reg = 1'b0;
         recovery_lookahead_slot_reg = {ROB_INDEX_WIDTH{1'b0}};
         rollback_scan_slot_reg = {ROB_INDEX_WIDTH{1'b0}};
 
-        for (rollback_lane_index = 0; rollback_lane_index < BE_WIDTH;
+        for (rollback_lane_index = 0; rollback_lane_index < RECOVERY_WIDTH;
                 rollback_lane_index = rollback_lane_index + 1) begin
             rollback_scan_slot_reg = rob_index_sub(tail_reg,
                 rollback_lane_index + 1);
@@ -671,7 +676,7 @@ module rv32_reorder_buffer #(
         end else if (recovery_busy_reg) begin
             recovery_redirect_pending_reg <= 1'b0;
             for (sequential_lane_index = 0;
-                    sequential_lane_index < BE_WIDTH;
+                    sequential_lane_index < RECOVERY_WIDTH;
                     sequential_lane_index = sequential_lane_index + 1) begin
                 if (rollback_valid_reg[sequential_lane_index]) begin
                     sequential_slot_reg = rollback_slot_reg[

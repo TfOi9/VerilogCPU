@@ -32,6 +32,8 @@
 
 每个代表配置运行 seed `0x2401`、`0x2402`、`0x2403` 的逐条退休差分，以及 19 个官方 correctness、`perf_multiply`、`perf_vvadd` 和两个本地 smoke。差分比对 PC、原指令、目的寄存器及结果，继续检查 Store 必须位于 ROB 头部、满宽发射/写回/退休、分支恢复和旧响应处理。官方模拟器使用相同 FakeRAM 与 AXI harness，启用 100000 周期无退休 watchdog；每例上限为 30000000 周期、1800 秒墙钟时间，外存延迟 10 周期。
 
+`run_parameter_matrix.py` 和 `run_width_regression.py` 的 `--all-performance` 选项将性能程序扩展至全部六项，因此每个代表配置运行 27 个程序，九组共 243 次。默认轻量集合不变。此选项与源码哈希一起写入报告；2026-10-14 的树化/恢复加宽验证见 [优化报告](optimization-20261014.md)。
+
 ## 报告与复现
 
 `reports/matrix.json` 记录配置、seed、源码与测试脚本 SHA-256、测试集 Git 版本、工具命令、timeout、状态和日志路径，并汇总所有程序结果。启动即写入 `completed=false`；所有步骤结束且源码未变化后才写入最终状态。局部运行的报告带有 `phase` 和 `focused_config`，不能当作完整矩阵通过。

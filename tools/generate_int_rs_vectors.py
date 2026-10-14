@@ -103,7 +103,7 @@ class IntegerRsModel:
 
         available = [
             index for index, slot in enumerate(self.slots)
-            if slot is None or index in issue_remove
+            if slot is None
         ]
         dispatches = stimulus["dispatches"]
         dispatch_count = sum(int(item is not None) for item in dispatches)

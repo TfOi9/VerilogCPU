@@ -4,6 +4,7 @@
 module rv32_decode_rename_dispatch #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = 6,
     parameter ROB_ENTRIES = 32,
@@ -102,11 +103,11 @@ module rv32_decode_rename_dispatch #(
     input  wire [BE_WIDTH-1:0]                              commit_writes_rd_i,
     input  wire [(BE_WIDTH*5)-1:0]                          commit_rd_i,
     input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        commit_new_phys_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_valid_i,
-    input  wire [BE_WIDTH-1:0]                              rollback_writes_rd_i,
-    input  wire [(BE_WIDTH*5)-1:0]                          rollback_rd_i,
-    input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_new_phys_i,
-    input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_old_phys_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_valid_i,
+    input  wire [RECOVERY_WIDTH-1:0]                              rollback_writes_rd_i,
+    input  wire [(RECOVERY_WIDTH*5)-1:0]                          rollback_rd_i,
+    input  wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_new_phys_i,
+    input  wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        rollback_old_phys_i,
     input  wire [BE_WIDTH-1:0]                              writeback_valid_i,
     input  wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0]        writeback_phys_i,
     input  wire [(BE_WIDTH*32)-1:0]                         writeback_value_i,
@@ -241,7 +242,7 @@ module rv32_decode_rename_dispatch #(
     rv32_rename_unit #(
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .BE_WIDTH(BE_WIDTH)
+        .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH)
     ) rename_unit (
         .clk_i(clk_i),
         .reset_i(reset_i),

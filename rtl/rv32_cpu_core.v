@@ -4,6 +4,7 @@
 module rv32_cpu_core #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = 4,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
@@ -165,13 +166,13 @@ module rv32_cpu_core #(
     wire store_dispatch_ready;
     wire [STORE_RS_INDEX_WIDTH:0] store_occupancy;
 
-    wire [BE_WIDTH-1:0] rollback_valid;
-    wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag;
-    wire [BE_WIDTH-1:0] rollback_writes_rd;
-    wire [(BE_WIDTH*5)-1:0] rollback_rd;
-    wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys;
-    wire [(BE_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys;
-    wire [(BE_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag;
+    wire [RECOVERY_WIDTH-1:0] rollback_valid;
+    wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_tag;
+    wire [RECOVERY_WIDTH-1:0] rollback_writes_rd;
+    wire [(RECOVERY_WIDTH*5)-1:0] rollback_rd;
+    wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_new_phys;
+    wire [(RECOVERY_WIDTH*PHYS_REG_ADDR_WIDTH)-1:0] rollback_old_phys;
+    wire [(RECOVERY_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag;
 
     wire [BE_WIDTH-1:0] int_issue_valid;
     wire [BE_WIDTH-1:0] int_issue_ready;
@@ -381,7 +382,7 @@ module rv32_cpu_core #(
     );
 
     rv32_decode_rename_dispatch #(
-        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
@@ -471,7 +472,7 @@ module rv32_cpu_core #(
 
     rv32_reorder_buffer #(
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
-        .ROB_TAG_WIDTH(ROB_TAG_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .ROB_TAG_WIDTH(ROB_TAG_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH)
     ) rob (
@@ -537,7 +538,7 @@ module rv32_cpu_core #(
 
     rv32_integer_reservation_station #(
         .INT_RS_ENTRIES(INT_RS_ENTRIES),
-        .INT_RS_INDEX_WIDTH(INT_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .INT_RS_INDEX_WIDTH(INT_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
@@ -627,7 +628,7 @@ module rv32_cpu_core #(
 
     rv32_multiply_reservation_station #(
         .MUL_RS_ENTRIES(MUL_RS_ENTRIES),
-        .MUL_RS_INDEX_WIDTH(MUL_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .MUL_RS_INDEX_WIDTH(MUL_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
@@ -659,7 +660,7 @@ module rv32_cpu_core #(
 
     rv32_divide_reservation_station #(
         .DIV_RS_ENTRIES(DIV_RS_ENTRIES),
-        .DIV_RS_INDEX_WIDTH(DIV_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .DIV_RS_INDEX_WIDTH(DIV_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
@@ -691,7 +692,7 @@ module rv32_cpu_core #(
 
     rv32_memory_reservation_station #(
         .IS_STORE(0), .RS_ENTRIES(LOAD_RS_ENTRIES),
-        .RS_INDEX_WIDTH(LOAD_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .RS_INDEX_WIDTH(LOAD_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
@@ -725,7 +726,7 @@ module rv32_cpu_core #(
 
     rv32_memory_reservation_station #(
         .IS_STORE(1), .RS_ENTRIES(STORE_RS_ENTRIES),
-        .RS_INDEX_WIDTH(STORE_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .RS_INDEX_WIDTH(STORE_RS_INDEX_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
@@ -760,7 +761,7 @@ module rv32_cpu_core #(
 
     rv32_load_store_queue #(
         .LSQ_ENTRIES(LSQ_ENTRIES), .LSQ_INDEX_WIDTH(LSQ_INDEX_WIDTH),
-        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .BE_WIDTH(BE_WIDTH),
+        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH)
     ) lsq (

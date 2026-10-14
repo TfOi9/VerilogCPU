@@ -8,11 +8,11 @@ dispatch 接口使用稀疏 valid 掩码，lane 0 位于压平总线最低位。
 
 ## 分配、唤醒与选择
 
-两个保留站按照 dispatch lane 顺序把有效指令写入最低编号空槽，不允许部分接收 bundle。已经在本周期与执行单元握手的槽位计入可用容量，因此满站时可以在同一上升沿完成 issue 和槽位复用。新分配项在下一个周期才参加选择。
+两个保留站按照 dispatch lane 顺序把有效指令写入最低编号空槽，不允许部分接收 bundle。分配只统计周期开始时的空槽；本拍 issue 释放的槽下一拍才可复用，切断发射到派发容量的组合路径。新分配项在下一个周期才参加选择。
 
 驻留项和新 dispatch 项都会检查最多 `BE_WIDTH` 路写回广播。未就绪源的物理寄存器号匹配时，保留站在同一周期旁路广播值并将源标记为就绪；驻留项可以在该广播周期立即参加 issue。
 
-选择器使用 ROB tag 的 index 与 `rob_head_index_i` 计算环形距离，选择距离最小的 oldest-ready 项，距离相同时选择较低槽号。完整 generation 随请求送入执行单元，但不参与年龄比较，因为同一 ROB index 不会同时存在两个 live 指令。
+选择器使用 ROB tag 的 index 与 `rob_head_index_i` 计算环形距离，通过 [ranked selector](ranked_select.md) 选择距离最小的 oldest-ready 项，距离相同时选择较低槽号。完整 generation 随请求送入执行单元，但不参与年龄比较，因为同一 ROB index 不会同时存在两个 live 指令。
 
 ## 执行与回压
 
@@ -24,7 +24,7 @@ dispatch 接口使用稀疏 valid 掩码，lane 0 位于压平总线最低位。
 
 ## 恢复与清空
 
-`recover_i` 立即禁止 dispatch 和 issue，并通过 rollback tag 删除尚未发射的错误路径表项。恢复期间执行单元的响应握手被阻塞，已有结果保留。已经发射的年轻请求不会被选择性取消；恢复结束后，它的响应仍携带原 ROB generation，由 ROB 拒绝陈旧 tag 并由完成网络排空。
+`recover_i` 立即禁止 dispatch 和 issue，并通过独立 `RECOVERY_WIDTH` 路 rollback tag 删除尚未发射的错误路径表项。两个包装模块将该宽度完整传递给保留站核心。恢复期间执行单元的响应握手被阻塞，已有结果保留。已经发射的年轻请求不会被选择性取消；恢复结束后，它的响应仍携带原 ROB generation，由 ROB 拒绝陈旧 tag 并由完成网络排空。
 
 `flush_i` 用于整个后端清空，同时删除所有保留站表项并清除乘法流水线或除法迭代状态。顺序状态优先级为同步 reset、全局 flush、选择性 recover、正常 issue/dispatch/wakeup。
 
@@ -32,7 +32,7 @@ dispatch 接口使用稀疏 valid 掩码，lane 0 位于压平总线最低位。
 
 `MUL_RS_ENTRIES` 和 `DIV_RS_ENTRIES` 必须为不小于 `BE_WIDTH` 的 2 次幂，index width 必须与容量匹配。`BE_WIDTH` 只允许 1、2 或 4；物理寄存器和 ROB 参数沿用其他后端组件的约束。
 
-单元测试覆盖稀疏分配、广播旁路、ROB 环回年龄、满站同周期复用、乘法连续发射、除法 busy、请求和响应回压、rollback、恢复保持、全局 flush，以及乘除结果同时有效时的无损消费。固定 seed 的 Python 向量覆盖全部八条 RV32M 指令、边界输入和随机输入，并在多组宽度与容量配置下核对结果和 ROB tag。
+单元测试覆盖稀疏分配、广播旁路、ROB 环回年龄、满站发射后下一拍复用、乘法连续发射、除法 busy、请求和响应回压、rollback、恢复保持、全局 flush，以及乘除结果同时有效时的无损消费。固定 seed 的 Python 向量覆盖全部八条 RV32M 指令、边界输入和随机输入，并在多组宽度与容量配置下核对结果和 ROB tag。检查失败通过 `$stop` 配合 `vvp -N` 返回非零；`+CHECK_FAILURE` 用于验证该负向控制。
 
 ## 统一发射授权
 

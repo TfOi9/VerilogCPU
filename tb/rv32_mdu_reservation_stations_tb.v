@@ -174,7 +174,7 @@ module rv32_mdu_reservation_stations_tb;
             if (!condition) begin
                 $display("FAIL rv32_mdu_reservation_stations code=%0d entries=%0d width=%0d time=%0t",
                     code, RS_ENTRIES, BE_WIDTH, $time);
-                $finish(1);
+                $stop;
             end
         end
     endtask
@@ -450,12 +450,18 @@ module rv32_mdu_reservation_stations_tb;
             set_mul_lane(BE_WIDTH-1, `RV32_OP_MUL, 32'd3, 32'd4,
                 ROB_ENTRIES, 1'b1, 1'b1, 0, 0);
             #1;
-            check(mul_dispatch_ready_o, 31);
+            check(!mul_dispatch_ready_o, 31);
+            clock_edge;
+            check(mul_occupancy_o == RS_ENTRIES - 1, 33);
+            mul_issue_grant = 1'b0;
+            #1;
+            check(mul_dispatch_ready_o, 34);
             mul_dispatch_fire_i = 1'b1;
             clock_edge;
             clear_inputs;
             #1;
             check(mul_occupancy_o == RS_ENTRIES, 32);
+            mul_issue_grant = 1'b1;
             flush_i = 1'b1;
             clock_edge;
             clear_inputs;
@@ -673,6 +679,8 @@ module rv32_mdu_reservation_stations_tb;
         reset_i = 1'b0;
         test_count = 0;
         vector_count = 0;
+        if ($test$plusargs("CHECK_FAILURE"))
+            check(1'b0, 999);
         vector_path = "build/mdu_rs_vectors.txt";
         if ($value$plusargs("VECTOR_FILE=%s", vector_path)) begin
             vector_path = vector_path;

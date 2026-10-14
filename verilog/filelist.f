@@ -19,3 +19,4 @@
 ../rtl/rv32_issue_arbiter.v
 ../rtl/rv32_cpu_core.v
 ../rtl/student_top.v
+../rtl/rv32_ranked_select.v

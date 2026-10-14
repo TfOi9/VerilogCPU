@@ -7,6 +7,7 @@ module rv32_load_store_queue #(
     parameter LSQ_GENERATION_WIDTH = 2,
     parameter LSQ_TAG_WIDTH = 5,
     parameter BE_WIDTH = 1,
+    parameter RECOVERY_WIDTH = BE_WIDTH,
     parameter ROB_ENTRIES = 32,
     parameter ROB_INDEX_WIDTH = 5,
     parameter ROB_TAG_WIDTH = 7,
@@ -42,9 +43,9 @@ module rv32_load_store_queue #(
     input  wire [LSQ_TAG_WIDTH-1:0] store_data_lsq_tag_i,
     input  wire [31:0] store_data_i,
     input  wire [ROB_INDEX_WIDTH-1:0] rob_head_index_i,
-    input  wire [BE_WIDTH-1:0] rollback_valid_i,
-    input  wire [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_rob_tag_i,
-    input  wire [(BE_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag_i,
+    input  wire [RECOVERY_WIDTH-1:0] rollback_valid_i,
+    input  wire [(RECOVERY_WIDTH*ROB_TAG_WIDTH)-1:0] rollback_rob_tag_i,
+    input  wire [(RECOVERY_WIDTH*LSQ_TAG_WIDTH)-1:0] rollback_lsq_tag_i,
     output wire completion_valid_o,
     input  wire completion_ready_i,
     output wire [ROB_TAG_WIDTH-1:0] completion_rob_tag_o,
@@ -605,7 +606,7 @@ module rv32_load_store_queue #(
                 if (flush_i)
                     pending_discard[pending_index] <= 1'b1;
                 else if (recover_i)
-                    for (pending_lane = 0; pending_lane < BE_WIDTH;
+                    for (pending_lane = 0; pending_lane < RECOVERY_WIDTH;
                             pending_lane = pending_lane + 1)
                         if (rollback_valid_i[pending_lane] &&
                                 pending_lsq_tag[pending_index] == rollback_lsq_tag_i[
@@ -660,7 +661,7 @@ module rv32_load_store_queue #(
             if (recover_i) begin
                 for (sequential_index = 0; sequential_index < LSQ_ENTRIES;
                         sequential_index = sequential_index + 1) begin
-                    for (sequential_lane = 0; sequential_lane < BE_WIDTH;
+                    for (sequential_lane = 0; sequential_lane < RECOVERY_WIDTH;
                             sequential_lane = sequential_lane + 1) begin
                         if (rollback_valid_i[sequential_lane] &&
                                 busy[sequential_index] &&

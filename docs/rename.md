@@ -31,7 +31,7 @@ rename 组合逻辑按 lane 0 到 lane N 的程序顺序更新临时 RAT 和临�
 
 正常周期最多接受 `BE_WIDTH` 条 oldest 到 youngest 排列的提交。RRAT 是提交旧映射的权威来源，提交端只需提供 valid、writes-rd、rd 和 `new_phys`。模块允许 commit、rename 和 writeback 在同一周期发生，并统一计算空闲表计数变化。
 
-分支恢复由 `recover_i` 选择，rollback lane 必须按 youngest 到 oldest 排列。每个写 rd 的撤销项执行：
+分支恢复由 `recover_i` 选择，最多 `RECOVERY_WIDTH` 个 rollback lane 必须按 youngest 到 oldest 排列。该参数默认等于 `BE_WIDTH`，整核显式传入独立恢复宽度。计数、映射恢复及 free-list 释放都遍历完整恢复总线。每个写 rd 的撤销项执行：
 
 1. `RAT[rd]` 恢复为 ROB 保存的 `old_phys`；
 2. 被撤销的 `new_phys` 写入空闲表尾部。

@@ -1,0 +1,52 @@
+--- a/rtl/rv32_load_store_queue.v
++++ b/rtl/rv32_load_store_queue.v
+@@ -163,0 +164,4 @@
++    integer store_issue_lane;
++    reg store_issue_prefix;
++    reg store_issue_allowed;
++    wire replace_waiting_store;
+@@ -310,0 +315 @@
++        (!request_write || store_issue_allowed) &&
+@@ -316,0 +322,2 @@
++    assign replace_waiting_store = request_valid && request_write &&
++        !request_mmio && !store_issue_allowed && request_candidate >= 0;
+@@ -532,0 +540,21 @@
++        store_issue_allowed = 1'b0;
++        store_issue_prefix = 1'b1;
++        for (store_issue_lane = 0; store_issue_lane < BE_WIDTH;
++                store_issue_lane = store_issue_lane + 1) begin
++            if (store_issue_prefix && commit_valid_i[store_issue_lane] &&
++                    commit_lsq_valid_i[store_issue_lane] &&
++                    !commit_exception_valid_i[store_issue_lane] &&
++                    commit_rob_tag_i[store_issue_lane*ROB_TAG_WIDTH +:
++                        ROB_TAG_WIDTH] == request_rob_tag &&
++                    commit_lsq_tag_i[store_issue_lane*LSQ_TAG_WIDTH +:
++                        LSQ_TAG_WIDTH] == request_lsq_tag &&
++                    (store_issue_lane == 0 || !request_mmio))
++                store_issue_allowed = 1'b1;
++            // A write crosses the interface only after all older lanes retire.
++            store_issue_prefix = store_issue_prefix &&
++                commit_fire_i[store_issue_lane] &&
++                !commit_exception_valid_i[store_issue_lane];
++        end
++    end
++
++    always @* begin
+@@ -540 +568,2 @@
+-            if (store_request_prefix && commit_valid_i[store_request_lane] &&
++            if (store_request_candidate < 0 && store_request_prefix &&
++                    commit_valid_i[store_request_lane] &&
+@@ -555 +584 @@
+-            // A later store is prepared only when every older lane retires now.
++            // Preparation has no side effect; the separate issue gate orders writes.
+@@ -557 +586 @@
+-                commit_fire_i[store_request_lane] &&
++                commit_valid_i[store_request_lane] &&
+@@ -749 +778 @@
+-                if ((!request_valid || request_fire) &&
++                if ((!request_valid || request_fire || replace_waiting_store) &&
+@@ -752 +781,3 @@
+-                    if (store_request_candidate >= 0) begin
++                    if (replace_waiting_store)
++                        write_requested[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]] <= 1'b0;
++                    if (store_request_candidate >= 0 && !replace_waiting_store) begin

@@ -2,6 +2,10 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := doctor
 
+.PHONY: optimization-unit
+optimization-unit:
+	@$(TIMEOUT) 300 $(PYTHON) tools/test_cpu_optimizations.py
+
 .PHONY: build-configured smoke-configured test-configured regression-widths issue-lint issue-unit doctor lint unit build build-dual test test-dual core-lint core-unit memory-lint memory-unit main-memory-lint main-memory-unit icache-lint icache-unit dcache-lint dcache-unit cache-bridge-lint cache-bridge-unit predictor-lint predictor-unit fetch-lint fetch-unit dispatch-lint dispatch-unit smoke smoke-dual regression matrix matrix-lint matrix-functional matrix-unit perf perf-unit synth synth-matrix synth-unit synth-setup report image image-test
 
 PYTHON ?= $(shell command -v /opt/homebrew/bin/python3 2>/dev/null || command -v python3)
@@ -48,7 +52,7 @@ CORE_RTL := \
 	rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
 	rtl/rv32_fetch_pipeline.v rtl/rv32_physical_register_file.v \
 	rtl/rv32_rename_unit.v rtl/rv32_decode_rename_dispatch.v \
-	rtl/rv32_reorder_buffer.v rtl/rv32_integer_reservation_station.v \
+	rtl/rv32_reorder_buffer.v rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v \
 	rtl/rv32i_alu.v rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
 	rtl/rv32_mdu_reservation_stations.v \
 	rtl/rv32_memory_reservation_station.v \
@@ -87,15 +91,15 @@ lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint 
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32_integer_reservation_station \
 		-o build/rv32_integer_reservation_station_lint.vvp \
-		rtl/rv32_integer_reservation_station.v
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32_multiply_reservation_station \
 		-o build/rv32_multiply_reservation_station_lint.vvp \
-		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_multiplier.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32_divide_reservation_station \
 		-o build/rv32_divide_reservation_station_lint.vvp \
-		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_divider.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32im_decoder.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
@@ -111,13 +115,13 @@ lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint 
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-Irtl rtl/rv32_reorder_buffer.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
-		-Irtl rtl/rv32_integer_reservation_station.v
+		-Irtl rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		--top-module rv32_multiply_reservation_station -Irtl \
-		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_multiplier.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		--top-module rv32_divide_reservation_station -Irtl \
-		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_divider.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -I rtl rtl/rv32im_decoder.v; hierarchy -check -top rv32im_decoder; proc; check'
 	@$(TIMEOUT) 30 yosys -q -p \
@@ -137,15 +141,15 @@ lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint 
 	@$(TIMEOUT) 120 yosys -q -p \
 		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_reorder_buffer.v; chparam -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 -set BE_WIDTH 4 rv32_reorder_buffer; hierarchy -check -top rv32_reorder_buffer; proc; memory; opt; select -assert-none t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 4 -set INT_RS_INDEX_WIDTH 2 -set BE_WIDTH 1 -set PHYS_REGS 48 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 16 -set ROB_INDEX_WIDTH 4 -set ROB_TAG_WIDTH 6 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 4 -set INT_RS_INDEX_WIDTH 2 -set BE_WIDTH 1 -set PHYS_REGS 48 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 16 -set ROB_INDEX_WIDTH 4 -set ROB_TAG_WIDTH 6 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 8 -set INT_RS_INDEX_WIDTH 3 -set BE_WIDTH 2 -set PHYS_REGS 64 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 32 -set ROB_INDEX_WIDTH 5 -set ROB_TAG_WIDTH 7 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 8 -set INT_RS_INDEX_WIDTH 3 -set BE_WIDTH 2 -set PHYS_REGS 64 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_ENTRIES 32 -set ROB_INDEX_WIDTH 5 -set ROB_TAG_WIDTH 7 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 16 -set INT_RS_INDEX_WIDTH 4 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v; chparam -set INT_RS_ENTRIES 16 -set INT_RS_INDEX_WIDTH 4 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_integer_reservation_station; hierarchy -check -top rv32_integer_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v; chparam -set MUL_RS_ENTRIES 8 -set MUL_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_multiply_reservation_station; hierarchy -check -top rv32_multiply_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v; chparam -set MUL_RS_ENTRIES 8 -set MUL_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_multiply_reservation_station; hierarchy -check -top rv32_multiply_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v; chparam -set DIV_RS_ENTRIES 8 -set DIV_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_divide_reservation_station; hierarchy -check -top rv32_divide_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS -I rtl rtl/rv32m_multiplier.v rtl/rv32m_divider.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v; chparam -set DIV_RS_ENTRIES 8 -set DIV_RS_INDEX_WIDTH 3 -set BE_WIDTH 4 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_ENTRIES 64 -set ROB_INDEX_WIDTH 6 -set ROB_TAG_WIDTH 8 rv32_divide_reservation_station; hierarchy -check -top rv32_divide_reservation_station; proc; memory; opt; select -assert-none t:$$dlatch t:$$mul t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-P rv32_completion_writeback_network.BE_WIDTH=1 \
 		-P rv32_completion_writeback_network.SOURCE_COUNT=3 \
@@ -154,13 +158,13 @@ lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint 
 		-P rv32_completion_writeback_network.ROB_TAG_WIDTH=6 \
 		-s rv32_completion_writeback_network \
 		-o build/rv32_completion_writeback_network_lint_1x3.vvp \
-		rtl/rv32_completion_writeback_network.v
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-P rv32_completion_writeback_network.BE_WIDTH=2 \
 		-P rv32_completion_writeback_network.SOURCE_COUNT=4 \
 		-s rv32_completion_writeback_network \
 		-o build/rv32_completion_writeback_network_lint_2x4.vvp \
-		rtl/rv32_completion_writeback_network.v
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-P rv32_completion_writeback_network.BE_WIDTH=4 \
 		-P rv32_completion_writeback_network.SOURCE_COUNT=6 \
@@ -169,24 +173,24 @@ lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint 
 		-P rv32_completion_writeback_network.ROB_TAG_WIDTH=8 \
 		-s rv32_completion_writeback_network \
 		-o build/rv32_completion_writeback_network_lint_4x6.vvp \
-		rtl/rv32_completion_writeback_network.v
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-GBE_WIDTH=1 -GSOURCE_COUNT=3 -GPHYS_REGS=48 \
 		-GPHYS_REG_ADDR_WIDTH=6 -GROB_TAG_WIDTH=6 \
-		-Irtl rtl/rv32_completion_writeback_network.v
+		-Irtl rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-GBE_WIDTH=2 -GSOURCE_COUNT=4 \
-		-Irtl rtl/rv32_completion_writeback_network.v
+		-Irtl rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 verilator --lint-only --language 1364-2005 -Wall \
 		-GBE_WIDTH=4 -GSOURCE_COUNT=6 -GPHYS_REGS=96 \
 		-GPHYS_REG_ADDR_WIDTH=7 -GROB_TAG_WIDTH=8 \
-		-Irtl rtl/rv32_completion_writeback_network.v
+		-Irtl rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 1 -set SOURCE_COUNT 3 -set PHYS_REGS 48 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_TAG_WIDTH 6 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 1 -set SOURCE_COUNT 3 -set PHYS_REGS 48 -set PHYS_REG_ADDR_WIDTH 6 -set ROB_TAG_WIDTH 6 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 2 -set SOURCE_COUNT 4 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 2 -set SOURCE_COUNT 4 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 	@$(TIMEOUT) 30 yosys -q -p \
-		'read_verilog -D SYNTHESIS rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
+		'read_verilog -D SYNTHESIS rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
 unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
@@ -435,7 +439,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_integer_reservation_station_tb.ROB_INDEX_WIDTH=4 \
 		-s rv32_integer_reservation_station_tb \
 		-o build/rv32_integer_reservation_station_tb_4x1.vvp \
-		rtl/rv32_integer_reservation_station.v \
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v \
 		tb/rv32_integer_reservation_station_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_integer_reservation_station_tb_4x1.vvp \
@@ -453,7 +457,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_integer_reservation_station_tb.ROB_INDEX_WIDTH=5 \
 		-s rv32_integer_reservation_station_tb \
 		-o build/rv32_integer_reservation_station_tb_8x2.vvp \
-		rtl/rv32_integer_reservation_station.v \
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v \
 		tb/rv32_integer_reservation_station_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_integer_reservation_station_tb_8x2.vvp \
@@ -471,7 +475,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_integer_reservation_station_tb.ROB_INDEX_WIDTH=6 \
 		-s rv32_integer_reservation_station_tb \
 		-o build/rv32_integer_reservation_station_tb_16x4.vvp \
-		rtl/rv32_integer_reservation_station.v \
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v \
 		tb/rv32_integer_reservation_station_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_integer_reservation_station_tb_16x4.vvp \
@@ -481,7 +485,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_integer_reservation_station.INT_RS_INDEX_WIDTH=3 \
 		-s rv32_integer_reservation_station \
 		-o build/rv32_integer_reservation_station_bad_entries.vvp \
-		rtl/rv32_integer_reservation_station.v
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_integer_reservation_station_bad_entries.vvp 2>&1 | \
 		grep -q '^ERROR rv32_integer_reservation_station INT_RS_ENTRIES not power of two='
@@ -490,7 +494,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_integer_reservation_station.BE_WIDTH=3 \
 		-s rv32_integer_reservation_station \
 		-o build/rv32_integer_reservation_station_bad_be.vvp \
-		rtl/rv32_integer_reservation_station.v
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_integer_reservation_station_bad_be.vvp 2>&1 | \
 		grep -q '^ERROR rv32_integer_reservation_station invalid BE_WIDTH='
@@ -499,7 +503,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_integer_reservation_station.INT_RS_INDEX_WIDTH=4 \
 		-s rv32_integer_reservation_station \
 		-o build/rv32_integer_reservation_station_bad_index.vvp \
-		rtl/rv32_integer_reservation_station.v
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_integer_reservation_station_bad_index.vvp 2>&1 | \
 		grep -q '^ERROR rv32_integer_reservation_station index width='
@@ -508,7 +512,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_integer_reservation_station.PHYS_REG_ADDR_WIDTH=7 \
 		-s rv32_integer_reservation_station \
 		-o build/rv32_integer_reservation_station_bad_phys.vvp \
-		rtl/rv32_integer_reservation_station.v
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_integer_reservation_station_bad_phys.vvp 2>&1 | \
 		grep -q '^ERROR rv32_integer_reservation_station physical address width='
@@ -526,7 +530,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-s rv32_mdu_reservation_stations_tb \
 		-o build/rv32_mdu_reservation_stations_tb_2x1.vvp \
 		rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
-		rtl/rv32_mdu_reservation_stations.v \
+		rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v \
 		tb/rv32_mdu_reservation_stations_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_mdu_reservation_stations_tb_2x1.vvp \
@@ -542,7 +546,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-s rv32_mdu_reservation_stations_tb \
 		-o build/rv32_mdu_reservation_stations_tb_4x2.vvp \
 		rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
-		rtl/rv32_mdu_reservation_stations.v \
+		rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v \
 		tb/rv32_mdu_reservation_stations_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_mdu_reservation_stations_tb_4x2.vvp \
@@ -558,7 +562,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-s rv32_mdu_reservation_stations_tb \
 		-o build/rv32_mdu_reservation_stations_tb_8x4.vvp \
 		rtl/rv32m_multiplier.v rtl/rv32m_divider.v \
-		rtl/rv32_mdu_reservation_stations.v \
+		rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v \
 		tb/rv32_mdu_reservation_stations_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_mdu_reservation_stations_tb_8x4.vvp \
@@ -568,7 +572,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_multiply_reservation_station.MUL_RS_INDEX_WIDTH=3 \
 		-s rv32_multiply_reservation_station \
 		-o build/rv32_multiply_reservation_station_bad_entries.vvp \
-		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_multiplier.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_multiply_reservation_station_bad_entries.vvp 2>&1 | \
 		grep -q '^ERROR rv32_mdu_reservation_station_core RS_ENTRIES not power of two='
@@ -579,7 +583,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_multiply_reservation_station.BE_WIDTH=4 \
 		-s rv32_multiply_reservation_station \
 		-o build/rv32_multiply_reservation_station_too_small.vvp \
-		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_multiplier.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_multiply_reservation_station_too_small.vvp 2>&1 | \
 		grep -q '^ERROR rv32_mdu_reservation_station_core invalid RS_ENTRIES='
@@ -588,7 +592,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_divide_reservation_station.BE_WIDTH=3 \
 		-s rv32_divide_reservation_station \
 		-o build/rv32_divide_reservation_station_bad_be.vvp \
-		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_divider.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_divide_reservation_station_bad_be.vvp 2>&1 | \
 		grep -q '^ERROR rv32_mdu_reservation_station_core invalid BE_WIDTH='
@@ -597,7 +601,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_multiply_reservation_station.MUL_RS_INDEX_WIDTH=3 \
 		-s rv32_multiply_reservation_station \
 		-o build/rv32_multiply_reservation_station_bad_index.vvp \
-		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_multiplier.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_multiply_reservation_station_bad_index.vvp 2>&1 | \
 		grep -q '^ERROR rv32_mdu_reservation_station_core index width='
@@ -606,7 +610,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_divide_reservation_station.PHYS_REG_ADDR_WIDTH=7 \
 		-s rv32_divide_reservation_station \
 		-o build/rv32_divide_reservation_station_bad_phys.vvp \
-		rtl/rv32m_divider.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_divider.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_divide_reservation_station_bad_phys.vvp 2>&1 | \
 		grep -q '^ERROR rv32_mdu_reservation_station_core physical address width='
@@ -615,7 +619,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_multiply_reservation_station.ROB_TAG_WIDTH=5 \
 		-s rv32_multiply_reservation_station \
 		-o build/rv32_multiply_reservation_station_bad_tag.vvp \
-		rtl/rv32m_multiplier.v rtl/rv32_mdu_reservation_stations.v
+		rtl/rv32m_multiplier.v rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_multiply_reservation_station_bad_tag.vvp 2>&1 | \
 		grep -q '^ERROR rv32_mdu_reservation_station_core invalid ROB_TAG_WIDTH='
@@ -623,7 +627,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32_mdu_reservation_station_bad_op_tb \
 		-o build/rv32_mdu_reservation_station_bad_op.vvp \
-		rtl/rv32_mdu_reservation_stations.v \
+		rtl/rv32_ranked_select.v rtl/rv32_mdu_reservation_stations.v \
 		tb/rv32_mdu_reservation_stations_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_mdu_reservation_station_bad_op.vvp 2>&1 | \
@@ -639,7 +643,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_completion_writeback_network_tb.ROB_TAG_WIDTH=6 \
 		-s rv32_completion_writeback_network_tb \
 		-o build/rv32_completion_writeback_network_tb_1x3.vvp \
-		rtl/rv32_completion_writeback_network.v \
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v \
 		tb/rv32_completion_writeback_network_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_completion_writeback_network_tb_1x3.vvp \
@@ -651,7 +655,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_completion_writeback_network_tb.SOURCE_COUNT=4 \
 		-s rv32_completion_writeback_network_tb \
 		-o build/rv32_completion_writeback_network_tb_2x4.vvp \
-		rtl/rv32_completion_writeback_network.v \
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v \
 		tb/rv32_completion_writeback_network_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_completion_writeback_network_tb_2x4.vvp \
@@ -666,7 +670,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_completion_writeback_network_tb.ROB_TAG_WIDTH=8 \
 		-s rv32_completion_writeback_network_tb \
 		-o build/rv32_completion_writeback_network_tb_4x6.vvp \
-		rtl/rv32_completion_writeback_network.v \
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v \
 		tb/rv32_completion_writeback_network_tb.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_completion_writeback_network_tb_4x6.vvp \
@@ -674,7 +678,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32_completion_writeback_integration_tb \
 		-o build/rv32_completion_writeback_integration_tb.vvp \
-		rtl/rv32_completion_writeback_network.v \
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v \
 		rtl/rv32_reorder_buffer.v \
 		rtl/rv32_physical_register_file.v \
 		tb/rv32_completion_writeback_integration_tb.v
@@ -684,7 +688,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_completion_writeback_network.BE_WIDTH=3 \
 		-s rv32_completion_writeback_network \
 		-o build/rv32_completion_writeback_network_bad_be.vvp \
-		rtl/rv32_completion_writeback_network.v
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_completion_writeback_network_bad_be.vvp 2>&1 | \
 		grep -q '^ERROR rv32_completion_writeback_network invalid BE_WIDTH='
@@ -694,7 +698,7 @@ unit: issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit 
 		-P rv32_completion_writeback_network.PHYS_REG_ADDR_WIDTH=7 \
 		-s rv32_completion_writeback_network \
 		-o build/rv32_completion_writeback_network_bad_phys.vvp \
-		rtl/rv32_completion_writeback_network.v
+		rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v
 	@$(TIMEOUT) 30 vvp -N \
 		build/rv32_completion_writeback_network_bad_phys.vvp 2>&1 | \
 		grep -q '^ERROR rv32_completion_writeback_network physical address width='
@@ -870,7 +874,7 @@ core-lint:
 		$(TIMEOUT) 60 verilator --lint-only --language 1364-2005 -Wall \
 			--top-module rv32_cpu_core -GFE_WIDTH=$$fe -GBE_WIDTH=$$be \
 			-Irtl $(CORE_RTL) || exit 1; \
-		$(TIMEOUT) 120 yosys -q -p 'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); chparam -set FE_WIDTH '"$$fe"' -set BE_WIDTH '"$$be"' rv32_cpu_core; hierarchy -check -top rv32_cpu_core; proc; memory; opt; select -assert-none t:$$dlatch; check' || exit 1; \
+		$(TIMEOUT) 120 yosys -q -p 'read_verilog -D SYNTHESIS -I rtl $(CORE_RTL); chparam -set FE_WIDTH '"$$fe"' -set BE_WIDTH '"$$be"' rv32_cpu_core; hierarchy -check -top rv32_cpu_core; proc; memory; opt -fast; select -assert-none t:$$dlatch; check -assert' || exit 1; \
 		echo "PASS core lint FE=$$fe BE=$$be"; \
 	done; done
 
@@ -914,12 +918,12 @@ core-unit:
 	@$(TIMEOUT) 30 iverilog -g2005 -I rtl -s rv32_completion_writeback_network_tb \
 		-P rv32_completion_writeback_network_tb.BE_WIDTH=4 \
 		-P rv32_completion_writeback_network_tb.SOURCE_COUNT=7 \
-		-o build/writeback_4x7.vvp rtl/rv32_completion_writeback_network.v tb/rv32_completion_writeback_network_tb.v
+		-o build/writeback_4x7.vvp rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v tb/rv32_completion_writeback_network_tb.v
 	@$(TIMEOUT) 30 vvp -N build/writeback_4x7.vvp +VECTOR_FILE=build/writeback_vectors_4x7.txt
 	@$(TIMEOUT) 30 iverilog -g2005 -I rtl -s rv32_completion_writeback_integration_tb \
 		-P rv32_completion_writeback_integration_tb.BE_WIDTH=4 \
 		-P rv32_completion_writeback_integration_tb.SOURCE_COUNT=7 \
-		-o build/writeback_integration_4x7.vvp rtl/rv32_completion_writeback_network.v \
+		-o build/writeback_integration_4x7.vvp rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v \
 			rtl/rv32_reorder_buffer.v rtl/rv32_physical_register_file.v tb/rv32_completion_writeback_integration_tb.v
 	@$(TIMEOUT) 30 vvp -N build/writeback_integration_4x7.vvp
 
@@ -972,7 +976,7 @@ memory-unit:
 	done
 	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
 		-s rv32_lsq_rob_integration_tb -o build/lsq_rob_integration.vvp \
-		rtl/rv32_load_store_queue.v rtl/rv32_completion_writeback_network.v \
+		rtl/rv32_load_store_queue.v rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v \
 		rtl/rv32_reorder_buffer.v tb/rv32_lsq_rob_integration_tb.v
 	@$(TIMEOUT) 30 vvp -N build/lsq_rob_integration.vvp
 	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
@@ -1307,7 +1311,7 @@ dispatch-unit:
 		rtl/rv32im_decoder.v rtl/rv32_rename_unit.v \
 		rtl/rv32_physical_register_file.v \
 		rtl/rv32_decode_rename_dispatch.v rtl/rv32_reorder_buffer.v \
-		rtl/rv32_integer_reservation_station.v \
+		rtl/rv32_ranked_select.v rtl/rv32_integer_reservation_station.v \
 		rtl/rv32_memory_reservation_station.v \
 		rtl/rv32_load_store_queue.v tb/rv32_dispatch_integration_tb.v
 	@$(TIMEOUT) 30 vvp -N build/rv32_dispatch_integration_tb.vvp

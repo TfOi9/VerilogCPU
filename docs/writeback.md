@@ -14,7 +14,7 @@ ROB completion ready 当前采用全开或全关的 bundle 语义。网络在仿
 
 ## 轮询仲裁
 
-仲裁器保存 one-hot 轮询起点，从该来源开始循环扫描所有缓冲，每周期选择最多 `BE_WIDTH` 个有效项。输出 lane 按扫描顺序形成连续有效前缀。只有 `completion_valid_o && completion_ready_i` 才会移除缓冲项，轮询起点更新为最后一个实际交付来源的下一项。
+仲裁器保存 one-hot 轮询起点，将每个来源的循环距离送入 [ranked selector](ranked_select.md)，通过并行名次比较和平衡归并树每周期选择最多 `BE_WIDTH` 个有效项。输出 lane 按原循环顺序形成连续有效前缀。只有 `completion_valid_o && completion_ready_i` 才会移除缓冲项，轮询起点更新为最后一个实际交付来源的下一项。
 
 轮询依据 ROB ready 而不是 accept 更新。因而已经回滚、generation 不匹配、重复或已经完成的结果虽然不会再次修改 ROB，仍能从完成网络排空，不会永久占用来源缓冲。所有来源具有相同仲裁地位，持续的整数完成流量不会饿死乘除法结果。环回使用常量比较和减法，不使用行为级除法或取模。
 

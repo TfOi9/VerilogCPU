@@ -34,7 +34,9 @@ commit 组合逻辑从 head 开始选择连续的 complete 前缀。`commit_vali
 
 每个被接受的控制流完成还输出一次预测器训练事件，包括操作类型、PC、预测 next PC、实际 next PC 和实际 taken。训练与执行完成同步，不需要等待该分支提交；stale tag、重复完成和恢复期间的完成不会产生训练事件。
 
-下一周期 ROB 进入注册的 recovery 状态，发出一次 redirect，并暂停 allocation、commit 和 completion。每周期从 tail 前一项开始输出最多 `BE_WIDTH` 个回滚项，直到误预测分支本身为止；分支保留并保持 complete。最后一批年轻项在上升沿删除时同时退出 recovery，不增加空的恢复周期。若分支已经是 tail 前一项，仍保留一个只发 redirect、不含 rollback 项的恢复周期。
+下一周期 ROB 进入注册的 recovery 状态，发出一次 redirect，并暂停 allocation、commit 和 completion。每周期从 tail 前一项开始输出最多 `RECOVERY_WIDTH` 个回滚项，直到误预测分支本身为止；分支保留并保持 complete。最后一批年轻项在上升沿删除时同时退出 recovery，不增加空的恢复周期。若分支已经是 tail 前一项，仍保留一个只发 redirect、不含 rollback 项的恢复周期。
+
+`RECOVERY_WIDTH` 独立于派发、完成和退休宽度；ROB 单独实例化时默认等于 `BE_WIDTH`，`student_top` 和整核默认设为4，并传递给 rename、全部 RS 和 LSQ。范围为1至 `ROB_ENTRIES`。对于 N 个年轻项，恢复阶段需要 `max(1, ceil(N/RECOVERY_WIDTH))` 拍。总线始终从最年轻到最老排列，RAT 对同一架构寄存器的多次撤销由最后一个、较老的 lane 覆盖；free-list 释放数、RS 删除和 LSQ 在途请求 discard 必须使用同一恢复宽度。
 
 状态优先级固定为同步复位、已进入的 recovery、正常周期。复位清空全部表项、指针、occupancy 和 generation；reset 为高时所有有效输出被屏蔽。
 
