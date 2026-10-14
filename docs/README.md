@@ -65,3 +65,5 @@ Cache 容量、两路相联的三程序轻量对照、SRAM 面积预算及后续
 Load 多笔在途、Store 同拍提交与提前取指预测的正式实现及部分验证见 [ipc-optimization-20261014.md](ipc-optimization-20261014.md)。
 
 树形选择器、独立回滚宽度、Store交接实验和完整验证见 [optimization-20261014.md](optimization-20261014.md)，选择器结构见 [ranked_select.md](ranked_select.md)。
+
+当前六程序瓶颈、12 组参数对照、依赖链微基准与七条优化方向见 [bottlenecks-20261014.md](bottlenecks-20261014.md)。
