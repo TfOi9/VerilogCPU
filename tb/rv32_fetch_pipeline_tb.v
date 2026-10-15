@@ -54,7 +54,8 @@ module rv32_fetch_pipeline_tb;
         .FE_WIDTH(FE_WIDTH),
         .BE_WIDTH(BE_WIDTH),
         .FETCH_QUEUE_ENTRIES(8),
-        .FETCH_QUEUE_INDEX_WIDTH(3)
+        .FETCH_QUEUE_INDEX_WIDTH(3),
+        .FETCH_LINE_BUFFER_ENTRIES(0)
     ) dut (
         .clk_i(clk_i),
         .reset_i(reset_i),
@@ -630,7 +631,8 @@ module rv32_fetch_pipeline_protocol_tb;
 
     rv32_fetch_pipeline #(
         .FE_WIDTH(2),
-        .BE_WIDTH(1)
+        .BE_WIDTH(1),
+        .FETCH_LINE_BUFFER_ENTRIES(0)
     ) dut (
         .clk_i(clk_i),
         .reset_i(reset_i),

@@ -5,7 +5,8 @@ module rv32_fetch_pipeline #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
     parameter FETCH_QUEUE_ENTRIES = 8,
-    parameter FETCH_QUEUE_INDEX_WIDTH = 3
+    parameter FETCH_QUEUE_INDEX_WIDTH = 3,
+    parameter FETCH_LINE_BUFFER_ENTRIES = 4
 ) (
     input  wire                                         clk_i,
     input  wire                                         reset_i,
@@ -55,6 +56,29 @@ module rv32_fetch_pipeline #(
     /* verilator lint_off WIDTHTRUNC */
 
     localparam REQUEST_TRACK_ENTRIES = 4;
+    localparam LINE_BUFFER_STORAGE = FETCH_LINE_BUFFER_ENTRIES > 0 ?
+        FETCH_LINE_BUFFER_ENTRIES : 1;
+    localparam LINE_BUFFER_INDEX_WIDTH = LINE_BUFFER_STORAGE > 1 ?
+        address_width_for_count(LINE_BUFFER_STORAGE) : 1;
+
+    reg line_buffer_valid [0:LINE_BUFFER_STORAGE-1];
+    reg [27:0] line_buffer_tag [0:LINE_BUFFER_STORAGE-1];
+    reg [127:0] line_buffer_data [0:LINE_BUFFER_STORAGE-1];
+    reg local_response_valid_reg;
+    reg request_blocked_reg;
+    reg [31:0] local_response_pc_reg;
+    reg [127:0] local_response_line_reg;
+    reg [LINE_BUFFER_INDEX_WIDTH-1:0] line_buffer_request_index;
+    reg [LINE_BUFFER_INDEX_WIDTH-1:0] line_buffer_response_index;
+    integer line_buffer_reset_index;
+    wire line_buffer_hit;
+    wire local_request_valid;
+    wire request_available;
+    wire response_valid;
+    wire response_ready;
+    wire [31:0] response_pc;
+    wire [127:0] response_line;
+    wire response_error;
 
     reg [31:0] queue_pc [0:FETCH_QUEUE_ENTRIES-1];
     reg [31:0] queue_instruction [0:FETCH_QUEUE_ENTRIES-1];
@@ -247,18 +271,42 @@ module rv32_fetch_pipeline #(
         end
     end
 
+    always @* begin
+        line_buffer_request_index = (next_request_pc_reg >> 4) &
+            (LINE_BUFFER_STORAGE - 1);
+        line_buffer_response_index = (icache_response_pc_i >> 4) &
+            (LINE_BUFFER_STORAGE - 1);
+    end
+
+    assign line_buffer_hit = FETCH_LINE_BUFFER_ENTRIES != 0 &&
+        line_buffer_valid[line_buffer_request_index] &&
+        line_buffer_tag[line_buffer_request_index] == next_request_pc_reg[31:4];
+    assign local_request_valid = request_available && !request_blocked_reg &&
+        line_buffer_hit &&
+        ((request_count_reg == 0) ||
+            ((request_count_reg == 1) && local_response_valid_reg &&
+                response_enqueue_fire));
+    assign response_valid = local_response_valid_reg || icache_response_valid_i;
+    assign response_pc = local_response_valid_reg ?
+        local_response_pc_reg : icache_response_pc_i;
+    assign response_line = local_response_valid_reg ?
+        local_response_line_reg : icache_response_line_i;
+    assign response_error = !local_response_valid_reg && icache_response_error_i;
     assign response_next_pc = predicted_redirect ? predicted_redirect_pc :
-        icache_response_pc_i + candidate_count*4;
+        response_pc + candidate_count*4;
     assign response_path_mismatch = response_next_pc != request_next_pc[request_head_reg];
     assign icache_flush_o = !reset_i &&
         (redirect_valid_i || icache_flush_reg);
-    assign icache_request_valid_o = !reset_i && !redirect_valid_i &&
+    assign request_available = !reset_i && !redirect_valid_i &&
         !icache_flush_reg && !fault_block_reg &&
         ((request_count_reg < REQUEST_TRACK_ENTRIES) || request_pop_fire);
+    assign icache_request_valid_o = request_available && !local_request_valid &&
+        (!local_response_valid_reg || response_enqueue_fire);
     assign icache_request_pc_o = next_request_pc_reg;
-    assign icache_response_ready_o = !reset_i && !redirect_valid_i &&
+    assign response_ready = !reset_i && !redirect_valid_i &&
         !icache_flush_reg && (!response_matches_head ||
             (available_count >= enqueue_count));
+    assign icache_response_ready_o = response_ready && !local_response_valid_reg;
 
     assign fetch_valid_o = fetch_valid_reg;
     assign fetch_pc_o = fetch_pc_reg;
@@ -269,6 +317,14 @@ module rv32_fetch_pipeline #(
         {(FETCH_QUEUE_INDEX_WIDTH+1){1'b0}} : queue_occupancy_reg;
 
     initial begin
+        if ((FETCH_LINE_BUFFER_ENTRIES != 0) &&
+                (FETCH_LINE_BUFFER_ENTRIES != 1) &&
+                (FETCH_LINE_BUFFER_ENTRIES != 2) &&
+                (FETCH_LINE_BUFFER_ENTRIES != 4)) begin
+            $display("ERROR rv32_fetch_pipeline invalid line buffer entries=%0d",
+                FETCH_LINE_BUFFER_ENTRIES);
+            $finish(1);
+        end
         if ((FE_WIDTH != 1) && (FE_WIDTH != 2) && (FE_WIDTH != 4)) begin
             $display("ERROR rv32_fetch_pipeline invalid FE_WIDTH=%0d",
                 FE_WIDTH);
@@ -330,25 +386,25 @@ module rv32_fetch_pipeline #(
 
     always @* begin
         response_matches_head = (request_count_reg != 0) &&
-            (icache_response_pc_i == request_pc[request_head_reg]);
+            (response_pc == request_pc[request_head_reg]);
 
         candidate_valid = {FE_WIDTH{1'b0}};
         candidate_pc = {(FE_WIDTH*32){1'b0}};
         candidate_instruction = {(FE_WIDTH*32){1'b0}};
-        candidate_count = words_from_offset(icache_response_pc_i[3:2]);
+        candidate_count = words_from_offset(response_pc[3:2]);
 
         for (candidate_lane_index = 0;
                 candidate_lane_index < FE_WIDTH;
                 candidate_lane_index = candidate_lane_index + 1) begin
-            if (icache_response_valid_i && response_matches_head &&
-                    !icache_response_error_i &&
+            if (response_valid && response_matches_head &&
+                    !response_error &&
                     (candidate_lane_index < candidate_count)) begin
                 candidate_valid[candidate_lane_index] = 1'b1;
                 candidate_pc[candidate_lane_index*32 +: 32] =
-                    icache_response_pc_i + candidate_lane_index*4;
+                    response_pc + candidate_lane_index*4;
                 candidate_instruction[candidate_lane_index*32 +: 32] =
-                    icache_response_line_i[
-                        (icache_response_pc_i[3:2] +
+                    response_line[
+                        (response_pc[3:2] +
                             candidate_lane_index)*32 +: 32];
             end
         end
@@ -387,23 +443,64 @@ module rv32_fetch_pipeline #(
             end
         end
 
-        if (icache_response_error_i) begin
+        if (response_error) begin
             enqueue_count = 1;
             predicted_redirect = 1'b0;
             predicted_redirect_pc = 32'd0;
-            enqueue_pc[0] = icache_response_pc_i;
+            enqueue_pc[0] = response_pc;
             enqueue_instruction[0] = 32'd0;
             enqueue_predicted_next_pc[0] =
-                icache_response_pc_i + 32'd4;
+                response_pc + 32'd4;
             enqueue_error[0] = 1'b1;
         end
 
         available_count = FETCH_QUEUE_ENTRIES -
             (queue_occupancy_reg - dequeue_count);
-        response_enqueue_fire = icache_response_valid_i &&
-            icache_response_ready_o && response_matches_head;
+        response_enqueue_fire = response_valid &&
+            response_ready && response_matches_head;
         request_pop_fire = response_enqueue_fire;
-        request_fire = icache_request_valid_o && icache_request_ready_i;
+        request_fire = local_request_valid ||
+            (icache_request_valid_o && icache_request_ready_i);
+    end
+
+    always @(posedge clk_i) begin
+        if (reset_i) begin
+            local_response_valid_reg <= 1'b0;
+            request_blocked_reg <= 1'b0;
+            local_response_pc_reg <= 32'd0;
+            local_response_line_reg <= 128'd0;
+            for (line_buffer_reset_index = 0;
+                    line_buffer_reset_index < LINE_BUFFER_STORAGE;
+                    line_buffer_reset_index = line_buffer_reset_index + 1) begin
+                line_buffer_valid[line_buffer_reset_index] <= 1'b0;
+                line_buffer_tag[line_buffer_reset_index] <= 28'd0;
+                line_buffer_data[line_buffer_reset_index] <= 128'd0;
+            end
+        end else begin
+            if (response_enqueue_fire && !local_response_valid_reg &&
+                    !response_error && FETCH_LINE_BUFFER_ENTRIES != 0) begin
+                line_buffer_valid[line_buffer_response_index] <= 1'b1;
+                line_buffer_tag[line_buffer_response_index] <= response_pc[31:4];
+                line_buffer_data[line_buffer_response_index] <= response_line;
+            end
+            if (redirect_valid_i || icache_flush_reg ||
+                    (response_enqueue_fire &&
+                        (response_path_mismatch || response_error))) begin
+                local_response_valid_reg <= 1'b0;
+                request_blocked_reg <= 1'b0;
+            end else if (local_request_valid) begin
+                local_response_valid_reg <= 1'b1;
+                local_response_pc_reg <= next_request_pc_reg;
+                local_response_line_reg <= line_buffer_data[line_buffer_request_index];
+            end else if (response_enqueue_fire) begin
+                local_response_valid_reg <= 1'b0;
+            end
+            if (!redirect_valid_i && !icache_flush_reg &&
+                    !(response_enqueue_fire &&
+                        (response_path_mismatch || response_error)))
+                request_blocked_reg <= icache_request_valid_o &&
+                    !icache_request_ready_i;
+        end
     end
 
     always @(posedge clk_i) begin
@@ -503,13 +600,13 @@ module rv32_fetch_pipeline #(
             endcase
 
             if (response_enqueue_fire &&
-                    (response_path_mismatch || icache_response_error_i)) begin
+                    (response_path_mismatch || response_error)) begin
                 request_head_reg <= 2'd0;
                 request_tail_reg <= 2'd0;
                 request_count_reg <= 3'd0;
                 icache_flush_reg <= 1'b1;
                 next_request_pc_reg <= response_next_pc;
-                if (icache_response_error_i)
+                if (response_error)
                     fault_block_reg <= 1'b1;
             end
         end

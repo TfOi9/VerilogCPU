@@ -1192,7 +1192,42 @@ fetch-lint:
 		done; \
 	done
 
-fetch-unit:
+.PHONY: fetch-line-buffer-unit
+fetch-line-buffer-unit:
+	@mkdir -p build
+	@for entries in 1 2 4; do \
+		for fe_width in 1 2 4; do \
+			for be_width in 1 2 4; do \
+				$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
+					-P rv32_fetch_line_buffer_tb.FE_WIDTH=$$fe_width \
+					-P rv32_fetch_line_buffer_tb.BE_WIDTH=$$be_width \
+					-P rv32_fetch_line_buffer_tb.LINE_BUFFER_ENTRIES=$$entries \
+					-s rv32_fetch_line_buffer_tb \
+					-o build/fetch_line_buffer_$${entries}_$${fe_width}_$${be_width}.vvp \
+					rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+					rtl/rv32_fetch_pipeline.v tb/rv32_fetch_line_buffer_tb.v || exit 1; \
+				$(TIMEOUT) 30 vvp -N \
+					build/fetch_line_buffer_$${entries}_$${fe_width}_$${be_width}.vvp || exit 1; \
+			done; \
+		done; \
+	done
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-P rv32_fetch_line_buffer_tb.DUT_BUFFER_ENTRIES=0 \
+		-s rv32_fetch_line_buffer_tb -o build/fetch_line_buffer_disabled.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v \
+		rtl/rv32_fetch_pipeline.v tb/rv32_fetch_line_buffer_tb.v
+	@$(TIMEOUT) 30 vvp -N build/fetch_line_buffer_disabled.vvp 2>&1 | \
+		grep -q '^ERROR fetch_line_buffer .*hot target issued an I-cache request'
+	@echo "PASS fetch line buffer disabled negative control"
+	@$(TIMEOUT) 30 iverilog -g2005 -I rtl \
+		-P rv32_fetch_pipeline.FETCH_LINE_BUFFER_ENTRIES=3 \
+		-s rv32_fetch_pipeline -o build/fetch_line_buffer_bad_entries.vvp \
+		rtl/rv32im_decoder.v rtl/rv32_branch_predictor.v rtl/rv32_fetch_pipeline.v
+	@$(TIMEOUT) 30 vvp -N build/fetch_line_buffer_bad_entries.vvp 2>&1 | \
+		grep -q '^ERROR rv32_fetch_pipeline invalid line buffer entries='
+	@echo "PASS fetch line buffer rejected invalid entries"
+
+fetch-unit: fetch-line-buffer-unit
 	@mkdir -p build
 	@for fe_width in 1 2 4; do \
 		for be_width in 1 2 4; do \
