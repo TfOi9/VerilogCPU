@@ -10,6 +10,7 @@ module rv32_l1_data_cache #(
     parameter integer LATE_STORE_CONFIRM = 0,
     parameter integer AUX_RETURNS = 0,
     parameter integer NONBLOCKING = 0,
+    parameter integer MSHR_ENTRIES = 1,
     parameter integer HIT_UNDER_MISS = NONBLOCKING,
     parameter integer RESPONSE_QUEUE = NONBLOCKING
 ) (
@@ -41,6 +42,7 @@ module rv32_l1_data_cache #(
     output wire memory_request_valid_o,
     input  wire memory_request_ready_i,
     output wire memory_request_write_o,
+    output wire memory_request_id_o,
     output wire [31:0] memory_request_address_o,
     output wire [127:0] memory_request_write_data_o,
     output wire [15:0] memory_request_byte_enable_o,
@@ -49,6 +51,7 @@ module rv32_l1_data_cache #(
     input  wire [127:0] memory_response_read_data_i,
     input  wire memory_response_error_i,
     input wire memory_response_write_i,
+    input wire memory_response_id_i,
     output reg hit_event_o,
     output reg miss_event_o
 );
@@ -103,7 +106,8 @@ module rv32_l1_data_cache #(
     reg [ROB_TAG_WIDTH-1:0] skid_rob_tag;
     reg [ROB_TAG_WIDTH-1:0] miss_rob_tag;
     wire [ROB_TAG_WIDTH-1:0] response_packet_rob_tag;
-    reg miss_active;
+    reg legacy_miss_active;
+    wire miss_active;
     reg [31:2] miss_address;
     reg miss_write;
     reg [31:0] miss_write_data;
@@ -175,9 +179,12 @@ module rv32_l1_data_cache #(
     reg [31:0] r_data;
     reg r_error;
 
-    reg [INDEX_WIDTH-1:0] miss_index;
-    reg [TAG_WIDTH-1:0] miss_tag;
-    reg [WAY_WIDTH-1:0] miss_way;
+    reg [INDEX_WIDTH-1:0] legacy_miss_index;
+    reg [TAG_WIDTH-1:0] legacy_miss_tag;
+    reg [WAY_WIDTH-1:0] legacy_miss_way;
+    wire [INDEX_WIDTH-1:0] miss_index;
+    wire [TAG_WIDTH-1:0] miss_tag;
+    wire [WAY_WIDTH-1:0] miss_way;
     reg [31:0] miss_line_address;
     reg [31:0] victim_address;
     reg [127:0] victim_line;
@@ -216,6 +223,121 @@ module rv32_l1_data_cache #(
     wire [INDEX_WIDTH-1:0] s1_set;
     wire [INDEX_WIDTH-1:0] s2_set;
 
+    reg [1:0] m_valid;
+    reg [27:0] m_line [0:1];
+    reg [WAY_WIDTH-1:0] m_way [0:1];
+    reg [31:0] m_victim_address [0:1];
+    reg [127:0] m_victim_data [0:1];
+    reg [1:0] m_wb_valid, m_wb_sent, m_wb_done, m_wb_error;
+    reg [1:0] m_read_sent, m_read_done, m_read_error, m_dirty;
+    reg [127:0] m_data [0:1];
+    reg [2:0] m_count [0:1];
+    reg [1:0] m_head [0:1];
+    reg [1:0] m_tail [0:1];
+    reg [1:0] m_wait_id [0:1][0:3];
+    reg [ROB_TAG_WIDTH-1:0] m_wait_tag [0:1][0:3];
+    reg [1:0] m_wait_word [0:1][0:3];
+    reg m_wait_write [0:1][0:3];
+    reg [31:0] m_wait_data [0:1][0:3];
+    reg [3:0] m_wait_mask [0:1][0:3];
+    reg m_replay;
+    reg m_delivery_next;
+    reg m_request_locked;
+    reg m_locked_slot, m_locked_write;
+    reg m_request_valid, m_request_slot, m_request_write;
+    reg m_match, m_match_slot, m_free, m_free_slot;
+    reg m_s1_locked, m_s1_reserved, m_s2_conflict, m_request_conflict;
+    wire [1:0] m_complete;
+    wire m_delivery_valid = |m_complete;
+    wire m_delivery_slot = m_complete[m_delivery_next] ? m_delivery_next : !m_delivery_next;
+    wire m_delivery = MSHR_ENTRIES == 2 && !m_replay && m_delivery_valid && r_ready;
+    wire m_join = MSHR_ENTRIES == 2 && s2_miss && m_match &&
+        (m_count[m_match_slot] < 4 || (m_delivery && m_delivery_slot == m_match_slot));
+    wire m_allocate = MSHR_ENTRIES == 2 && !m_replay && s2_miss &&
+        !m_match && !m_s2_conflict && m_free;
+    wire m_accept = m_join || m_allocate;
+    wire m_accept_slot = m_match ? m_match_slot : m_free_slot;
+    wire m_last = m_count[m_delivery_slot] == 1 &&
+        !(m_join && m_match_slot == m_delivery_slot);
+    wire m_delivery_error = m_wb_error[m_delivery_slot] || m_read_error[m_delivery_slot] ||
+        (memory_response_fire && memory_response_id_i == m_delivery_slot && memory_response_error_i);
+    wire [127:0] m_delivery_line = memory_response_fire && !memory_response_write_i &&
+        memory_response_id_i == m_delivery_slot ? memory_response_read_data_i : m_data[m_delivery_slot];
+    wire m_delivery_write = m_wait_write[m_delivery_slot][m_head[m_delivery_slot]];
+    wire [1:0] m_delivery_word = m_wait_word[m_delivery_slot][m_head[m_delivery_slot]];
+    wire [127:0] m_result = m_delivery_write ? merge_word(m_delivery_line, m_delivery_word,
+        m_wait_data[m_delivery_slot][m_head[m_delivery_slot]],
+        m_wait_mask[m_delivery_slot][m_head[m_delivery_slot]]) : m_delivery_line;
+    wire miss_allocate = MSHR_ENTRIES == 2 ? m_allocate : mode == RUN && s2_miss;
+    wire refill_dirty = MSHR_ENTRIES == 2 ? m_dirty[m_delivery_slot] || m_delivery_write : refill_write;
+    integer m_scan;
+    integer m_index;
+    integer m_wait;
+
+    genvar m_gen;
+    generate
+        for (m_gen = 0; m_gen < 2; m_gen = m_gen + 1) begin: complete_mshr
+            assign m_complete[m_gen] = m_valid[m_gen] &&
+                (m_read_done[m_gen] || (memory_response_fire && !memory_response_write_i &&
+                    memory_response_id_i == m_gen)) &&
+                (!m_wb_valid[m_gen] || m_wb_done[m_gen] ||
+                    (memory_response_fire && memory_response_write_i && memory_response_id_i == m_gen));
+        end
+    endgenerate
+
+    always @* begin
+        m_match = 1'b0;
+        m_match_slot = 1'b0;
+        m_free = 1'b0;
+        m_free_slot = 1'b0;
+        m_s1_locked = 1'b0;
+        m_s1_reserved = 1'b0;
+        m_s2_conflict = 1'b0;
+        m_request_conflict = 1'b0;
+        m_request_valid = 1'b0;
+        m_request_slot = 1'b0;
+        m_request_write = 1'b0;
+        for (m_scan = 0; m_scan < 2; m_scan = m_scan + 1) begin
+            if (m_valid[m_scan]) begin
+                if (m_line[m_scan] == s2_address[31:4]) begin
+                    m_match = 1'b1;
+                    m_match_slot = m_scan != 0;
+                end
+                if (m_line[m_scan][INDEX_WIDTH-1:0] == s1_set) begin
+                    m_s1_reserved = 1'b1;
+                    if (m_line[m_scan] != s1_address[31:4]) m_s1_locked = 1'b1;
+                end
+                if (m_line[m_scan][INDEX_WIDTH-1:0] == s2_set) m_s2_conflict = 1'b1;
+                if (m_line[m_scan][INDEX_WIDTH-1:0] == request_address_i[4 +: INDEX_WIDTH] &&
+                        m_line[m_scan] != request_address_i[31:4]) m_request_conflict = 1'b1;
+            end else if (!m_free) begin
+                m_free = 1'b1;
+                m_free_slot = m_scan != 0;
+            end
+            if (!m_request_valid && m_valid[m_scan] && !m_read_sent[m_scan] &&
+                    (!m_wb_valid[m_scan] || m_wb_sent[m_scan])) begin
+                m_request_valid = 1'b1;
+                m_request_slot = m_scan != 0;
+            end
+        end
+        for (m_scan = 0; m_scan < 2; m_scan = m_scan + 1)
+            if (!m_request_valid && m_valid[m_scan] && m_wb_valid[m_scan] && !m_wb_sent[m_scan]) begin
+                m_request_valid = 1'b1;
+                m_request_slot = m_scan != 0;
+                m_request_write = 1'b1;
+            end
+        if (m_request_locked) begin
+            m_request_valid = 1'b1;
+            m_request_slot = m_locked_slot;
+            m_request_write = m_locked_write;
+        end
+    end
+
+    assign miss_active = MSHR_ENTRIES == 2 ? |m_valid : legacy_miss_active;
+    assign miss_index = MSHR_ENTRIES == 2 ? m_line[m_delivery_slot][INDEX_WIDTH-1:0] : legacy_miss_index;
+    assign miss_tag = MSHR_ENTRIES == 2 ? m_line[m_delivery_slot][27:INDEX_WIDTH] : legacy_miss_tag;
+    assign miss_way = MSHR_ENTRIES == 2 ? m_way[m_delivery_slot] : legacy_miss_way;
+
     function [127:0] merge_word;
         input [127:0] old_line;
         input [1:0] word_index;
@@ -240,9 +362,10 @@ module rv32_l1_data_cache #(
     assign s2_bad_address = s2_address[1:0] != 0 ||
         s2_address > 32'h0ffffffc;
     assign s2_miss = s2_valid && !s2_bad_address && !s2_hit;
-    assign pipeline_run = mode == RUN || (NONBLOCKING != 0 && HIT_UNDER_MISS != 0 &&
-        mode != DELIVER && mode != REPLAY);
-    assign s1_locked = NONBLOCKING != 0 && miss_active && s1_set == miss_index;
+    assign pipeline_run = MSHR_ENTRIES == 2 ? !m_delivery && !m_replay :
+        mode == RUN || (NONBLOCKING != 0 && HIT_UNDER_MISS != 0 && mode != DELIVER && mode != REPLAY);
+    assign s1_locked = MSHR_ENTRIES == 2 ? m_s1_locked :
+        NONBLOCKING != 0 && miss_active && s1_set == miss_index;
     assign s2_ready = !s2_valid ||
         (pipeline_run && !s2_miss && r_ready && !refill_install);
     assign s1_can_advance = (!s1_valid || s2_ready) && !s1_locked;
@@ -251,12 +374,13 @@ module rv32_l1_data_cache #(
     assign pipeline_read_accept = pipeline_run && !refill_install && !s2_miss &&
         s1_can_advance && s0_valid && !array_read_conflict;
     assign array_read_enable = !reset_i &&
-        ((pipeline_run && !refill_install) || ((mode == REPLAY) && s1_valid));
+        (MSHR_ENTRIES == 2 ? !refill_install : (pipeline_run && !refill_install) ||
+            (((MSHR_ENTRIES == 2 && m_replay) || mode == REPLAY) && s1_valid));
     assign s0_ready = !s0_valid ||
         (s1_can_advance && !array_read_conflict);
     assign request_ready_o = !reset_i && pipeline_run && !refill_install &&
-        !s2_miss && s0_ready && !(NONBLOCKING != 0 && miss_active &&
-            request_address_i[4 +: INDEX_WIDTH] == miss_index);
+        !s2_miss && s0_ready && !(MSHR_ENTRIES == 2 ? m_request_conflict :
+            NONBLOCKING != 0 && miss_active && request_address_i[4 +: INDEX_WIDTH] == miss_index);
     // FIFO ownership protects an accepted hit from younger replacements.
     assign older_conflict =
         (s0_valid && s0_set == request_address_i[4 +: INDEX_WIDTH] &&
@@ -270,17 +394,20 @@ module rv32_l1_data_cache #(
         hint_match && !older_conflict;
 
     assign cache_response_push = r_ready &&
-        ((pipeline_run && !refill_install && s2_valid && !s2_miss) ||
+        (m_delivery || (pipeline_run && !refill_install && s2_valid && !s2_miss) ||
             (mode == DELIVER && (NONBLOCKING != 0 || s2_valid)));
     assign aux_response_ready_o = AUX_RETURNS != 0 && !reset_i &&
         r_ready && !cache_response_push;
     assign response_push = cache_response_push ||
         (AUX_RETURNS != 0 && aux_response_valid_i && aux_response_ready_o);
-    assign response_packet_data = !cache_response_push ? 32'd0 : mode == DELIVER ? miss_data :
+    assign response_packet_data = !cache_response_push ? 32'd0 : m_delivery ?
+        (m_delivery_error || m_delivery_write ? 32'd0 : m_delivery_line[m_delivery_word*32 +: 32]) :
+        mode == DELIVER ? miss_data :
         (s2_bad_address || s2_write ? 32'd0 : s2_line[s2_address[3:2]*32 +: 32]);
     assign response_packet_error = !cache_response_push ? aux_response_error_i :
-        mode == DELIVER ? miss_error : s2_bad_address;
+        m_delivery ? m_delivery_error : mode == DELIVER ? miss_error : s2_bad_address;
     assign response_packet_id = !cache_response_push ? aux_response_id_i :
+        m_delivery ? m_wait_id[m_delivery_slot][m_head[m_delivery_slot]] :
         mode == DELIVER && NONBLOCKING != 0 ? miss_id : s2_id;
     assign response_valid_o = !reset_i && r_valid;
     assign response_read_data_o = r_data;
@@ -288,6 +415,7 @@ module rv32_l1_data_cache #(
     assign response_id_o = r_id;
     assign response_rob_tag_o = r_rob_tag;
     assign response_packet_rob_tag = !cache_response_push ? aux_response_rob_tag_i :
+        m_delivery ? m_wait_tag[m_delivery_slot][m_head[m_delivery_slot]] :
         mode == DELIVER && NONBLOCKING != 0 ? miss_rob_tag : s2_rob_tag;
     assign confirm_hit = LATE_STORE_CONFIRM != 0 && pipeline_run &&
         !refill_install && !s2_miss && s2_ready && s1_valid && !s1_locked &&
@@ -298,27 +426,36 @@ module rv32_l1_data_cache #(
         !s2_bad_address && s2_hit && s2_write && r_ready;
     assign store_line = merge_word(s2_line, s2_address[3:2],
         s2_write_data, s2_byte_enable);
-    assign refill_address = NONBLOCKING != 0 ? miss_address : s2_address[31:2];
+    assign refill_address = MSHR_ENTRIES == 2 ? {m_line[m_delivery_slot], m_delivery_word} :
+        NONBLOCKING != 0 ? miss_address : s2_address[31:2];
     assign refill_write = NONBLOCKING != 0 ? miss_write : s2_write;
     assign refill_write_data = NONBLOCKING != 0 ? miss_write_data : s2_write_data;
     assign refill_byte_enable = NONBLOCKING != 0 ? miss_byte_enable : s2_byte_enable;
     assign current_refill_line = NONBLOCKING != 0 ?
         ((memory_response_fire && !memory_response_write_i) ?
             memory_response_read_data_i : refill_line) : memory_response_read_data_i;
-    assign refill_result = refill_write ?
+    assign refill_result = MSHR_ENTRIES == 2 ? m_result : refill_write ?
         merge_word(current_refill_line, refill_address[3:2],
             refill_write_data, refill_byte_enable) : current_refill_line;
 
     assign memory_request_valid_o = !reset_i &&
-        ((mode == WRITEBACK_REQUEST) || (mode == REFILL_REQUEST));
-    assign memory_request_write_o = mode == WRITEBACK_REQUEST;
-    assign memory_request_address_o = mode == WRITEBACK_REQUEST ?
+        (MSHR_ENTRIES == 2 ? m_request_valid : (mode == WRITEBACK_REQUEST) || (mode == REFILL_REQUEST));
+    assign memory_request_write_o = MSHR_ENTRIES == 2 ? m_request_write : mode == WRITEBACK_REQUEST;
+    assign memory_request_id_o = MSHR_ENTRIES == 2 && m_request_slot;
+    assign memory_request_address_o = MSHR_ENTRIES == 2 ?
+        (m_request_write ? m_victim_address[m_request_slot] : {m_line[m_request_slot], 4'b0000}) :
+        mode == WRITEBACK_REQUEST ?
         victim_address : miss_line_address;
-    assign memory_request_write_data_o = mode == WRITEBACK_REQUEST ?
+    assign memory_request_write_data_o = MSHR_ENTRIES == 2 ?
+        (m_request_write ? m_victim_data[m_request_slot] : 128'd0) : mode == WRITEBACK_REQUEST ?
         victim_line : 128'd0;
-    assign memory_request_byte_enable_o = mode == WRITEBACK_REQUEST ?
+    assign memory_request_byte_enable_o = MSHR_ENTRIES == 2 ?
+        (m_request_write ? 16'hffff : 16'd0) : mode == WRITEBACK_REQUEST ?
         16'hffff : 16'd0;
-    assign memory_response_ready_o = !reset_i && (NONBLOCKING != 0 ?
+    assign memory_response_ready_o = !reset_i && (MSHR_ENTRIES == 2 ?
+        (m_valid[memory_response_id_i] && (memory_response_write_i ?
+            m_wb_sent[memory_response_id_i] && !m_wb_done[memory_response_id_i] :
+            m_read_sent[memory_response_id_i] && !m_read_done[memory_response_id_i])) : NONBLOCKING != 0 ?
         (miss_active && (memory_response_write_i ? wb_sent && !wb_done :
             read_sent && !read_done)) :
         ((mode == WRITEBACK_WAIT) || (mode == REFILL_WAIT)));
@@ -329,7 +466,8 @@ module rv32_l1_data_cache #(
         (!wb_valid || wb_done || (memory_response_fire && memory_response_write_i));
     assign miss_all_error = read_error || wb_error ||
         (memory_response_fire && memory_response_error_i);
-    assign refill_install = !reset_i && (NONBLOCKING != 0 ?
+    assign refill_install = !reset_i && (MSHR_ENTRIES == 2 ?
+        m_delivery && m_last && !m_delivery_error : NONBLOCKING != 0 ?
         (miss_complete_event && !miss_all_error) :
         ((mode == REFILL_WAIT) && memory_response_fire && !memory_response_error_i));
 
@@ -352,6 +490,7 @@ module rv32_l1_data_cache #(
                 s1_invalid_way = scan_way[WAY_WIDTH-1:0];
             end
         end
+        if (MSHR_ENTRIES == 2 && m_s1_reserved) s1_hit = 1'b0;
         if (s1_hit)
             s1_selected_way = s1_hit_way;
         else if (s1_invalid_found)
@@ -471,7 +610,7 @@ module rv32_l1_data_cache #(
                             valid[reset_way][reset_index] <= 1'b0;
                 end else begin
                     // A replacement revokes only the selected victim way.
-                    if (mode == RUN && s2_miss)
+                    if (miss_allocate)
                         valid[s2_way][hit_index] <= 1'b0;
                     if (refill_install) begin
                         valid[miss_way][refill_index] <= 1'b1;
@@ -510,7 +649,7 @@ module rv32_l1_data_cache #(
                     for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
                         hint_line[hint_update] <= 0;
                 end else begin
-                    if (mode == RUN && s2_miss)
+                    if (miss_allocate)
                         for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
                             if (hint_line[hint_update][INDEX_WIDTH-1:0] == s2_set)
                                 hint_valid[hint_update] <= 1'b0;
@@ -538,7 +677,7 @@ module rv32_l1_data_cache #(
             r_rob_tag <= 0;
             skid_rob_tag <= 0;
             miss_rob_tag <= 0;
-            miss_active <= 1'b0;
+            legacy_miss_active <= 1'b0;
             miss_address <= 0;
             miss_write <= 0;
             miss_write_data <= 0;
@@ -591,9 +730,9 @@ module rv32_l1_data_cache #(
             s2_hit <= 1'b0;
             r_data <= 32'd0;
             r_error <= 1'b0;
-            miss_index <= {INDEX_WIDTH{1'b0}};
-            miss_tag <= {TAG_WIDTH{1'b0}};
-            miss_way <= {WAY_WIDTH{1'b0}};
+            legacy_miss_index <= {INDEX_WIDTH{1'b0}};
+            legacy_miss_tag <= {TAG_WIDTH{1'b0}};
+            legacy_miss_way <= {WAY_WIDTH{1'b0}};
             miss_line_address <= 32'd0;
             victim_address <= 32'd0;
             victim_line <= 128'd0;
@@ -628,7 +767,7 @@ module rv32_l1_data_cache #(
                 line_dirty[s2_way][s2_set] <= 1'b1;
             if (refill_install) begin
                 line_valid[miss_way][miss_index] <= 1'b1;
-                line_dirty[miss_way][miss_index] <= refill_write;
+                line_dirty[miss_way][miss_index] <= refill_dirty;
                 if (miss_way == LAST_WAY_INDEX[WAY_WIDTH-1:0])
                     replacement_way[miss_index] <= {WAY_WIDTH{1'b0}};
                 else
@@ -671,7 +810,7 @@ module rv32_l1_data_cache #(
                 end
             end
 
-            if (NONBLOCKING != 0 && memory_response_fire) begin
+            if (MSHR_ENTRIES == 1 && NONBLOCKING != 0 && memory_response_fire) begin
                 if (memory_response_write_i) begin
                     wb_done <= 1'b1;
                     wb_error <= memory_response_error_i;
@@ -754,12 +893,25 @@ module rv32_l1_data_cache #(
                         end
             end
 
+            if (MSHR_ENTRIES == 2) begin
+                if (m_accept) s2_valid <= 1'b0;
+                if (memory_response_fire && memory_response_write_i && !memory_response_error_i &&
+                        (!refill_install || memory_response_id_i != m_delivery_slot))
+                    line_dirty[m_way[memory_response_id_i]][m_line[memory_response_id_i][INDEX_WIDTH-1:0]] <= 1'b0;
+                if (m_replay && s1_valid) begin
+                    for (way_index = 0; way_index < NUM_WAYS; way_index = way_index + 1) begin
+                        s1_way_valid[way_index] <= line_valid[way_index][s1_set];
+                        s1_way_dirty[way_index] <= line_dirty[way_index][s1_set];
+                    end
+                    s1_forward_valid <= 1'b0;
+                end
+            end else begin
             case (mode)
                 RUN: begin
                     if (s2_miss) begin
-                        miss_index <= s2_set;
-                        miss_tag <= s2_address[31:INDEX_WIDTH+4];
-                        miss_way <= s2_way;
+                        legacy_miss_index <= s2_set;
+                        legacy_miss_tag <= s2_address[31:INDEX_WIDTH+4];
+                        legacy_miss_way <= s2_way;
                         miss_line_address <=
                             {s2_address[31:4], 4'b0000};
                         victim_address <=
@@ -767,7 +919,7 @@ module rv32_l1_data_cache #(
                         victim_line <= s2_line;
                         mode <= s2_line_valid && s2_line_dirty ?
                             WRITEBACK_REQUEST : REFILL_REQUEST;
-                        miss_active <= 1'b1;
+                        legacy_miss_active <= 1'b1;
                         miss_address <= s2_address[31:2];
                         miss_write <= s2_write;
                         miss_write_data <= s2_write_data;
@@ -827,7 +979,7 @@ module rv32_l1_data_cache #(
                 DELIVER: begin
                     if (r_ready) begin
                         if (NONBLOCKING == 0) s2_valid <= 1'b0;
-                        miss_active <= 1'b0;
+                        legacy_miss_active <= 1'b0;
                         mode <= REPLAY;
                     end
                 end
@@ -845,10 +997,122 @@ module rv32_l1_data_cache #(
                 end
                 default: mode <= RUN;
             endcase
+            end
+        end
+    end
+
+    always @(posedge clk_i) begin
+        if (reset_i) begin
+            m_valid <= 0;
+            m_wb_valid <= 0;
+            m_wb_sent <= 0;
+            m_wb_done <= 0;
+            m_wb_error <= 0;
+            m_read_sent <= 0;
+            m_read_done <= 0;
+            m_read_error <= 0;
+            m_dirty <= 0;
+            m_replay <= 0;
+            m_delivery_next <= 0;
+            m_request_locked <= 0;
+            m_locked_slot <= 0;
+            m_locked_write <= 0;
+            for (m_index = 0; m_index < 2; m_index = m_index + 1) begin
+                m_line[m_index] <= 0;
+                m_way[m_index] <= 0;
+                m_victim_address[m_index] <= 0;
+                m_victim_data[m_index] <= 0;
+                m_data[m_index] <= 0;
+                m_count[m_index] <= 0;
+                m_head[m_index] <= 0;
+                m_tail[m_index] <= 0;
+                for (m_wait = 0; m_wait < 4; m_wait = m_wait + 1) begin
+                    m_wait_id[m_index][m_wait] <= 0;
+                    m_wait_tag[m_index][m_wait] <= 0;
+                    m_wait_word[m_index][m_wait] <= 0;
+                    m_wait_write[m_index][m_wait] <= 0;
+                    m_wait_data[m_index][m_wait] <= 0;
+                    m_wait_mask[m_index][m_wait] <= 0;
+                end
+            end
+        end else if (MSHR_ENTRIES == 2) begin
+            m_replay <= m_delivery && m_last;
+            if (m_delivery) m_delivery_next <= !m_delivery_slot;
+            if (memory_request_valid_o && memory_request_ready_i) begin
+                m_request_locked <= 1'b0;
+                if (m_request_write) m_wb_sent[m_request_slot] <= 1'b1;
+                else m_read_sent[m_request_slot] <= 1'b1;
+            end else if (memory_request_valid_o && !m_request_locked) begin
+                m_request_locked <= 1'b1;
+                m_locked_slot <= m_request_slot;
+                m_locked_write <= m_request_write;
+            end
+            if (memory_response_fire) begin
+                if (memory_response_write_i) begin
+                    m_wb_done[memory_response_id_i] <= 1'b1;
+                    m_wb_error[memory_response_id_i] <= memory_response_error_i;
+                end else begin
+                    m_read_done[memory_response_id_i] <= 1'b1;
+                    m_read_error[memory_response_id_i] <= memory_response_error_i;
+                    m_data[memory_response_id_i] <= memory_response_read_data_i;
+                end
+            end
+            for (m_index = 0; m_index < 2; m_index = m_index + 1) begin
+                if (m_allocate && m_accept_slot == m_index[0]) begin
+                    m_valid[m_index] <= 1'b1;
+                    m_line[m_index] <= s2_address[31:4];
+                    m_way[m_index] <= s2_way;
+                    m_victim_address[m_index] <= {s2_tag, s2_set, 4'b0000};
+                    m_victim_data[m_index] <= s2_line;
+                    m_wb_valid[m_index] <= s2_line_valid && s2_line_dirty;
+                    m_wb_sent[m_index] <= 1'b0;
+                    m_wb_done[m_index] <= 1'b0;
+                    m_wb_error[m_index] <= 1'b0;
+                    m_read_sent[m_index] <= 1'b0;
+                    m_read_done[m_index] <= 1'b0;
+                    m_read_error[m_index] <= 1'b0;
+                    m_dirty[m_index] <= 1'b0;
+                    m_count[m_index] <= 1;
+                    m_head[m_index] <= 0;
+                    m_tail[m_index] <= 1;
+                    m_wait_id[m_index][0] <= s2_id;
+                    m_wait_tag[m_index][0] <= s2_rob_tag;
+                    m_wait_word[m_index][0] <= s2_address[3:2];
+                    m_wait_write[m_index][0] <= s2_write;
+                    m_wait_data[m_index][0] <= s2_write_data;
+                    m_wait_mask[m_index][0] <= s2_byte_enable;
+                end else begin
+                    case ({m_join && m_accept_slot == m_index[0], m_delivery && m_delivery_slot == m_index[0]})
+                        2'b10: m_count[m_index] <= m_count[m_index] + 1'b1;
+                        2'b01: m_count[m_index] <= m_count[m_index] - 1'b1;
+                        default: m_count[m_index] <= m_count[m_index];
+                    endcase
+                    if (m_join && m_accept_slot == m_index[0]) begin
+                        m_tail[m_index] <= m_tail[m_index] + 1'b1;
+                        m_wait_id[m_index][m_tail[m_index]] <= s2_id;
+                        m_wait_tag[m_index][m_tail[m_index]] <= s2_rob_tag;
+                        m_wait_word[m_index][m_tail[m_index]] <= s2_address[3:2];
+                        m_wait_write[m_index][m_tail[m_index]] <= s2_write;
+                        m_wait_data[m_index][m_tail[m_index]] <= s2_write_data;
+                        m_wait_mask[m_index][m_tail[m_index]] <= s2_byte_enable;
+                    end
+                    if (m_delivery && m_delivery_slot == m_index[0]) begin
+                        m_head[m_index] <= m_head[m_index] + 1'b1;
+                        m_data[m_index] <= m_result;
+                        if (m_delivery_write && !m_delivery_error) m_dirty[m_index] <= 1'b1;
+                        if (m_last) m_valid[m_index] <= 1'b0;
+                    end
+                end
+            end
         end
     end
 
     initial begin
+        if ((MSHR_ENTRIES != 1 && MSHR_ENTRIES != 2) ||
+                (MSHR_ENTRIES == 2 && (NONBLOCKING == 0 || HIT_UNDER_MISS == 0))) begin
+            $display("ERROR invalid data cache MSHR parameters");
+            $stop;
+        end
         if (STORE_DIRECTORY_ENTRIES < 0 || (STORE_DIRECTORY_ENTRIES > 0 &&
                 (STORE_DIRECTORY_ENTRIES & (STORE_DIRECTORY_ENTRIES - 1)) != 0)) begin
             $display("ERROR invalid Store directory parameters");
@@ -861,6 +1125,25 @@ module rv32_l1_data_cache #(
     end
 `ifndef SYNTHESIS
     always @(posedge clk_i) begin
+        if (!reset_i && MSHR_ENTRIES == 2) begin
+            if (m_valid == 2'b11 && m_line[0][INDEX_WIDTH-1:0] == m_line[1][INDEX_WIDTH-1:0]) begin
+                $display("ERROR rv32_l1_data_cache duplicate set reservations");
+                $stop;
+            end
+            if (memory_response_valid_i && !memory_response_ready_o) begin
+                $display("ERROR rv32_l1_data_cache unknown or duplicate memory response");
+                $stop;
+            end
+            if (m_accept && s2_irrevocable) begin
+                $display("ERROR rv32_l1_data_cache proven Store entered an MSHR");
+                $stop;
+            end
+            if ((m_valid[0] && (m_count[0] == 0 || m_count[0] > 4)) ||
+                    (m_valid[1] && (m_count[1] == 0 || m_count[1] > 4))) begin
+                $display("ERROR rv32_l1_data_cache invalid MSHR waiter count");
+                $stop;
+            end
+        end
         if (!reset_i && store_confirm_valid_o &&
                 (!s2_valid || !s2_write || !s2_hit || s2_bad_address ||
                     s2_id != store_confirm_id_o ||
@@ -871,6 +1154,9 @@ module rv32_l1_data_cache #(
         if (!reset_i && pipeline_run && s2_valid && s2_irrevocable &&
                 (s2_bad_address || !s2_hit)) begin
             $display("ERROR rv32_l1_data_cache irrevocable store lost its line");
+            $display("address=%h id=%0d tag=%h s1=%h s0=%h m_valid=%b lines=%h/%h ways=%0d/%0d",
+                s2_address, s2_id, s2_rob_tag, s1_address, s0_address,
+                m_valid, m_line[0], m_line[1], m_way[0], m_way[1]);
             $stop;
         end
     end

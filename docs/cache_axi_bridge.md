@@ -1,14 +1,16 @@
 # L1 Cache 与 AXI4-Lite 桥接
 
-`rv32_l1_cache_axi_bridge` 连接 I-Cache、D-Cache、MMIO Store 与 32 位 AXI4-Lite 主接口。Cache 侧保留 128 位整行 ready/valid 协议，一行固定为 16 字节；桥接层把一次行请求转换为四个顺序的 32 位读或写事务。MMIO 侧是单个 32 位写事务。模块由 `rv32_l1_cache_arbiter` 和 `rv32_cache_axi4_lite_adapter` 组成，顶层仅负责两者接线。
+`rv32_l1_cache_axi_bridge` 连接 I-Cache、D-Cache、MMIO Store 与 32 位 AXI4-Lite 主接口。Cache 侧保留 128 位整行 ready/valid 协议，一行固定为 16 字节；桥接层把一次行请求转换为四个顺序的 32 位读或写事务。MMIO 侧是单个 32 位写事务。`PARALLEL=0` 使用单事务 adapter；`PARALLEL=1` 使用两项读队列和一项独立写事务，顶层 nonblocking 配置默认启用后者。
 
 ## 仲裁与请求保持
 
-仲裁优先级为 MMIO、D-Cache、I-Cache。MMIO 只会由 ROB 头部 Store 产生，最高优先级避免结束事务被 Cache refill 长期阻塞。同一事务未收到响应并完成响应握手前，不接收其他请求；若下游暂时未能接收被选请求，仲裁器锁存选择。事务归属保存在 arbiter 中，响应只对原发起方有效，响应回压会阻止后续请求。
+仲裁优先级为 MMIO、D-Cache、I-Cache。MMIO 只会由 ROB 头部 Store 产生，最高优先级避免结束事务被 Cache refill 长期阻塞。串行模式同一事务结束前不接收其他请求；并行模式保存两个读 owner 和一个写 owner，两个读可以来自 I/D 或两个不同的 Dcache MSHR，MMIO 等先前事务全部结束后进入。下游受回压时，仲裁器锁存选择并保持到请求握手，不能因另一事务完成而改变 owner。
+
+`D_TAGGED=1` 时，D 侧额外接收一位 `d_request_id_i`，与读 owner FIFO 或写 owner 一同保存；响应通过 `d_response_id_o` 返回。ID 与 `d_response_write_o` 共同区分两个 MSHR 的 refill/写回。串行模式在单一 owner 中同样保存 ID。内部 ID 不改变外部 AXI4-Lite 接口，也不能代替通道内响应顺序约束。
 
 ## AXI4-Lite 转换
 
-adapter 在接收行请求时锁存地址、写数据和 16 位 byte enable。地址按 16 字节对齐，四个 AXI beat 的地址依次为行基址加 0、4、8、12。内部状态为 IDLE、READ、WRITE、RESPONSE。每次仍只处理一个行事务，但允许行内最多四个字请求在途。
+adapter 在接收行请求时锁存地址、写数据和 16 位 byte enable。地址按 16 字节对齐，四个 AXI beat 的地址依次为行基址加 0、4、8、12。串行 adapter 的状态为 IDLE、READ、WRITE、RESPONSE；并行 adapter 为每个读槽分别保存地址、数据、错误和 AR/R 计数，写槽单独保存 AW/W/B 计数。每行允许四个字请求在途，两个读行可在 AXI 读通道内按顺序流水发出；读写通道独立推进。
 
 读通路用 `ar_count` 和 `r_count` 分别记录已接受地址和已回收响应。AR 无需等待上一字的 R，即可发出下一字；只有存在已接受但未回收的地址时才拉高 RREADY。按 AXI4-Lite 响应顺序，把第 n 个 R 写入整行第 n 个字。最后一个 R 握手后才生成 Cache 响应。
 
@@ -22,10 +24,12 @@ MMIO 的字数限制为 1，保留原始的 4 字节对齐地址。写数据和 
 
 完整收尾针对 Cache 的普通内存行，不承诺错误写入的事务原子性：部分或全部字可能已经产生副作用，桥接层不回滚。MMIO 不使用四字行模式，因此错误收尾不会导致额外 MMIO 写入。
 
-复位立即抑制所有握手输出，并在时钟边沿清空状态和计数。系统必须同时复位 AXI 从设备，取消旧请求及响应；本接口没有 transaction ID，不能在只复位桥接层、保留旧从设备响应的情况下区分新旧事务。
+复位立即抑制所有握手输出，并在时钟边沿清空状态和计数。系统必须同时复位 AXI 从设备，取消旧请求及响应；外部 AXI4-Lite 没有 transaction ID，不能在只复位桥接层、保留旧从设备响应的情况下区分新旧事务。
 
 ## 接线与验证
 
 I-Cache 的 `memory_request_*` / `memory_response_*` 接到顶层 `i_*` 端口，D-Cache 对应信号接到 `d_*` 端口，LSQ 的 MMIO Store 接到 `m_*` 端口；`ar*`、`r*`、`aw*`、`w*`、`b*` 直接连接官方 AXI4-Lite RAM。接口不增加 AXI burst 或 ID，依赖从设备在各响应通道内保持请求顺序；下游只接受单个在途请求时也能通过 READY 背压正常工作。
 
 `make cache-bridge-lint` 检查 Verilog 2005 语法、层次及综合结构。`make cache-bridge-unit` 包含原有仲裁测试和八个种子的并发协议测试：四字在途、AW/W 双向领先、请求/响应重叠、每个字的错误、错误发生时仍有请求未发送、错误后的下一事务、字节掩码、MMIO 不同字地址与全部 16 种 WSTRB、I/D/MMIO 响应隔离、其他客户端 READY 已拉高时的响应背压，以及共享复位。覆盖计数未达到要求时测试失败。
+
+`make mshr-unit` 另外验证两个 D 读加一个 D 写同时在途的 ID/错误归属、D/I 混合、MMIO 排序及回压稳定性；把响应 ID 强制为零的负对照必须失败。与 Dcache 两项 MSHR 的接线见 [dcache-mshr.md](dcache-mshr.md)。

@@ -10,6 +10,7 @@ module student_top #(
     parameter STORE_DIRECTORY_ENTRIES = 128,
     parameter LATE_STORE_CONFIRM = 1,
     parameter NONBLOCKING_DCACHE = 1,
+    parameter DCACHE_MSHR_ENTRIES = 2,
     parameter FAST_MEMORY_RETURNS = NONBLOCKING_DCACHE,
     parameter PARALLEL_BRIDGE = NONBLOCKING_DCACHE,
     parameter HIT_UNDER_MISS = NONBLOCKING_DCACHE,
@@ -82,6 +83,8 @@ module student_top #(
     wire [1:0] dcache_response_id;
     reg [1:0] mmio_response_id;
     wire d_memory_response_write;
+    wire d_memory_request_id;
+    wire d_memory_response_id;
     wire core_d_request_valid;
     wire core_d_request_ready;
     wire core_d_request_write;
@@ -216,7 +219,8 @@ module student_top #(
         .CACHE_SIZE_BYTES(DCACHE_SIZE_BYTES),
         .NUM_SETS(DCACHE_NUM_SETS), .NUM_WAYS(DCACHE_NUM_WAYS),
         .STORE_HINTS(STORE_HINTS), .STORE_DIRECTORY_ENTRIES(STORE_DIRECTORY_ENTRIES),
-        .NONBLOCKING(NONBLOCKING_DCACHE), .HIT_UNDER_MISS(HIT_UNDER_MISS)
+        .NONBLOCKING(NONBLOCKING_DCACHE), .HIT_UNDER_MISS(HIT_UNDER_MISS),
+        .MSHR_ENTRIES((NONBLOCKING_DCACHE && HIT_UNDER_MISS) ? DCACHE_MSHR_ENTRIES : 1)
     ) dcache (
         .clk_i(clock), .reset_i(reset),
         .request_valid_i(dcache_request_valid),
@@ -243,6 +247,7 @@ module student_top #(
         .memory_request_valid_o(d_memory_request_valid),
         .memory_request_ready_i(d_memory_request_ready),
         .memory_request_write_o(d_memory_request_write),
+        .memory_request_id_o(d_memory_request_id),
         .memory_request_address_o(d_memory_request_address),
         .memory_request_write_data_o(d_memory_request_write_data),
         .memory_request_byte_enable_o(d_memory_request_byte_enable),
@@ -251,10 +256,12 @@ module student_top #(
         .memory_response_read_data_i(d_memory_response_read_data),
         .memory_response_error_i(d_memory_response_error),
         .memory_response_write_i(d_memory_response_write),
+        .memory_response_id_i(d_memory_response_id),
         .hit_event_o(), .miss_event_o()
     );
 
-    rv32_l1_cache_axi_bridge #(.PARALLEL(PARALLEL_BRIDGE)) bridge (
+    rv32_l1_cache_axi_bridge #(.PARALLEL(PARALLEL_BRIDGE),
+        .D_TAGGED((DCACHE_MSHR_ENTRIES == 2 && NONBLOCKING_DCACHE && HIT_UNDER_MISS) ? 1 : 0)) bridge (
         .clk_i(clock), .reset_i(reset),
         .i_request_valid_i(i_memory_request_valid),
         .i_request_ready_o(i_memory_request_ready),
@@ -266,6 +273,7 @@ module student_top #(
         .d_request_valid_i(d_memory_request_valid),
         .d_request_ready_o(d_memory_request_ready),
         .d_request_write_i(d_memory_request_write),
+        .d_request_id_i(d_memory_request_id),
         .d_request_address_i(d_memory_request_address),
         .d_request_write_data_i(d_memory_request_write_data),
         .d_request_byte_enable_i(d_memory_request_byte_enable),
@@ -274,6 +282,7 @@ module student_top #(
         .d_response_read_data_o(d_memory_response_read_data),
         .d_response_error_o(d_memory_response_error),
         .d_response_write_o(d_memory_response_write),
+        .d_response_id_o(d_memory_response_id),
         .m_request_valid_i(mmio_request_valid),
         .m_request_ready_o(mmio_request_ready),
         .m_request_address_i(core_d_request_address),

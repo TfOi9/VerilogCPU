@@ -4,6 +4,8 @@
 
 缓存只接受对齐的 32 位 RAM 字访问，地址范围为 `0x00000000` 至 `0x0ffffffc`，对应 256 MiB RAM。地址 `0x80000000` 等 MMIO 不在缓存范围内，应由 LSQ 路由。行偏移为地址低 4 位，`address[4 +: log2(NUM_SETS)]` 选组，其余高位构成标签；`address[3:2]` 选行内的 32 位字。
 
+单独实例的 `MSHR_ENTRIES` 默认 1；当前顶层在 nonblocking/HUM 开启时默认使用两项 MSHR，并合并同一行请求。两项模式的状态、顺序、桥接身份与错误策略见 [dcache-mshr.md](dcache-mshr.md)。
+
 ## 命中流水线
 
 | 上升沿 | 处理 |
@@ -19,10 +21,10 @@
 
 ## Miss、写回与主存接线
 
-单笔 miss 控制器只接管 S2 的未命中请求；S0、S1 中已经接收的年轻请求冻结。若选中路有效且脏，先将 `{原标签, 组号, 4'b0}` 对应的整行以 `16'hffff` 掩码写回，收到成功确认后才读取目标行；否则直接读取。写回成功时原行变为 clean。回填成功后安装新标签和数据；store miss 先把写入字节合并到回填行，并标记 dirty。原请求完成后，S1 重新读取阵列，再恢复年轻请求，避免它使用回填前的过期快照。
+单项阻塞 miss 控制器只接管 S2 的未命中请求；S0、S1 中已经接收的年轻请求冻结。若选中路有效且脏，先将 `{原标签, 组号, 4'b0}` 对应的整行以 `16'hffff` 掩码写回，收到成功确认后才读取目标行；否则直接读取。nonblocking 模式允许写回确认与读取重叠，并允许其他 set 命中继续处理。写回成功时原行变为 clean。回填成功后安装新标签和数据；store miss 先把写入字节合并到回填行，并标记 dirty。原请求完成后，S1 重新读取阵列，再恢复年轻请求，避免它使用回填前的过期快照。
 
 写回失败时保留原 dirty 行并向当前请求返回错误；回填失败时保留原行，若先前写回成功则该行保持 clean。非字对齐或超出 `0x0ffffffc` 的字请求返回错误，不访问主存，也不计入命中或未命中。有效请求在首次标签判断时恰好产生一个 `hit_event_o` 或 `miss_event_o` 脉冲，重读不重复计数。
 
-Cache 的 128 位 refill/writeback ready/valid 接口保持不变，系统接线时连接 `rv32_l1_cache_axi_bridge` 的 D 侧端口；该桥接层负责 I/D 仲裁并把每行拆成四次 32 位 AXI4-Lite 事务。本地单测直接连接 128 位仿真主存。LSQ 根据 ROB 提交候选发送 store，并在需要时丢弃错误路径 load 的返回值；缓存不设分支 flush 端口。脏数据立即对后续 D-Cache 读取可见，主存中的副本直到驱逐写回才更新。复位须与桥接层及主存一起施加。桥接层的仲裁、AXI 握手和错误处理见 [cache_axi_bridge.md](cache_axi_bridge.md)。
+Cache 的 128 位 refill/writeback ready/valid 接口连接 `rv32_l1_cache_axi_bridge` 的 D 侧端口，两项模式额外携带一位 MSHR ID，并由返回 ID 和读写类型共同定位事务；单项模式忽略返回 ID。桥接层负责 I/D 仲裁并把每行拆成四次 32 位 AXI4-Lite 事务。本地单测直接连接 128 位仿真主存。LSQ 根据 ROB 提交候选发送 store，并在需要时丢弃错误路径 load 的返回值；缓存不设分支 flush 端口。Store 数据按接收顺序对后续同一行 Load 可见，主存中的副本直到驱逐写回才更新。复位须与桥接层及主存一起施加。桥接层的仲裁、AXI 握手和错误处理见 [cache_axi_bridge.md](cache_axi_bridge.md)。
 
 `make dcache-lint` 检查 Verilog 2005 RTL 语法、FakeRAM 层次和综合结构；`make dcache-unit` 运行独立缓存、参数化 2 路冲突替换及 LSQ—D-Cache—主存接线测试。测试包含三周期命中、逐周期吞吐、同组旁路、回压、脏行驱逐、错误、256 MiB 地址边界和固定种子随机一致性，并设置仿真与墙钟 watchdog。

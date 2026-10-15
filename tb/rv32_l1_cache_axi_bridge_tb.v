@@ -55,6 +55,7 @@ module rv32_l1_cache_axi_bridge_tb;
     integer write_beat_count;
 
     rv32_l1_cache_axi_bridge dut (
+        .d_request_id_i(1'b0), .d_response_id_o(),
         .d_response_write_o(),
         .clk_i(clk), .reset_i(reset),
         .i_request_valid_i(i_request_valid),

@@ -72,7 +72,7 @@ image:
 image-test:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_image_pipeline.py
 
-lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint predictor-lint fetch-lint dispatch-lint
+lint: mshr-lint issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint cache-bridge-lint predictor-lint fetch-lint dispatch-lint
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl -s rv32im_decoder \
 		-o build/rv32im_decoder_lint.vvp rtl/rv32im_decoder.v
@@ -196,7 +196,7 @@ lint: issue-lint core-lint memory-lint main-memory-lint icache-lint dcache-lint 
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: store-confirm-unit store-directory-unit int-rs-reuse-unit response-owner-unit deep-unit issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
+unit: mshr-unit store-confirm-unit store-directory-unit int-rs-reuse-unit response-owner-unit deep-unit issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -1394,6 +1394,23 @@ store-directory-unit:
 .PHONY: response-owner-unit
 response-owner-unit:
 	@$(TIMEOUT) 180 $(PYTHON) tools/test_response_owner.py
+
+.PHONY: mshr-unit mshr-lint
+MSHR_OUT ?= build/mshr-unit
+mshr-unit:
+	@$(TIMEOUT) 600 $(PYTHON) tools/test_mshr.py --out "$(MSHR_OUT)"
+
+mshr-lint:
+	@mkdir -p build
+	@$(TIMEOUT) 30 iverilog -g2005 -i -Wall -s rv32_l1_data_cache \
+		-P rv32_l1_data_cache.MSHR_ENTRIES=2 -P rv32_l1_data_cache.NONBLOCKING=1 \
+		-o build/rv32_l1_data_cache_mshr_2005.vvp rtl/rv32_l1_data_cache.v
+	@$(TIMEOUT) 30 verilator --lint-only --language 1800-2012 -Wall \
+		-Wno-TIMESCALEMOD -Wno-BLKSEQ -GMSHR_ENTRIES=2 -GNONBLOCKING=1 \
+		-GNUM_SETS=512 -GNUM_WAYS=2 -GCACHE_SIZE_BYTES=16384 \
+		--top-module rv32_l1_data_cache $(FAKERAM) rtl/rv32_l1_data_cache.v
+	@$(TIMEOUT) 120 yosys -q -p \
+		'read_verilog -sv -D SYNTHESIS $(FAKERAM) rtl/rv32_l1_data_cache.v; chparam -set MSHR_ENTRIES 2 -set NONBLOCKING 1 rv32_l1_data_cache; hierarchy -check -top rv32_l1_data_cache; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod; check -assert'
 
 .PHONY: store-confirm-unit
 STORE_CONFIRM_OUT ?= build/store-confirm-unit

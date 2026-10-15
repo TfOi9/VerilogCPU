@@ -82,6 +82,7 @@ module rv32_cache_hum_tb;
     always #5 clk = ~clk;
     rv32_l1_data_cache #(.CACHE_SIZE_BYTES(64*WAYS), .NUM_SETS(4),
         .NUM_WAYS(WAYS), .STORE_HINTS(16), .LATE_STORE_CONFIRM(LATE_CONFIRM), .STORE_DIRECTORY_ENTRIES(DIRECTORY), .NONBLOCKING(1)) cache (
+        .memory_request_id_o(), .memory_response_id_i(1'b0),
         .request_rob_tag_i(req_rob_tag), .response_rob_tag_o(resp_rob_tag),
         .clk_i(clk), .reset_i(reset), .request_valid_i(req_valid),
         .request_ready_o(req_ready), .store_confirm_valid_o(confirm_valid), .store_confirm_id_o(confirm_id),

@@ -127,6 +127,7 @@ module rv32_lsq_dcache_integration_tb;
     );
 
     rv32_l1_data_cache cache (
+        .memory_request_id_o(), .memory_response_id_i(1'b0),
         .request_rob_tag_i(0), .response_rob_tag_o(),
         .request_id_i(2'd0), .response_id_o(),
         .memory_response_write_i(1'b0),

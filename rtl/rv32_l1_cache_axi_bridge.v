@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 
 module rv32_l1_cache_arbiter #(
-    parameter PARALLEL = 0
+    parameter PARALLEL = 0,
+    parameter D_TAGGED = 0
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -15,6 +16,7 @@ module rv32_l1_cache_arbiter #(
     input  wire d_request_valid_i,
     output wire d_request_ready_o,
     input  wire d_request_write_i,
+    input wire d_request_id_i,
     input  wire [31:0] d_request_address_i,
     input  wire [127:0] d_request_write_data_i,
     input  wire [15:0] d_request_byte_enable_i,
@@ -23,6 +25,7 @@ module rv32_l1_cache_arbiter #(
     output wire [127:0] d_response_read_data_o,
     output wire d_response_error_o,
     output wire d_response_write_o,
+    output wire d_response_id_o,
     input  wire m_request_valid_i,
     output wire m_request_ready_o,
     input  wire [31:0] m_request_address_i,
@@ -50,16 +53,19 @@ module rv32_l1_cache_arbiter #(
     localparam OWNER_M = 2'd2;
 
     reg [1:0] owner;
+    reg owner_id;
     reg grant_locked;
     reg [1:0] grant_owner;
     wire [1:0] selected_owner;
     wire selected_valid;
     reg [1:0] read_owner [0:1];
+    reg [1:0] read_id;
     reg read_head;
     reg read_tail;
     reg [1:0] read_count;
     reg write_busy;
     reg [1:0] write_owner;
+    reg write_id;
     wire request_fire = memory_request_valid_o && memory_request_ready_i;
     wire response_fire = memory_response_valid_i && memory_response_ready_o;
     wire parallel_busy = read_count != 0 || write_busy;
@@ -113,6 +119,8 @@ module rv32_l1_cache_arbiter #(
     assign d_response_error_o = memory_response_error_i;
     assign m_response_error_o = memory_response_error_i;
     assign d_response_write_o = memory_response_write_i;
+    assign d_response_id_o = D_TAGGED != 0 && (PARALLEL != 0 ?
+        (memory_response_write_i ? write_id : read_id[read_head]) : owner_id);
     assign memory_response_ready_o = !reset_i && response_owned &&
         (response_owner == OWNER_I ? i_response_ready_i :
          (response_owner == OWNER_D ? d_response_ready_i : m_response_ready_i));
@@ -124,8 +132,10 @@ module rv32_l1_cache_arbiter #(
             read_count <= 0;
             read_owner[0] <= OWNER_I;
             read_owner[1] <= OWNER_I;
+            read_id <= 0;
             write_busy <= 1'b0;
             write_owner <= OWNER_D;
+            write_id <= 0;
         end else if (PARALLEL != 0) begin
             case ({request_fire && !memory_request_write_o,
                     response_fire && !memory_response_write_i})
@@ -138,9 +148,11 @@ module rv32_l1_cache_arbiter #(
             if (request_fire && memory_request_write_o) begin
                 write_busy <= 1'b1;
                 write_owner <= selected_owner;
+                write_id <= selected_owner == OWNER_D && d_request_id_i;
             end
             if (request_fire && !memory_request_write_o) begin
                 read_owner[read_tail] <= selected_owner;
+                read_id[read_tail] <= selected_owner == OWNER_D && d_request_id_i;
                 read_tail <= !read_tail;
             end
             if (response_fire && !memory_response_write_i)
@@ -152,14 +164,22 @@ module rv32_l1_cache_arbiter #(
         if (reset_i) begin
             busy <= 1'b0;
             owner <= OWNER_I;
+            owner_id <= 0;
             grant_locked <= 1'b0;
             grant_owner <= OWNER_I;
+        end else if (PARALLEL != 0) begin
+            if (request_fire) grant_locked <= 1'b0;
+            else if (memory_request_valid_o && !grant_locked) begin
+                grant_locked <= 1'b1;
+                grant_owner <= selected_owner;
+            end
         end else if (busy) begin
             if (memory_response_valid_i && memory_response_ready_o)
                 busy <= 1'b0;
         end else if (memory_request_valid_o && memory_request_ready_i) begin
             busy <= 1'b1;
             owner <= selected_owner;
+            owner_id <= selected_owner == OWNER_D && d_request_id_i;
             grant_locked <= 1'b0;
         end else if (memory_request_valid_o && !grant_locked) begin
             grant_locked <= 1'b1;
@@ -329,7 +349,8 @@ module rv32_cache_axi4_lite_adapter (
 endmodule
 
 module rv32_l1_cache_axi_bridge #(
-    parameter PARALLEL = 0
+    parameter PARALLEL = 0,
+    parameter D_TAGGED = 0
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -343,6 +364,7 @@ module rv32_l1_cache_axi_bridge #(
     input  wire d_request_valid_i,
     output wire d_request_ready_o,
     input  wire d_request_write_i,
+    input wire d_request_id_i,
     input  wire [31:0] d_request_address_i,
     input  wire [127:0] d_request_write_data_i,
     input  wire [15:0] d_request_byte_enable_i,
@@ -351,6 +373,7 @@ module rv32_l1_cache_axi_bridge #(
     output wire [127:0] d_response_read_data_o,
     output wire d_response_error_o,
     output wire d_response_write_o,
+    output wire d_response_id_o,
     input  wire m_request_valid_i,
     output wire m_request_ready_o,
     input  wire [31:0] m_request_address_i,
@@ -390,7 +413,7 @@ module rv32_l1_cache_axi_bridge #(
     wire memory_response_error;
     wire memory_response_write;
 
-    rv32_l1_cache_arbiter #(.PARALLEL(PARALLEL)) arbiter (
+    rv32_l1_cache_arbiter #(.PARALLEL(PARALLEL), .D_TAGGED(D_TAGGED)) arbiter (
         .clk_i(clk_i), .reset_i(reset_i),
         .i_request_valid_i(i_request_valid_i),
         .i_request_ready_o(i_request_ready_o),
@@ -402,6 +425,7 @@ module rv32_l1_cache_axi_bridge #(
         .d_request_valid_i(d_request_valid_i),
         .d_request_ready_o(d_request_ready_o),
         .d_request_write_i(d_request_write_i),
+        .d_request_id_i(d_request_id_i),
         .d_request_address_i(d_request_address_i),
         .d_request_write_data_i(d_request_write_data_i),
         .d_request_byte_enable_i(d_request_byte_enable_i),
@@ -410,6 +434,7 @@ module rv32_l1_cache_axi_bridge #(
         .d_response_read_data_o(d_response_read_data_o),
         .d_response_error_o(d_response_error_o),
         .d_response_write_o(d_response_write_o),
+        .d_response_id_o(d_response_id_o),
         .m_request_valid_i(m_request_valid_i),
         .m_request_ready_o(m_request_ready_o),
         .m_request_address_i(m_request_address_i),

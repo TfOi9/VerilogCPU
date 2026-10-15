@@ -82,6 +82,7 @@ module rv32_store_directory_tb;
         .CACHE_SIZE_BYTES(SETS*WAYS*16), .NUM_SETS(SETS), .NUM_WAYS(WAYS),
         .LATE_STORE_CONFIRM(LATE_CONFIRM), .STORE_DIRECTORY_ENTRIES(DIRECTORY), .NONBLOCKING(NONBLOCKING)
     ) cache (
+        .memory_request_id_o(), .memory_response_id_i(1'b0),
         .clk_i(clk), .reset_i(reset), .request_valid_i(req_valid),
         .request_ready_o(req_ready), .store_confirm_valid_o(confirm_valid), .store_confirm_id_o(confirm_id),
         .store_confirm_rob_tag_o(confirm_tag),
