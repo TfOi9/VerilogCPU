@@ -84,8 +84,6 @@ module rv32_memory_reservation_station #(
     integer i;
     integer j;
     integer best;
-    integer best_distance;
-    integer candidate_distance;
     integer occupancy_index;
     integer sequential_index;
     integer sequential_lane;
@@ -102,19 +100,6 @@ module rv32_memory_reservation_station #(
                 index_width_for_count = index_width_for_count + 1;
                 n = n >> 1;
             end
-        end
-    endfunction
-
-    function integer distance_from_head;
-        input [ROB_TAG_WIDTH-1:0] tag_value;
-        input [ROB_INDEX_WIDTH-1:0] head_value;
-        integer index_value;
-        begin
-            index_value = tag_value[ROB_INDEX_WIDTH-1:0];
-            if (index_value >= head_value)
-                distance_from_head = index_value - head_value;
-            else
-                distance_from_head = index_value + ROB_ENTRIES - head_value;
         end
     endfunction
 
@@ -136,8 +121,6 @@ module rv32_memory_reservation_station #(
 
     always @* begin
         best = -1;
-        best_distance = ROB_ENTRIES;
-        candidate_distance = ROB_ENTRIES;
         for (i = 0; i < RS_ENTRIES; i = i + 1) begin
             effective_base_ready[i] = base_ready[i];
             effective_base_value[i] = base_value[i];
@@ -200,71 +183,70 @@ module rv32_memory_reservation_station #(
             end
         end
 
-        address_valid_o = 1'b0;
-        address_o = 0;
-        address_rob_tag_o = 0;
-        address_lsq_tag_o = 0;
-        address_slot = 0;
-        data_valid_o = 1'b0;
-        data_o = 0;
-        data_rob_tag_o = 0;
-        data_lsq_tag_o = 0;
-        data_slot = 0;
-        if (!reset_i && !flush_i && !recover_i) begin
-            best = -1;
-            best_distance = ROB_ENTRIES;
-            if (address_locked && busy[address_locked_slot] &&
-                    !address_sent[address_locked_slot] &&
-                    effective_base_ready[address_locked_slot]) begin
-                best = address_locked_slot;
-            end else begin
-                for (i = 0; i < RS_ENTRIES; i = i + 1) begin
-                    if (busy[i] && !address_sent[i] && effective_base_ready[i]) begin
-                        candidate_distance = distance_from_head(
-                            rob_tag[i], rob_head_index_i);
-                        if (candidate_distance < best_distance) begin
-                            best = i;
-                            best_distance = candidate_distance;
-                        end
-                    end
-                end
+    end
+
+    localparam PAYLOAD_WIDTH = RS_INDEX_WIDTH + ROB_TAG_WIDTH + LSQ_TAG_WIDTH + 32;
+    wire select_enable = !reset_i && !flush_i && !recover_i;
+    wire [RS_ENTRIES-1:0] address_eligible;
+    wire [RS_ENTRIES-1:0] data_eligible;
+    wire [RS_ENTRIES-1:0] address_selected;
+    wire [RS_ENTRIES-1:0] data_selected;
+    wire [ROB_INDEX_WIDTH-1:0] age [0:RS_ENTRIES-1];
+    wire [PAYLOAD_WIDTH-1:0] address_tree [1:2*RS_ENTRIES-1];
+    wire [PAYLOAD_WIDTH-1:0] data_tree [1:2*RS_ENTRIES-1];
+    wire keep_address = address_locked && address_eligible[address_locked_slot];
+    wire keep_data = data_locked && data_eligible[data_locked_slot];
+    genvar entry_index, older_index, node_index;
+    generate
+        for (entry_index = 0; entry_index < RS_ENTRIES;
+                entry_index = entry_index + 1) begin: select_entry
+            localparam [RS_INDEX_WIDTH-1:0] SLOT = entry_index;
+            wire [RS_ENTRIES-1:0] older_address;
+            wire [RS_ENTRIES-1:0] older_data;
+            wire [31:0] entry_address;
+            assign age[entry_index] =
+                rob_tag[entry_index][ROB_INDEX_WIDTH-1:0] - rob_head_index_i;
+            assign address_eligible[entry_index] = busy[entry_index] &&
+                !address_sent[entry_index] && effective_base_ready[entry_index];
+            assign data_eligible[entry_index] = IS_STORE != 0 && busy[entry_index] &&
+                !data_sent[entry_index] && effective_data_ready[entry_index];
+            for (older_index = 0; older_index < RS_ENTRIES;
+                    older_index = older_index + 1) begin: compare_age
+                wire precedes;
+                assign precedes = age[older_index] < age[entry_index] ||
+                    (age[older_index] == age[entry_index] && older_index < entry_index);
+                assign older_address[older_index] =
+                    address_eligible[older_index] && precedes;
+                assign older_data[older_index] = data_eligible[older_index] && precedes;
             end
-            if (best >= 0) begin
-                address_valid_o = 1'b1;
-                address_slot = best;
-                address_o = effective_base_value[best] + immediate[best];
-                address_rob_tag_o = rob_tag[best];
-                address_lsq_tag_o = lsq_tag[best];
-            end
-            if (IS_STORE != 0) begin
-                best = -1;
-                best_distance = ROB_ENTRIES;
-                if (data_locked && busy[data_locked_slot] &&
-                        !data_sent[data_locked_slot] &&
-                        effective_data_ready[data_locked_slot]) begin
-                    best = data_locked_slot;
-                end else begin
-                    for (i = 0; i < RS_ENTRIES; i = i + 1) begin
-                        if (busy[i] && !data_sent[i] &&
-                                effective_data_ready[i]) begin
-                            candidate_distance = distance_from_head(
-                                rob_tag[i], rob_head_index_i);
-                            if (candidate_distance < best_distance) begin
-                                best = i;
-                                best_distance = candidate_distance;
-                            end
-                        end
-                    end
-                end
-                if (best >= 0) begin
-                    data_valid_o = 1'b1;
-                    data_slot = best;
-                    data_o = effective_data_value[best];
-                    data_rob_tag_o = rob_tag[best];
-                    data_lsq_tag_o = lsq_tag[best];
-                end
-            end
+            assign address_selected[entry_index] = select_enable &&
+                address_eligible[entry_index] && (keep_address ?
+                    address_locked_slot == SLOT : !(|older_address));
+            assign data_selected[entry_index] = select_enable &&
+                data_eligible[entry_index] && (keep_data ?
+                    data_locked_slot == SLOT : !(|older_data));
+            // Compute addresses in parallel with wakeup and age selection.
+            assign entry_address = effective_base_value[entry_index] + immediate[entry_index];
+            assign address_tree[RS_ENTRIES+entry_index] =
+                {PAYLOAD_WIDTH{address_selected[entry_index]}} &
+                {SLOT, rob_tag[entry_index], lsq_tag[entry_index], entry_address};
+            assign data_tree[RS_ENTRIES+entry_index] =
+                {PAYLOAD_WIDTH{data_selected[entry_index]}} &
+                {SLOT, rob_tag[entry_index], lsq_tag[entry_index], effective_data_value[entry_index]};
         end
+        for (node_index = 1; node_index < RS_ENTRIES;
+                node_index = node_index + 1) begin: select_tree
+            assign address_tree[node_index] = address_tree[2*node_index] |
+                address_tree[2*node_index+1];
+            assign data_tree[node_index] = data_tree[2*node_index] | data_tree[2*node_index+1];
+        end
+    endgenerate
+
+    always @* begin
+        address_valid_o = |address_selected;
+        {address_slot, address_rob_tag_o, address_lsq_tag_o, address_o} = address_tree[1];
+        data_valid_o = |data_selected;
+        {data_slot, data_rob_tag_o, data_lsq_tag_o, data_o} = data_tree[1];
     end
 
     always @* begin
