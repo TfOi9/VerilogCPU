@@ -5,6 +5,7 @@ module rv32_cpu_core #(
     parameter FE_WIDTH = 1,
     parameter BE_WIDTH = 1,
     parameter RECOVERY_WIDTH = 4,
+    parameter LATE_STORE_CONFIRM = 0,
     parameter PHYS_REGS = 64,
     parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
@@ -51,6 +52,9 @@ module rv32_cpu_core #(
     output wire [ROB_TAG_WIDTH-1:0] dcache_request_rob_tag_o,
     input wire [ROB_TAG_WIDTH-1:0] dcache_response_rob_tag_i,
     input  wire dcache_request_irrevocable_i,
+    input wire dcache_store_confirm_valid_i,
+    input wire [1:0] dcache_store_confirm_id_i,
+    input wire [ROB_TAG_WIDTH-1:0] dcache_store_confirm_rob_tag_i,
     output wire dcache_request_write_o,
     output wire [31:0] dcache_request_address_o,
     output wire [31:0] dcache_request_write_data_o,
@@ -778,7 +782,7 @@ module rv32_cpu_core #(
 
     rv32_load_store_queue #(
         .LSQ_ENTRIES(LSQ_ENTRIES), .LSQ_INDEX_WIDTH(LSQ_INDEX_WIDTH),
-        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .TAGGED_RESPONSES(OUT_OF_ORDER_MEMORY), .ECHO_ROB_TAG(ECHO_MEMORY_ROB_TAG), .FAST_RETURN(FAST_MEMORY_RETURNS), .POSTED_STORES(POSTED_STORES), .LOAD_FALLTHROUGH(RESULT_FALLTHROUGH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
+        .LSQ_TAG_WIDTH(LSQ_TAG_WIDTH), .TAGGED_RESPONSES(OUT_OF_ORDER_MEMORY), .ECHO_ROB_TAG(ECHO_MEMORY_ROB_TAG), .FAST_RETURN(FAST_MEMORY_RETURNS), .POSTED_STORES(POSTED_STORES), .LATE_STORE_CONFIRM(LATE_STORE_CONFIRM && OUT_OF_ORDER_MEMORY && ECHO_MEMORY_ROB_TAG), .LOAD_FALLTHROUGH(RESULT_FALLTHROUGH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH)
     ) lsq (
@@ -827,6 +831,9 @@ module rv32_cpu_core #(
         .cache_request_rob_tag_o(dcache_request_rob_tag_o),
         .cache_response_rob_tag_i(dcache_response_rob_tag_i),
         .cache_request_irrevocable_i(dcache_request_irrevocable_i),
+        .cache_store_confirm_valid_i(dcache_store_confirm_valid_i),
+        .cache_store_confirm_id_i(dcache_store_confirm_id_i),
+        .cache_store_confirm_rob_tag_i(dcache_store_confirm_rob_tag_i),
         .cache_request_write_o(dcache_request_write_o),
         .cache_request_address_o(dcache_request_address_o),
         .cache_request_write_data_o(dcache_request_write_data_o),

@@ -114,6 +114,8 @@ module rv32_lsq_rob_integration_tb;
         .commit_fire_i(commit_fire), .commit_ready_o(commit_ready),
         .cache_request_valid_o(cache_req_valid),
         .cache_request_ready_i(cache_req_ready),
+        .cache_store_confirm_valid_i(1'b0), .cache_store_confirm_id_i(2'd0),
+        .cache_store_confirm_rob_tag_i(7'd0),
         .cache_request_irrevocable_i(1'b0),
         .cache_request_write_o(cache_req_write),
         .cache_request_address_o(cache_req_address),

@@ -17,6 +17,7 @@ module rv32_load_store_queue #(
     parameter ECHO_ROB_TAG = 0,
     parameter FAST_RETURN = ECHO_ROB_TAG && TAGGED_RESPONSES,
     parameter POSTED_STORES = 0,
+    parameter LATE_STORE_CONFIRM = 0,
     parameter LOAD_FALLTHROUGH = 0
 ) (
     input  wire clk_i,
@@ -73,6 +74,9 @@ module rv32_load_store_queue #(
     output wire [ROB_TAG_WIDTH-1:0] cache_request_rob_tag_o,
     input wire [ROB_TAG_WIDTH-1:0] cache_response_rob_tag_i,
     input  wire cache_request_irrevocable_i,
+    input wire cache_store_confirm_valid_i,
+    input wire [((MAX_INFLIGHT > 1) ? index_width_for_count(MAX_INFLIGHT) : 1)-1:0] cache_store_confirm_id_i,
+    input wire [ROB_TAG_WIDTH-1:0] cache_store_confirm_rob_tag_i,
     output wire cache_request_write_o,
     output wire [31:0] cache_request_address_o,
     output wire [31:0] cache_request_write_data_o,
@@ -149,6 +153,19 @@ module rv32_load_store_queue #(
     reg [ROB_TAG_WIDTH-1:0] pending_rob_tag [0:MAX_INFLIGHT-1];
     reg [LSQ_TAG_WIDTH-1:0] pending_lsq_tag [0:MAX_INFLIGHT-1];
     reg [31:0] pending_address [0:MAX_INFLIGHT-1];
+    wire [INFLIGHT_INDEX_WIDTH-1:0] confirm_slot = cache_store_confirm_id_i;
+    wire [LSQ_TAG_WIDTH-1:0] confirm_lsq_tag = pending_lsq_tag[confirm_slot];
+    wire [LSQ_INDEX_WIDTH-1:0] confirm_lsq_slot = confirm_lsq_tag[LSQ_INDEX_WIDTH-1:0];
+    wire confirm_match = POSTED_STORES != 0 && LATE_STORE_CONFIRM != 0 &&
+        !reset_i && !flush_i && !recover_i &&
+        cache_store_confirm_valid_i && pending_valid[confirm_slot] &&
+        pending_write[confirm_slot] && !pending_mmio[confirm_slot] &&
+        !pending_discard[confirm_slot] && !pending_posted[confirm_slot] &&
+        pending_rob_tag[confirm_slot] == cache_store_confirm_rob_tag_i;
+    wire confirm_live = confirm_match && busy[confirm_lsq_slot] &&
+        is_store[confirm_lsq_slot] &&
+        {generation[confirm_lsq_slot], confirm_lsq_slot} == confirm_lsq_tag &&
+        rob_tag[confirm_lsq_slot] == cache_store_confirm_rob_tag_i;
     wire inflight = inflight_count != 0;
     wire inflight_write = pending_write[response_slot];
     reg pending_mmio_any;
@@ -606,6 +623,10 @@ module rv32_load_store_queue #(
                         commit_ready_o[i] = i == 0 &&
                             (fault_valid[commit_slot] ||
                                 write_done[commit_slot] ||
+                                (confirm_match && confirm_lsq_tag == commit_lsq_tag_i[
+                                    i*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] &&
+                                    cache_store_confirm_rob_tag_i == commit_rob_tag_i[
+                                    i*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]) ||
                                 (POSTED_STORES != 0 && request_fire &&
                                     request_write && !request_mmio &&
                                     cache_request_irrevocable_i &&
@@ -705,6 +726,8 @@ module rv32_load_store_queue #(
                 pending_address[pending_index] <= 0;
             end
         end else begin
+            if (confirm_match)
+                pending_posted[confirm_slot] <= 1'b1;
             if (response_fire) pending_valid[response_slot] <= 1'b0;
             if (request_fire) pending_valid[accepted_slot] <= 1'b1;
             case ({request_fire, response_fire})
@@ -817,6 +840,8 @@ module rv32_load_store_queue #(
                     end
                 end
             end else begin
+                if (confirm_live)
+                    write_done[confirm_lsq_slot] <= 1'b1;
                 if (source_valid && completion_ready_i) begin
                     source_valid <= 1'b0;
                     if (busy[source_lsq_tag[LSQ_INDEX_WIDTH-1:0]] &&
@@ -1010,6 +1035,10 @@ module rv32_load_store_queue #(
 
 `ifndef SYNTHESIS
     always @(posedge clk_i) begin
+        if (confirm_match && !confirm_live) begin
+            $display("ERROR rv32_load_store_queue live confirmation lost its LSQ entry");
+            $stop;
+        end
         if (!reset_i && FAST_RETURN != 0 && cache_response_valid_i &&
                 pending_valid[response_slot] && !inflight_discard &&
                 !pending_posted[response_slot] && !inflight_identity_match) begin

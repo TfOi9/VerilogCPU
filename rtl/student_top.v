@@ -7,7 +7,8 @@ module student_top #(
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
     parameter STORE_HINTS = 16,
-    parameter STORE_DIRECTORY_ENTRIES = 256,
+    parameter STORE_DIRECTORY_ENTRIES = 128,
+    parameter LATE_STORE_CONFIRM = 1,
     parameter NONBLOCKING_DCACHE = 1,
     parameter FAST_MEMORY_RETURNS = NONBLOCKING_DCACHE,
     parameter PARALLEL_BRIDGE = NONBLOCKING_DCACHE,
@@ -72,6 +73,9 @@ module student_top #(
     wire [ROB_TAG_WIDTH-1:0] core_d_request_rob_tag;
     wire [ROB_TAG_WIDTH-1:0] core_d_response_rob_tag;
     wire [ROB_TAG_WIDTH-1:0] dcache_response_rob_tag;
+    wire dcache_store_confirm_valid;
+    wire [1:0] dcache_store_confirm_id;
+    wire [ROB_TAG_WIDTH-1:0] dcache_store_confirm_rob_tag;
     reg [ROB_TAG_WIDTH-1:0] mmio_response_rob_tag;
     wire [1:0] core_d_request_id;
     wire [1:0] core_d_response_id;
@@ -122,7 +126,6 @@ module student_top #(
     wire mmio_response_valid;
     wire mmio_response_ready;
     wire mmio_response_error;
-    reg lsu_mmio_inflight;
 
     assign dcache_request_valid = core_d_request_valid &&
         !core_d_request_mmio;
@@ -130,30 +133,12 @@ module student_top #(
         core_d_request_mmio;
     assign core_d_request_ready = core_d_request_mmio ?
         mmio_request_ready : dcache_request_ready;
-    assign core_d_response_valid = lsu_mmio_inflight ?
-        mmio_response_valid : dcache_response_valid;
-    assign core_d_response_read_data = lsu_mmio_inflight ?
-        32'd0 : dcache_response_read_data;
-    assign core_d_response_error = lsu_mmio_inflight ?
-        mmio_response_error : dcache_response_error;
-    assign mmio_response_ready = lsu_mmio_inflight &&
-        core_d_response_ready;
-    assign dcache_response_ready = !lsu_mmio_inflight &&
-        core_d_response_ready;
-
-    always @(posedge clock) begin
-        if (reset) begin
-            lsu_mmio_inflight <= 1'b0;
-        end else begin
-            if (core_d_request_valid && core_d_request_ready)
-                lsu_mmio_inflight <= core_d_request_mmio;
-            if (core_d_response_valid && core_d_response_ready)
-                lsu_mmio_inflight <= 1'b0;
-        end
-    end
-
-    assign core_d_response_rob_tag = lsu_mmio_inflight ? mmio_response_rob_tag : dcache_response_rob_tag;
-    assign core_d_response_id = lsu_mmio_inflight ? mmio_response_id : dcache_response_id;
+    assign core_d_response_valid = dcache_response_valid;
+    assign core_d_response_read_data = dcache_response_read_data;
+    assign core_d_response_error = dcache_response_error;
+    assign dcache_response_ready = core_d_response_ready;
+    assign core_d_response_rob_tag = dcache_response_rob_tag;
+    assign core_d_response_id = dcache_response_id;
     always @(posedge clock) begin
         if (reset) begin mmio_response_id <= 0; mmio_response_rob_tag <= 0; end
         else if (mmio_request_valid && mmio_request_ready) begin
@@ -163,6 +148,7 @@ module student_top #(
     end
 
     rv32_cpu_core #(
+        .LATE_STORE_CONFIRM(LATE_STORE_CONFIRM),
         .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH), .OUT_OF_ORDER_MEMORY(NONBLOCKING_DCACHE), .ECHO_MEMORY_ROB_TAG(NONBLOCKING_DCACHE), .FAST_MEMORY_RETURNS(FAST_MEMORY_RETURNS), .POSTED_STORES(POSTED_STORES),
         .RESULT_FALLTHROUGH(RESULT_FALLTHROUGH),
         .PHYS_REGS(PHYS_REGS),
@@ -186,6 +172,9 @@ module student_top #(
         .dcache_request_rob_tag_o(core_d_request_rob_tag),
         .dcache_response_rob_tag_i(core_d_response_rob_tag),
         .dcache_request_irrevocable_i(!core_d_request_mmio && dcache_request_irrevocable),
+        .dcache_store_confirm_valid_i(dcache_store_confirm_valid),
+        .dcache_store_confirm_id_i(dcache_store_confirm_id),
+        .dcache_store_confirm_rob_tag_i(dcache_store_confirm_rob_tag),
         .dcache_request_write_o(core_d_request_write),
         .dcache_request_address_o(core_d_request_address),
         .dcache_request_write_data_o(core_d_request_write_data),
@@ -221,6 +210,8 @@ module student_top #(
     );
 
     rv32_l1_data_cache #(
+        .LATE_STORE_CONFIRM((LATE_STORE_CONFIRM && POSTED_STORES && NONBLOCKING_DCACHE) ? 1 : 0),
+        .AUX_RETURNS(1),
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH),
         .CACHE_SIZE_BYTES(DCACHE_SIZE_BYTES),
         .NUM_SETS(DCACHE_NUM_SETS), .NUM_WAYS(DCACHE_NUM_WAYS),
@@ -231,6 +222,14 @@ module student_top #(
         .request_valid_i(dcache_request_valid),
         .request_ready_o(dcache_request_ready),
         .request_irrevocable_o(dcache_request_irrevocable),
+        .store_confirm_valid_o(dcache_store_confirm_valid),
+        .store_confirm_id_o(dcache_store_confirm_id),
+        .store_confirm_rob_tag_o(dcache_store_confirm_rob_tag),
+        .aux_response_valid_i(mmio_response_valid),
+        .aux_response_ready_o(mmio_response_ready),
+        .aux_response_id_i(mmio_response_id),
+        .aux_response_rob_tag_i(mmio_response_rob_tag),
+        .aux_response_error_i(mmio_response_error),
         .request_write_i(core_d_request_write),
         .request_id_i(core_d_request_id), .response_id_o(dcache_response_id),
         .request_rob_tag_i(core_d_request_rob_tag), .response_rob_tag_o(dcache_response_rob_tag),

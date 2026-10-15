@@ -104,6 +104,8 @@ module rv32_cpu_core_posted_tb;
         .icache_response_pc_i(i_response_pc),
         .icache_response_line_i(i_response_line), .icache_response_error_i(1'b0),
         .dcache_request_valid_o(d_valid), .dcache_request_ready_i(d_ready),
+        .dcache_store_confirm_valid_i(1'b0), .dcache_store_confirm_id_i(2'd0),
+        .dcache_store_confirm_rob_tag_i({ROB_TAG_WIDTH{1'b0}}),
         .dcache_request_irrevocable_i(d_valid && d_ready && d_write && !d_mmio),
         .dcache_request_write_o(d_write), .dcache_request_address_o(d_address),
         .dcache_request_write_data_o(d_write_data),

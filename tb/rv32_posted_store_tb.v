@@ -3,6 +3,14 @@
 
 module rv32_posted_store_tb;
     parameter DIRECTORY = 0;
+    parameter LATE_CONFIRM = 0;
+    wire confirm_valid;
+    wire [1:0] confirm_id;
+    wire [6:0] confirm_rob;
+    wire [1:0] request_id;
+    wire [6:0] request_rob;
+    wire [1:0] response_id;
+    wire [6:0] response_rob;
     wire cache_irrevocable;
     reg recover_i;
     reg flush_i;
@@ -74,9 +82,10 @@ module rv32_posted_store_tb;
     reg [4:0] store_tag;
     reg [4:0] load_tag;
 
-    rv32_load_store_queue #(.POSTED_STORES(1), .LOAD_FALLTHROUGH(1)) lsq (
-        .cache_request_rob_tag_o(), .cache_response_rob_tag_i(0),
-        .cache_request_id_o(), .cache_response_id_i(2'd0),
+    rv32_load_store_queue #(.POSTED_STORES(1), .LOAD_FALLTHROUGH(1),
+        .LATE_STORE_CONFIRM(LATE_CONFIRM), .TAGGED_RESPONSES(1), .ECHO_ROB_TAG(1)) lsq (
+        .cache_request_rob_tag_o(request_rob), .cache_response_rob_tag_i(response_rob),
+        .cache_request_id_o(request_id), .cache_response_id_i(response_id),
         .clk_i(clk_i), .reset_i(reset_i), .flush_i(flush_i),
         .recover_i(recover_i),
         .alloc_valid_i(alloc_valid_i), .alloc_fire_i(alloc_fire_i),
@@ -122,6 +131,8 @@ module rv32_posted_store_tb;
         .commit_ready_o(commit_ready_o),
         .cache_request_valid_o(cache_request_valid),
         .cache_request_ready_i(cache_request_ready),
+        .cache_store_confirm_valid_i(confirm_valid), .cache_store_confirm_id_i(confirm_id),
+        .cache_store_confirm_rob_tag_i(confirm_rob),
         .cache_request_irrevocable_i(cache_irrevocable),
         .cache_request_write_o(cache_request_write),
         .cache_request_address_o(cache_request_address),
@@ -134,13 +145,19 @@ module rv32_posted_store_tb;
         .cache_response_error_i(cache_response_error)
     );
 
-    rv32_l1_data_cache #(.STORE_DIRECTORY_ENTRIES(DIRECTORY)) cache (
-        .request_rob_tag_i(0), .response_rob_tag_o(),
-        .request_id_i(2'd0), .response_id_o(),
+    rv32_l1_data_cache #(.STORE_DIRECTORY_ENTRIES(DIRECTORY),
+        .LATE_STORE_CONFIRM(LATE_CONFIRM)) cache (
+        .request_rob_tag_i(request_rob), .response_rob_tag_o(response_rob),
+        .request_id_i(request_id), .response_id_o(response_id),
         .memory_response_write_i(1'b0),
         .clk_i(clk_i), .reset_i(reset_i),
         .request_valid_i(cache_request_valid),
         .request_ready_o(cache_request_ready),
+        .store_confirm_valid_o(confirm_valid), .store_confirm_id_o(confirm_id),
+        .store_confirm_rob_tag_o(confirm_rob),
+        .aux_response_valid_i(1'b0), .aux_response_ready_o(),
+        .aux_response_id_i(2'd0), .aux_response_rob_tag_i(7'd0),
+        .aux_response_error_i(1'b0),
         .request_irrevocable_o(cache_irrevocable),
         .request_write_i(cache_request_write),
         .request_address_i(cache_request_address),
@@ -336,7 +353,9 @@ module rv32_posted_store_tb;
         if (occupancy_o != 0 || memory.byte_memory[32'h201] != 0)
             $fatal(1, "ERROR load or write-back visibility");
 
-        // A resident RAM store retires at cache acceptance, before its response.
+        if (LATE_CONFIRM != 0) read_word(1, 32'h210, 32'd0);
+
+        // A resident RAM store retires before its response.
         allocate_store(2, 32'h202, 32'hbb, `RV32_MEMORY_BYTE, store_tag);
         allocate_store(3, 32'h208, 32'hdeadbeef, `RV32_MEMORY_WORD, younger_tag);
         commit_valid_i = 1; commit_lsq_valid_i = 1;
@@ -347,8 +366,9 @@ module rv32_posted_store_tb;
         while (!commit_ready_o && wait_count < 100) begin
             tick(); wait_count = wait_count + 1;
         end
-        if (!commit_ready_o || !cache_request_valid || !cache_request_ready ||
-                !cache_irrevocable || cache_response_valid)
+        if (!commit_ready_o || cache_response_valid ||
+                (LATE_CONFIRM != 0 ? !confirm_valid :
+                    (!cache_request_valid || !cache_request_ready || !cache_irrevocable)))
             $fatal(1, "ERROR resident store did not retire before response");
         commit_fire_i = 1; tick();
         commit_fire_i = 0; commit_valid_i = 0; commit_lsq_valid_i = 0;
@@ -362,6 +382,7 @@ module rv32_posted_store_tb;
         read_word(5, 32'h208, 32'd0);
 
         // A full LSQ flush also preserves an accepted cache write.
+        if (LATE_CONFIRM != 0) read_word(5, 32'h210, 32'd0);
         allocate_store(6, 32'h200, 32'h11223344, `RV32_MEMORY_WORD, store_tag);
         commit_valid_i = 1; commit_lsq_valid_i = 1;
         commit_op_i = `RV32_OP_SW; commit_rob_tag_i = 6;
@@ -371,7 +392,7 @@ module rv32_posted_store_tb;
         while (!commit_ready_o && wait_count < 100) begin
             tick(); wait_count = wait_count + 1;
         end
-        if (!cache_irrevocable || !commit_ready_o)
+        if (!(LATE_CONFIRM != 0 ? confirm_valid : cache_irrevocable) || !commit_ready_o)
             $fatal(1, "ERROR second posted store not accepted");
         commit_fire_i = 1; tick(); commit_fire_i = 0;
         commit_valid_i = 0; commit_lsq_valid_i = 0; flush_i = 1;
@@ -379,7 +400,7 @@ module rv32_posted_store_tb;
         read_word(7, 32'h200, 32'h11223344);
         if (cache_write_count != 3)
             $fatal(1, "ERROR posted write duplication");
-        $display("PASS rv32_posted_store_tb rollback flush partial-byte reuse");
+        $display("PASS rv32_posted_store_tb rollback flush partial-byte reuse late=%0d", LATE_CONFIRM);
         $finish;
     end
 

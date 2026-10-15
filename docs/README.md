@@ -34,6 +34,8 @@ LOAD/STORE 保留站设计见 [memory_rs.md](memory_rs.md)。
 
 流水线 L1 数据缓存设计见 [dcache.md](dcache.md)。
 
+Store 后续命中确认、事务所有权与 RAM/MMIO 共用返回寄存器见 [late-store-confirmation.md](late-store-confirmation.md)，小目录的独立 PPA 与最终验收见 [store-confirm-optimization-20261015.md](store-confirm-optimization-20261015.md)。
+
 I/D Cache 行接口仲裁与 AXI4-Lite 转换设计见 [cache_axi_bridge.md](cache_axi_bridge.md)。
 
 参数化多发射乱序核心与 `student_top` 接线见 [cpu_core.md](cpu_core.md)。

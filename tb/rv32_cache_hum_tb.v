@@ -1,6 +1,12 @@
 `timescale 1ns/1ps
 module rv32_cache_hum_tb;
     parameter WAYS = 2;
+    parameter LATE_CONFIRM = 0;
+    wire confirm_valid;
+    wire [1:0] confirm_id;
+    wire [6:0] confirm_tag;
+    reg expected_write [0:3];
+    integer confirmations = 0;
     parameter SEED = 1;
     parameter DIRECTORY = 0;
     reg clk = 0;
@@ -75,10 +81,15 @@ module rv32_cache_hum_tb;
 
     always #5 clk = ~clk;
     rv32_l1_data_cache #(.CACHE_SIZE_BYTES(64*WAYS), .NUM_SETS(4),
-        .NUM_WAYS(WAYS), .STORE_HINTS(16), .STORE_DIRECTORY_ENTRIES(DIRECTORY), .NONBLOCKING(1)) cache (
+        .NUM_WAYS(WAYS), .STORE_HINTS(16), .LATE_STORE_CONFIRM(LATE_CONFIRM), .STORE_DIRECTORY_ENTRIES(DIRECTORY), .NONBLOCKING(1)) cache (
         .request_rob_tag_i(req_rob_tag), .response_rob_tag_o(resp_rob_tag),
         .clk_i(clk), .reset_i(reset), .request_valid_i(req_valid),
-        .request_ready_o(req_ready), .request_irrevocable_o(irrevocable),
+        .request_ready_o(req_ready), .store_confirm_valid_o(confirm_valid), .store_confirm_id_o(confirm_id),
+        .store_confirm_rob_tag_o(confirm_tag),
+        .aux_response_valid_i(1'b0), .aux_response_ready_o(),
+        .aux_response_id_i(2'd0), .aux_response_rob_tag_i(7'd0),
+        .aux_response_error_i(1'b0),
+        .request_irrevocable_o(irrevocable),
         .request_write_i(req_write), .request_id_i(req_id),
         .request_address_i(req_address), .request_write_data_i(req_data),
         .request_byte_enable_i(req_mask), .response_valid_o(resp_valid),
@@ -115,6 +126,15 @@ module rv32_cache_hum_tb;
             if (read_pending && write_pending) overlaps = overlaps + 1;
             if (req_valid && !req_ready && cache.miss_active &&
                     req_address[5:4] == cache.miss_index) locked = locked + 1;
+            if (confirm_valid) begin
+                if (!pending[confirm_id] || !expected_write[confirm_id] ||
+                        expected_error[confirm_id] || expected_posted[confirm_id])
+                    fail("invalid or duplicate Store confirmation");
+                if (confirm_tag !== expected_rob_tag[confirm_id])
+                    fail("Store confirmation identity mismatch");
+                expected_posted[confirm_id] = 1;
+                confirmations = confirmations + 1;
+            end
             if (resp_valid && resp_ready) begin
                 if (!pending[resp_id]) fail("duplicate or unknown ID");
                 if (resp_rob_tag !== expected_rob_tag[resp_id]) fail("ROB metadata changed ownership");
@@ -131,6 +151,7 @@ module rv32_cache_hum_tb;
             if (req_valid && req_ready) begin
                 if (pending[req_id]) fail("ID reused while pending");
                 pending[req_id] = 1;
+                expected_write[req_id] = req_write;
                 expected_rob_tag[req_id] = req_rob_tag;
                 expected_error[req_id] = issue_error;
                 expected_strict[req_id] = strict_mode;
@@ -239,7 +260,7 @@ module rv32_cache_hum_tb;
         end
         drain;
         if (hum_hits < 2 || overlaps < 4 || locked == 0) fail("missing concurrency coverage");
-        $display("PASS Cache HUM ways=%0d seed=%0d checks=%0d hit_under_miss=%0d overlap=%0d locked=%0d",WAYS,SEED,checks,hum_hits,overlaps,locked);
+        $display("PASS Cache HUM ways=%0d seed=%0d checks=%0d confirmations=%0d hit_under_miss=%0d overlap=%0d locked=%0d",WAYS,SEED,checks,confirmations,hum_hits,overlaps,locked);
         $finish;
     end
     initial begin #10000000; fail("wall simulation timeout"); end

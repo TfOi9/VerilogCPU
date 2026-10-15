@@ -65,6 +65,8 @@ module rv32_lsq_posted_wrap_tb;
         .commit_rob_tag_i(7'd1),.commit_lsq_tag_i(tags[0]),.commit_exception_valid_i(1'b0),
         .commit_fire_i(commit_valid && commit_ready),.commit_ready_o(commit_ready),.cache_request_valid_o(request_valid),
         .cache_request_ready_i(cache_ready),.cache_request_id_o(request_id),.cache_response_id_i(response_id),
+        .cache_store_confirm_valid_i(1'b0), .cache_store_confirm_id_i(2'd0),
+        .cache_store_confirm_rob_tag_i(7'd0),
         .cache_request_irrevocable_i(1'b1),.cache_request_write_o(),.cache_request_address_o(request_address),
         .cache_request_write_data_o(),.cache_request_byte_enable_o(),.cache_request_mmio_o(),
         .cache_response_valid_i(response_valid),.cache_response_ready_o(response_ready),

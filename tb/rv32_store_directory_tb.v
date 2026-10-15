@@ -2,6 +2,12 @@
 
 module rv32_store_directory_tb;
     parameter WAYS = 2;
+    parameter LATE_CONFIRM = 0;
+    wire confirm_valid;
+    wire [1:0] confirm_id;
+    wire [6:0] confirm_tag;
+    reg expected_write [0:3];
+    integer confirmations = 0;
     parameter DIRECTORY = 2;
     parameter NONBLOCKING = 1;
     parameter SETS = 8;
@@ -74,10 +80,15 @@ module rv32_store_directory_tb;
     always #5 clk = ~clk;
     rv32_l1_data_cache #(
         .CACHE_SIZE_BYTES(SETS*WAYS*16), .NUM_SETS(SETS), .NUM_WAYS(WAYS),
-        .STORE_DIRECTORY_ENTRIES(DIRECTORY), .NONBLOCKING(NONBLOCKING)
+        .LATE_STORE_CONFIRM(LATE_CONFIRM), .STORE_DIRECTORY_ENTRIES(DIRECTORY), .NONBLOCKING(NONBLOCKING)
     ) cache (
         .clk_i(clk), .reset_i(reset), .request_valid_i(req_valid),
-        .request_ready_o(req_ready), .request_irrevocable_o(irrevocable),
+        .request_ready_o(req_ready), .store_confirm_valid_o(confirm_valid), .store_confirm_id_o(confirm_id),
+        .store_confirm_rob_tag_o(confirm_tag),
+        .aux_response_valid_i(1'b0), .aux_response_ready_o(),
+        .aux_response_id_i(2'd0), .aux_response_rob_tag_i(7'd0),
+        .aux_response_error_i(1'b0),
+        .request_irrevocable_o(irrevocable),
         .request_write_i(req_write), .request_rob_tag_i({5'd0, req_id}),
         .request_id_i(req_id), .request_address_i(req_address),
         .request_write_data_i(req_data), .request_byte_enable_i(req_mask),
@@ -128,6 +139,15 @@ module rv32_store_directory_tb;
                 fail("response changed under backpressure");
             held = resp_valid && !resp_ready;
             held_data = resp_data; held_error = resp_error; held_id = resp_id;
+            if (confirm_valid) begin
+                if (!pending[confirm_id] || !expected_write[confirm_id] ||
+                        expected_error[confirm_id] || expected_posted[confirm_id])
+                    fail("invalid or duplicate Store confirmation");
+                if (confirm_tag !== {5'd0, confirm_id})
+                    fail("Store confirmation identity mismatch");
+                expected_posted[confirm_id] = 1;
+                confirmations = confirmations + 1;
+            end
             if (resp_valid && resp_ready) begin
                 if (!pending[resp_id] || resp_tag !== {5'd0, resp_id})
                     fail("response identity mismatch");
@@ -142,6 +162,7 @@ module rv32_store_directory_tb;
             if (req_valid && req_ready) begin
                 if (pending[req_id]) fail("live ID reused");
                 pending[req_id] = 1;
+                expected_write[req_id] = req_write;
                 expected_posted[req_id] = irrevocable;
                 grants = grants + irrevocable;
                 if (!req_write && irrevocable) fail("load received a Store grant");
@@ -279,8 +300,8 @@ module rv32_store_directory_tb;
         reset = 1; repeat (3) @(negedge clk); reset = 0;
         send(1, 32'h01200020, 32'h77779999, 15, 0, 0); drain;
         if (grants < 2*WAYS+1) fail("missing Store grant coverage");
-        $display("PASS Store directory ways=%0d entries=%0d nb=%0d checks=%0d grants=%0d",
-            WAYS, DIRECTORY, NONBLOCKING, checks, grants);
+        $display("PASS Store directory ways=%0d entries=%0d nb=%0d checks=%0d grants=%0d confirmations=%0d",
+            WAYS, DIRECTORY, NONBLOCKING, checks, grants, confirmations);
         $finish;
     end
 endmodule

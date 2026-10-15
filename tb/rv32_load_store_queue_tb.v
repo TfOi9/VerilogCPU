@@ -149,6 +149,8 @@ module rv32_load_store_queue_tb;
         .commit_ready_o(commit_ready_o),
         .cache_request_valid_o(cache_request_valid_o),
         .cache_request_ready_i(cache_request_ready_i),
+        .cache_store_confirm_valid_i(1'b0), .cache_store_confirm_id_i(2'd0),
+        .cache_store_confirm_rob_tag_i(7'd0),
         .cache_request_irrevocable_i(1'b0),
         .cache_request_write_o(cache_request_write_o),
         .cache_request_address_o(cache_request_address_o),
