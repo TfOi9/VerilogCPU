@@ -1,0 +1,166 @@
+{
+  "completed": true,
+  "passed": true,
+  "baseline_revision": "3f0636c",
+  "configuration": {
+    "FE_WIDTH": 2,
+    "BE_WIDTH": 2,
+    "PHYS_REGS": 64,
+    "ROB_ENTRIES": 32,
+    "ICACHE_BYTES": 1024,
+    "ICACHE_WAYS": 1,
+    "DCACHE_BYTES": 16384,
+    "DCACHE_WAYS": 2,
+    "STORE_DIRECTORY_ENTRIES": 256,
+    "RECOVERY_WIDTH": 4,
+    "latency": 10
+  },
+  "baseline": {
+    "area_um2": 27275.777601002366,
+    "fmax_mhz": 309.17874396135267,
+    "minimum_period_ns": 3.234375,
+    "ipc_geomean": 0.7210173680897123
+  },
+  "selected": {
+    "area_um2": 33593.58320099187,
+    "fmax_mhz": 318.6060983198507,
+    "minimum_period_ns": 3.138671875,
+    "ipc_geomean": 0.7311359488859138
+  },
+  "be4_rejected": {
+    "area_um2": 30180.332300994753,
+    "fmax_mhz": 181.2068660414086,
+    "minimum_period_ns": 5.5185546875,
+    "ipc_geomean": 0.7536955976948234
+  },
+  "change_percent": {
+    "ipc_geomean": 1.4033754586259217,
+    "area_um2": 23.162696559592575,
+    "fmax_mhz": 3.0491599253267054
+  },
+  "estimated_throughput_gain_percent": 4.4953265460389025,
+  "joint_tier_three_target_met": false,
+  "ipc_gain_remaining_percent": 50.245655636802724,
+  "cases": [
+    {
+      "case": "perf_median",
+      "baseline_cycles": 13357,
+      "selected_cycles": 13357,
+      "ipc_gain_percent": 0.0,
+      "posted_stores_before": 300,
+      "posted_stores_after": 301,
+      "missing_proof_before": 102,
+      "missing_proof_after": 101
+    },
+    {
+      "case": "perf_multiply",
+      "baseline_cycles": 19934,
+      "selected_cycles": 19934,
+      "ipc_gain_percent": 0.0,
+      "posted_stores_before": 80,
+      "posted_stores_after": 80,
+      "missing_proof_before": 27,
+      "missing_proof_after": 27
+    },
+    {
+      "case": "perf_qsort",
+      "baseline_cycles": 198361,
+      "selected_cycles": 198365,
+      "ipc_gain_percent": -0.0020164847629344784,
+      "posted_stores_before": 13513,
+      "posted_stores_after": 13738,
+      "missing_proof_before": 237,
+      "missing_proof_after": 12
+    },
+    {
+      "case": "perf_rsort",
+      "baseline_cycles": 203472,
+      "selected_cycles": 187842,
+      "ipc_gain_percent": 8.32082281917781,
+      "posted_stores_before": 19515,
+      "posted_stores_after": 24314,
+      "missing_proof_before": 9151,
+      "missing_proof_after": 4337
+    },
+    {
+      "case": "perf_towers",
+      "baseline_cycles": 7831,
+      "selected_cycles": 7802,
+      "ipc_gain_percent": 0.3716995642143006,
+      "posted_stores_before": 1587,
+      "posted_stores_after": 1598,
+      "missing_proof_before": 33,
+      "missing_proof_after": 22
+    },
+    {
+      "case": "perf_vvadd",
+      "baseline_cycles": 8361,
+      "selected_cycles": 8361,
+      "ipc_gain_percent": 0.0,
+      "posted_stores_before": 225,
+      "posted_stores_after": 225,
+      "missing_proof_before": 75,
+      "missing_proof_after": 75
+    }
+  ],
+  "probes": [
+    {
+      "lines": 32,
+      "instructions": 6838,
+      "baseline_cycles": 33044,
+      "selected_cycles": 13685,
+      "ipc_gain_percent": 141.46145414687612
+    },
+    {
+      "lines": 64,
+      "instructions": 13270,
+      "baseline_cycles": 65823,
+      "selected_cycles": 27389,
+      "ipc_gain_percent": 140.32640841213623
+    },
+    {
+      "lines": 96,
+      "instructions": 19702,
+      "baseline_cycles": 98614,
+      "selected_cycles": 41093,
+      "ipc_gain_percent": 139.97761175869368
+    }
+  ],
+  "validation": {
+    "official_programs_per_version": 25,
+    "directory_configurations": 71,
+    "directory_checks": 11184,
+    "hum_configurations": 28,
+    "response_owner_checks": 7168,
+    "matrix_configurations": 81,
+    "matrix_static_checks": 324,
+    "matrix_retirement_traces": 27,
+    "matrix_program_runs": 243
+  },
+  "preserved_failed_runs": {
+    "unit-v1": "fixture coverage count assumed an optional alias case",
+    "unit-hash": "refill address bit selection fixed before revalidation",
+    "screen-hash": "interrupted after the directed failure; not qualified"
+  },
+  "evidence_sha256": {
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/branch-restart-20261015/selected/snapshot.json": "620c287ef93311688b8ed9dc51d89e256dfc4e8dfc78952ad4b2a7a06753d6d7",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/selected/snapshot.json": "4892443089e0af0cd9cb686e51e08940474c4dec5c60b53f87a686c6355bde96",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/be4-baseline/snapshot.json": "16120f310909e5d27769e1175076b2768b57aa7543ddcf9eb49cbb8625fb49c8",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/branch-restart-20261015/selected/sim-results.json": "04200dc72d5da438a85f8a10b5402301b49d03d6af0bb43bd4b86b720c53d49f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/selected/sim-results.json": "356fd74cdb41a8fd25f39a4e1044ae740f53bd9ad9a200fdcb2672d98a04e1e4",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/be4-baseline/sim-results.json": "89cd28da521d1c030c4d1f455070bd0f194b43193d0d2ffa548326d2cfa1f1fe",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/branch-restart-20261015/selected/ppa-results.json": "a5c2e745f5f5875583d43e07cdc75108a73af1df3655b97a3bfb2f86bdfc79a2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/selected/ppa-results.json": "a4b5a33106f0f39fc1973c6d9e88e0ff4643604cb6649c4bfd02bb78aa6ef53c",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/be4-baseline/ppa-results.json": "b17060feca687689aa87f9e6c5ed5e5fb7d2d4ca46ad3e41f50b16132af36650",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/profile-final/results.json": "2263bf808b2f0d5aa0841fc7f0c1f17c0025e2008605af5741d38cf0991c6959",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/profile-final/input-audit.json": "39a242ddb81311a1b7006100af3e9b664556c88d6469512da960fd89bc4541f2",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/gates/results.json": "d3c3d79b50ace15baa342a0868ff20127a8333c36655e2f7d6a3542c112e2159",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/gates/directory/results.json": "fa9c2d1e677e823f5e04de6db15a1ba20804cf6b09cf8bb738baa0de272c672e",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/gates/hum/results.json": "b587f4166badb570cbfa1b5852b7efb029704600610c1c5003895cf0632d4668",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/gates/response-owner/results.json": "b9f315e61a96ca5b07cbde8c11a99308f94fc077b84739e5eab94ae716b6ef14",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/matrix.json": "d1d4a3b36e954ace85c98d1436260cf3ab1c5a478918ba9b903168ed6f1ee0fb",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/store-directory-20261015/probes/results.json": "06d9268d565a8b208636945d5dc366c300db0764711620042d6caec69b66e52f",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/build/next-optimization-20261015/sensitivity/results.json": "a036993fe3213b4d07d044d22306df67de3c43946ae4ebf9ea586bb4bc745380",
+    "/Users/zhaoruicheng/Downloads/VerilogCPU/experiments/store_directory_20261015/report.py": "4520006efaaaba067e3ff9b6520c69913fbf03e4e8ae74f251ac86d23084a681"
+  }
+}

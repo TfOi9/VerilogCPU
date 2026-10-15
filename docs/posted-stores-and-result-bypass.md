@@ -2,13 +2,13 @@
 
 ## RAM Store 的安全退休边界
 
-`rv32_l1_data_cache` 默认保存 4 项驻留行提示，正式顶层选择 16 项，每项只有有效位和 28 位行地址。成功的命中与 refill 可建立提示；同组 miss 提前使提示失效，refill / 写回失败不会建立新提示。提示重复时不消耗新项。
+当前顶层启用 256 项按 set 索引的[驻留证明目录](store-residency-directory.md)，分别保存各 way 的完整地址身份；开始替换时只使 victim way 失效。独立 `rv32_l1_data_cache` 默认关闭目录，保留原有 4 项 FIFO 提示，顶层关闭目录时仍选择 16 项。成功的命中与 refill 可建立证明，refill / 写回失败不会建立新证明。
 
 LSQ 已完成地址、对齐、访问宽度和 RAM 范围检查，且 Store 进入 ROB 队首后，才准备写请求。Cache 对请求检查：
 
 1. 地址合法且对齐，存在对应驻留行提示。
 2. 前序 s0 / s1 / s2 中，没有同组、不同地址行的请求。
-3. Cache 在 RUN 状态且能够接收请求。
+3. Cache 能够接收请求，该组未被在途缺失锁定。
 
 这些条件成立时，`request_irrevocable_o` 表示该请求被接收后必然命中。**只有请求 valid、ready 和不可失败保证同时成立，LSQ 才允许 Store 退休。** 缺失、无法证明的冲突及 MMIO 仍走响应确认路径。保证依赖当前 Cache 命中不产生 ECC/权限错误的接口语义；未来增加这些错误时必须重新定义边界。
 
@@ -18,7 +18,7 @@ LSQ 已完成地址、对齐、访问宽度和 RAM 范围检查，且 Store 进�
 
 Store 尚未退休时，Load 使用 LSQ 原有逐字节转发和部分重叠阻塞规则。退休后，同址 Load 的 Cache 请求排在 Store 后面，Cache 原有整行旁路提供最新字节，包括连续部分字节写。MMIO 只从队首请求，等待在途 RAM 请求排空并等待自身响应。
 
-接线：`D-Cache.request_irrevocable_o` 经 `student_top` 的 MMIO 排除门连接 `core.dcache_request_irrevocable_i`，再传入 LSQ。`student_top.POSTED_STORES=1` 启用协议，`STORE_HINTS=16` 选择驻留提示项数；独立 core/LSQ 默认关闭，便于接入不提供保证的内存模型。
+接线：`D-Cache.request_irrevocable_o` 经 `student_top` 的 MMIO 排除门连接 `core.dcache_request_irrevocable_i`，再传入 LSQ。`student_top.POSTED_STORES=1` 启用协议，`STORE_DIRECTORY_ENTRIES=256` 选择目录组数；目录关闭时由 `STORE_HINTS=16` 选择 FIFO 提示项数。独立 core/LSQ 默认关闭提前退休，便于接入不提供保证的内存模型。
 
 ## 结果传递
 
@@ -42,4 +42,4 @@ Load 响应在在途队列、LSQ 标签匹配和错误检查后，可直接进�
 
 较短的结果延迟改变了随机程序中推测异常、同时满宽写回和同时分支完成是否恰巧重叠。新版退休差分继续逐条核对架构结果；这些偶然覆盖事件在关闭旁路时保留旧断言，在开启旁路时由独立的并发/异常/代际定向测试承担。不能把某一随机轨迹未出现旧事件解释为错误，也不能把该轨迹解释为已经覆盖该事件。
 
-该实现仍使用阻塞 D-Cache，未实现一般的提前 Store refill、独立多项 Store buffer、hit-under-miss 或 MSHR。
+当前顶层已有四项标签化访存在途表、跨行桥接和 hit-under-miss，见[缓存并行化验收](cache-parallel-optimization-20261014.md)。D-Cache 仍只有一个 demand miss 上下文；尚未实现一般的提前 Store refill、独立多项 Store buffer 或多个 D-Cache MSHR。

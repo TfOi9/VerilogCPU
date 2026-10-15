@@ -3,6 +3,7 @@
 module rv32_cache_posted_random_tb;
     parameter WAYS = 2;
     parameter HINTS = 4;
+    parameter DIRECTORY = 0;
     reg clk_i;
     reg reset_i;
     reg request_valid_i;
@@ -64,7 +65,7 @@ module rv32_cache_posted_random_tb;
     reg held_error;
 
     rv32_l1_data_cache #(.CACHE_SIZE_BYTES(64), .NUM_SETS(4/WAYS),
-        .NUM_WAYS(WAYS), .STORE_HINTS(HINTS)) cache (
+        .NUM_WAYS(WAYS), .STORE_HINTS(HINTS), .STORE_DIRECTORY_ENTRIES(DIRECTORY)) cache (
         .request_rob_tag_i(0), .response_rob_tag_o(),
         .request_id_i(2'd0), .response_id_o(),
         .memory_response_write_i(1'b0),

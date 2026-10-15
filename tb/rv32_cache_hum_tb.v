@@ -2,6 +2,7 @@
 module rv32_cache_hum_tb;
     parameter WAYS = 2;
     parameter SEED = 1;
+    parameter DIRECTORY = 0;
     reg clk = 0;
     reg reset = 1;
     reg req_valid = 0;
@@ -74,7 +75,7 @@ module rv32_cache_hum_tb;
 
     always #5 clk = ~clk;
     rv32_l1_data_cache #(.CACHE_SIZE_BYTES(64*WAYS), .NUM_SETS(4),
-        .NUM_WAYS(WAYS), .STORE_HINTS(16), .NONBLOCKING(1)) cache (
+        .NUM_WAYS(WAYS), .STORE_HINTS(16), .STORE_DIRECTORY_ENTRIES(DIRECTORY), .NONBLOCKING(1)) cache (
         .request_rob_tag_i(req_rob_tag), .response_rob_tag_o(resp_rob_tag),
         .clk_i(clk), .reset_i(reset), .request_valid_i(req_valid),
         .request_ready_o(req_ready), .request_irrevocable_o(irrevocable),

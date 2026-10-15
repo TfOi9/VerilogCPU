@@ -2,6 +2,7 @@
 `include "rv32im_defs.vh"
 
 module rv32_posted_store_tb;
+    parameter DIRECTORY = 0;
     wire cache_irrevocable;
     reg recover_i;
     reg flush_i;
@@ -133,7 +134,7 @@ module rv32_posted_store_tb;
         .cache_response_error_i(cache_response_error)
     );
 
-    rv32_l1_data_cache cache (
+    rv32_l1_data_cache #(.STORE_DIRECTORY_ENTRIES(DIRECTORY)) cache (
         .request_rob_tag_i(0), .response_rob_tag_o(),
         .request_id_i(2'd0), .response_id_o(),
         .memory_response_write_i(1'b0),

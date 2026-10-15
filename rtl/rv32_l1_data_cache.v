@@ -6,6 +6,7 @@ module rv32_l1_data_cache #(
     parameter integer NUM_SETS = 256,
     parameter integer NUM_WAYS = 1,
     parameter integer STORE_HINTS = 4,
+    parameter integer STORE_DIRECTORY_ENTRIES = 0,
     parameter integer NONBLOCKING = 0,
     parameter integer HIT_UNDER_MISS = NONBLOCKING,
     parameter integer RESPONSE_QUEUE = NONBLOCKING
@@ -82,16 +83,7 @@ module rv32_l1_data_cache #(
     wire tag_ram_write [0:NUM_WAYS-1];
     wire [TAG_WIDTH-1:0] tag_ram_write_data [0:NUM_WAYS-1];
 
-    localparam HINT_WIDTH = (STORE_HINTS > 1) ? cache_clog2(STORE_HINTS) : 1;
-    localparam integer LAST_HINT_VALUE = STORE_HINTS-1;
-    localparam [HINT_WIDTH-1:0] LAST_HINT = LAST_HINT_VALUE[HINT_WIDTH-1:0];
-    reg [STORE_HINTS-1:0] hint_valid;
-    reg [27:0] hint_line [0:STORE_HINTS-1];
-    reg [HINT_WIDTH-1:0] hint_next;
     reg hint_match;
-    reg hint_update_match;
-    integer hint_index;
-    integer hint_update;
     wire older_conflict;
 
     reg [ROB_TAG_WIDTH-1:0] s0_rob_tag;
@@ -261,17 +253,6 @@ module rv32_l1_data_cache #(
             s1_address[31:4] != request_address_i[31:4]) ||
         (s2_valid && s2_set == request_address_i[4 +: INDEX_WIDTH] &&
             s2_address[31:4] != request_address_i[31:4]);
-    always @* begin
-        hint_match = 1'b0;
-        hint_update_match = 1'b0;
-        for (hint_index = 0; hint_index < STORE_HINTS; hint_index = hint_index + 1) begin
-            if (hint_valid[hint_index] &&
-                    hint_line[hint_index] == request_address_i[31:4])
-                hint_match = 1'b1;
-            if (hint_valid[hint_index] && hint_line[hint_index] == s2_address[31:4])
-                hint_update_match = 1'b1;
-        end
-    end
     assign request_irrevocable_o = request_ready_o && request_write_i &&
         request_address_i[1:0] == 0 && request_address_i <= 32'h0ffffffc &&
         hint_match && !older_conflict;
@@ -427,27 +408,102 @@ module rv32_l1_data_cache #(
         end
     endgenerate
 
-    always @(posedge clk_i) begin
-        if (reset_i) begin
-            hint_valid <= 0;
-            hint_next <= 0;
-            for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
-                hint_line[hint_update] <= 0;
-        end else begin
-            if (mode == RUN && s2_miss)
-                for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
-                    if (hint_line[hint_update][INDEX_WIDTH-1:0] == s2_set)
-                        hint_valid[hint_update] <= 1'b0;
-            if ((pipeline_run && !refill_install && s2_valid && !s2_bad_address && s2_hit && r_ready) ||
-                    refill_install) begin
-                if (!hint_update_match || refill_install) begin
-                hint_valid[hint_next] <= 1'b1;
-                hint_line[hint_next] <= refill_install ? refill_address[31:4] : s2_address[31:4];
-                hint_next <= hint_next == LAST_HINT ? {HINT_WIDTH{1'b0}} : hint_next + 1'b1;
+    generate
+        if (STORE_DIRECTORY_ENTRIES > 0) begin : store_directory
+            localparam integer DIRECTORY_SETS = STORE_DIRECTORY_ENTRIES < NUM_SETS ?
+                STORE_DIRECTORY_ENTRIES : NUM_SETS;
+            localparam integer DIRECTORY_INDEX_BITS = cache_clog2(DIRECTORY_SETS);
+            localparam integer DIRECTORY_INDEX_WIDTH = DIRECTORY_INDEX_BITS > 0 ?
+                DIRECTORY_INDEX_BITS : 1;
+            localparam integer DIRECTORY_TAG_WIDTH = 28 - DIRECTORY_INDEX_BITS;
+            reg valid [0:NUM_WAYS-1][0:DIRECTORY_SETS-1];
+            reg [DIRECTORY_TAG_WIDTH-1:0] tag [0:NUM_WAYS-1][0:DIRECTORY_SETS-1];
+            wire [DIRECTORY_INDEX_WIDTH-1:0] request_index;
+            wire [DIRECTORY_INDEX_WIDTH-1:0] hit_index;
+            wire [DIRECTORY_INDEX_WIDTH-1:0] refill_index;
+            integer query_way;
+            integer reset_way;
+            integer reset_index;
+            if (DIRECTORY_SETS > 1) begin : indexed
+                assign request_index = request_address_i[4 +: DIRECTORY_INDEX_BITS];
+                assign hit_index = s2_address[4 +: DIRECTORY_INDEX_BITS];
+                assign refill_index = refill_address[4 +: DIRECTORY_INDEX_BITS];
+            end else begin : single
+                assign request_index = 0;
+                assign hit_index = 0;
+                assign refill_index = 0;
+            end
+            // The index and tag together retain every line address bit.
+            always @* begin
+                hint_match = 1'b0;
+                for (query_way = 0; query_way < NUM_WAYS; query_way = query_way + 1)
+                    if (valid[query_way][request_index] && tag[query_way][request_index] ==
+                            request_address_i[31:4+DIRECTORY_INDEX_BITS])
+                        hint_match = 1'b1;
+            end
+            always @(posedge clk_i) begin
+                if (reset_i) begin
+                    for (reset_way = 0; reset_way < NUM_WAYS; reset_way = reset_way + 1)
+                        for (reset_index = 0; reset_index < DIRECTORY_SETS;
+                                reset_index = reset_index + 1)
+                            valid[reset_way][reset_index] <= 1'b0;
+                end else begin
+                    // A replacement revokes only the selected victim way.
+                    if (mode == RUN && s2_miss)
+                        valid[s2_way][hit_index] <= 1'b0;
+                    if (refill_install) begin
+                        valid[miss_way][refill_index] <= 1'b1;
+                        tag[miss_way][refill_index] <=
+                            refill_address[31:4+DIRECTORY_INDEX_BITS];
+                    end else if (pipeline_run && s2_valid && !s2_bad_address && s2_hit && r_ready) begin
+                        valid[s2_way][hit_index] <= 1'b1;
+                        tag[s2_way][hit_index] <= s2_address[31:4+DIRECTORY_INDEX_BITS];
+                    end
+                end
+            end
+        end else begin : legacy_hints
+            localparam HINT_WIDTH = (STORE_HINTS > 1) ? cache_clog2(STORE_HINTS) : 1;
+            localparam integer LAST_HINT_VALUE = STORE_HINTS-1;
+            localparam [HINT_WIDTH-1:0] LAST_HINT = LAST_HINT_VALUE[HINT_WIDTH-1:0];
+            reg [STORE_HINTS-1:0] hint_valid;
+            reg [27:0] hint_line [0:STORE_HINTS-1];
+            reg [HINT_WIDTH-1:0] hint_next;
+            reg hint_update_match;
+            integer hint_index;
+            integer hint_update;
+            always @* begin
+                hint_match = 1'b0;
+                hint_update_match = 1'b0;
+                for (hint_index = 0; hint_index < STORE_HINTS; hint_index = hint_index + 1) begin
+                    if (hint_valid[hint_index] && hint_line[hint_index] == request_address_i[31:4])
+                        hint_match = 1'b1;
+                    if (hint_valid[hint_index] && hint_line[hint_index] == s2_address[31:4])
+                        hint_update_match = 1'b1;
+                end
+            end
+            always @(posedge clk_i) begin
+                if (reset_i) begin
+                    hint_valid <= 0;
+                    hint_next <= 0;
+                    for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
+                        hint_line[hint_update] <= 0;
+                end else begin
+                    if (mode == RUN && s2_miss)
+                        for (hint_update = 0; hint_update < STORE_HINTS; hint_update = hint_update + 1)
+                            if (hint_line[hint_update][INDEX_WIDTH-1:0] == s2_set)
+                                hint_valid[hint_update] <= 1'b0;
+                    if ((pipeline_run && !refill_install && s2_valid && !s2_bad_address && s2_hit && r_ready) ||
+                            refill_install) begin
+                        if (!hint_update_match || refill_install) begin
+                            hint_valid[hint_next] <= 1'b1;
+                            hint_line[hint_next] <= refill_install ? refill_address[31:4] : s2_address[31:4];
+                            hint_next <= hint_next == LAST_HINT ? {HINT_WIDTH{1'b0}} : hint_next + 1'b1;
+                        end
+                    end
                 end
             end
         end
-    end
+    endgenerate
 
     always @(posedge clk_i) begin
         if (reset_i) begin
@@ -773,6 +829,11 @@ module rv32_l1_data_cache #(
     end
 
     initial begin
+        if (STORE_DIRECTORY_ENTRIES < 0 || (STORE_DIRECTORY_ENTRIES > 0 &&
+                (STORE_DIRECTORY_ENTRIES & (STORE_DIRECTORY_ENTRIES - 1)) != 0)) begin
+            $display("ERROR invalid Store directory parameters");
+            $stop;
+        end
         if (NUM_SETS < 2 || (NUM_SETS & (NUM_SETS - 1)) != 0 ||
                 NUM_WAYS < 1 || CACHE_SIZE_BYTES !=
                 NUM_SETS * NUM_WAYS * LINE_BYTES)

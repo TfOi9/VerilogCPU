@@ -7,6 +7,7 @@ module student_top #(
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
     parameter STORE_HINTS = 16,
+    parameter STORE_DIRECTORY_ENTRIES = 256,
     parameter NONBLOCKING_DCACHE = 1,
     parameter FAST_MEMORY_RETURNS = NONBLOCKING_DCACHE,
     parameter PARALLEL_BRIDGE = NONBLOCKING_DCACHE,
@@ -223,7 +224,8 @@ module student_top #(
         .ROB_TAG_WIDTH(ROB_TAG_WIDTH),
         .CACHE_SIZE_BYTES(DCACHE_SIZE_BYTES),
         .NUM_SETS(DCACHE_NUM_SETS), .NUM_WAYS(DCACHE_NUM_WAYS),
-        .STORE_HINTS(STORE_HINTS), .NONBLOCKING(NONBLOCKING_DCACHE), .HIT_UNDER_MISS(HIT_UNDER_MISS)
+        .STORE_HINTS(STORE_HINTS), .STORE_DIRECTORY_ENTRIES(STORE_DIRECTORY_ENTRIES),
+        .NONBLOCKING(NONBLOCKING_DCACHE), .HIT_UNDER_MISS(HIT_UNDER_MISS)
     ) dcache (
         .clk_i(clock), .reset_i(reset),
         .request_valid_i(dcache_request_valid),
