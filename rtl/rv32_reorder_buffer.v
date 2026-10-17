@@ -128,8 +128,6 @@ module rv32_reorder_buffer #(
     reg [ROB_INDEX_WIDTH:0] occupancy_reg;
 
     reg recovery_busy_reg;
-    reg recovery_redirect_pending_reg;
-    reg [31:0] recovery_redirect_pc_reg;
     reg [ROB_TAG_WIDTH-1:0] recovery_branch_tag_reg;
 
     reg alloc_ready_reg;
@@ -276,10 +274,9 @@ module rv32_reorder_buffer #(
     assign commit_exception_tval_o = commit_exception_tval_reg;
 
     assign recover_busy_o = !reset_i && recovery_busy_reg;
-    assign recover_redirect_valid_o = !reset_i && recovery_busy_reg &&
-        recovery_redirect_pending_reg;
-    assign recover_redirect_pc_o = (!reset_i && recovery_busy_reg) ?
-        recovery_redirect_pc_reg : 32'd0;
+    assign recover_redirect_valid_o = !reset_i && mispredict_found_reg;
+    assign recover_redirect_pc_o = (!reset_i && mispredict_found_reg) ?
+        mispredict_next_pc_reg : 32'd0;
     assign rollback_valid_o = rollback_valid_reg;
     assign rollback_tag_o = rollback_tag_reg;
     assign rollback_writes_rd_o = rollback_writes_rd_reg;
@@ -692,11 +689,8 @@ module rv32_reorder_buffer #(
             tail_reg <= {ROB_INDEX_WIDTH{1'b0}};
             occupancy_reg <= {(ROB_INDEX_WIDTH+1){1'b0}};
             recovery_busy_reg <= 1'b0;
-            recovery_redirect_pending_reg <= 1'b0;
-            recovery_redirect_pc_reg <= 32'd0;
             recovery_branch_tag_reg <= {ROB_TAG_WIDTH{1'b0}};
         end else if (recovery_busy_reg) begin
-            recovery_redirect_pending_reg <= 1'b0;
             for (sequential_lane_index = 0;
                     sequential_lane_index < RECOVERY_WIDTH;
                     sequential_lane_index = sequential_lane_index + 1) begin
@@ -823,8 +817,6 @@ module rv32_reorder_buffer #(
 
             if (mispredict_found_reg) begin
                 recovery_busy_reg <= 1'b1;
-                recovery_redirect_pending_reg <= 1'b1;
-                recovery_redirect_pc_reg <= mispredict_next_pc_reg;
                 recovery_branch_tag_reg <= mispredict_tag_reg;
             end
         end

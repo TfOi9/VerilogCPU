@@ -511,13 +511,14 @@ module rv32_reorder_buffer_tb;
             end
             #1;
             check(alloc_ready_o && completion_accept_o[0], 90);
+            check(!recover_busy_o && recover_redirect_valid_o, 91);
+            check(recover_redirect_pc_o == 32'h7200, 92);
             clock_edge;
             alloc_fire_i = 1'b0;
             alloc_valid_i = {BE_WIDTH{1'b0}};
             completion_valid_i = {BE_WIDTH{1'b0}};
             #1;
-            check(recover_busy_o && recover_redirect_valid_o, 91);
-            check(recover_redirect_pc_o == 32'h7200, 92);
+            check(recover_busy_o && !recover_redirect_valid_o, 95);
             check(completion_ready_o == {BE_WIDTH{1'b0}}, 93);
             check(commit_valid_o == {BE_WIDTH{1'b0}}, 94);
 
