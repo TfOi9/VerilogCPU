@@ -1,6 +1,6 @@
 # 流水线 L1 数据缓存
 
-`rv32_l1_data_cache` 是可参数化、write-back/write-allocate 的 L1 数据缓存。默认容量为 4 KiB，256 组、1 路、每行 16 字节。`CACHE_SIZE_BYTES`、`NUM_SETS` 和 `NUM_WAYS` 配置容量、组数和相联度，并须满足 `CACHE_SIZE_BYTES = NUM_SETS × NUM_WAYS × 16`；组数须为不小于 2 的 2 的幂。每一路的数据阵列和标签阵列使用官方 `sram_fakeram` 同步 SRAM；valid、dirty 位和每组 round-robin 替换指针由寄存器保存。复位清除这些状态，不初始化 SRAM 内容。
+`rv32_l1_data_cache` 是可参数化、write-back/write-allocate 的 L1 数据缓存。模块单独实例化时默认容量为 4 KiB，256 组、1 路、每行 16 字节；`student_top` 默认覆盖为 16 KiB、512 组、2 路。`CACHE_SIZE_BYTES`、`NUM_SETS` 和 `NUM_WAYS` 配置容量、组数和相联度，并须满足 `CACHE_SIZE_BYTES = NUM_SETS × NUM_WAYS × 16`；组数须为不小于 2 的 2 的幂。每一路的数据阵列和标签阵列使用官方 `sram_fakeram` 同步 SRAM；valid、dirty 位和每组 round-robin 替换指针由寄存器保存。复位清除这些状态，不初始化 SRAM 内容。
 
 缓存只接受对齐的 32 位 RAM 字访问，地址范围为 `0x00000000` 至 `0x0ffffffc`，对应 256 MiB RAM。地址 `0x80000000` 等 MMIO 不在缓存范围内，应由 LSQ 路由。行偏移为地址低 4 位，`address[4 +: log2(NUM_SETS)]` 选组，其余高位构成标签；`address[3:2]` 选行内的 32 位字。
 

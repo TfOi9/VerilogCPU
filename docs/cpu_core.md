@@ -1,6 +1,6 @@
 # 参数化多发射乱序 CPU 核心
 
-`rv32_cpu_core` 将已有前端、重命名、ROB、保留站、执行单元、LSQ 与完成网络闭环。`FE_WIDTH` 和 `BE_WIDTH` 分别支持 1、2、4，共 9 种独立宽度组合。`student_top` 保持单发射默认参数，在核心外实例化分离的 I/D Cache 与 AXI4-Lite 桥接层，并只暴露官方规定的总线端口。
+`rv32_cpu_core` 将已有前端、重命名、ROB、保留站、执行单元、LSQ 与完成网络闭环。`FE_WIDTH` 和 `BE_WIDTH` 分别支持 1、2、4，共 9 种独立宽度组合。`student_top` 默认选择 FE=2、BE=2、PRF64、ROB32、I-Cache 1 KiB 单路、D-Cache 16 KiB 两路和 128 项 Store 目录，参数仍可覆盖为 1/2/4 单/双/四发射；它在核心外实例化分离的 I/D Cache 与 AXI4-Lite 桥接层，并只暴露官方规定的总线端口。
 
 `RECOVERY_WIDTH` 默认4，独立控制 ROB 到 rename、整数/乘除/访存 RS、LSQ 的恢复总线宽度。它不改变发射、完成和退休端口数；单独组件默认值仍兼容 `BE_WIDTH`。恢复顺序和精确异常语义见 [ROB](rob.md)。
 

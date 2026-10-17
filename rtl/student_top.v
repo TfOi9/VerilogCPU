@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
 module student_top #(
-    parameter FE_WIDTH = 1,
-    parameter BE_WIDTH = 1,
+    parameter FE_WIDTH = 2,
+    parameter BE_WIDTH = 2,
     parameter RECOVERY_WIDTH = 4,
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
@@ -22,9 +22,9 @@ module student_top #(
     parameter integer ICACHE_SIZE_BYTES = 1024,
     parameter integer ICACHE_NUM_SETS = 64,
     parameter integer ICACHE_NUM_WAYS = 1,
-    parameter integer DCACHE_SIZE_BYTES = 4096,
-    parameter integer DCACHE_NUM_SETS = 256,
-    parameter integer DCACHE_NUM_WAYS = 1
+    parameter integer DCACHE_SIZE_BYTES = 16384,
+    parameter integer DCACHE_NUM_SETS = 512,
+    parameter integer DCACHE_NUM_WAYS = 2
 ) (
     input  wire clock,
     input  wire reset,
