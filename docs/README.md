@@ -74,6 +74,8 @@ Load 多笔在途、Store 同拍提交与提前取指预测的正式实现及部
 
 分支误预测当拍 redirect 的结构、IPC 与频率权衡见 [early-redirect-optimization-20261017.md](early-redirect-optimization-20261017.md)。
 
+恢复总线宽度 5/6/7/8 的对照、选定宽度 7 的 IPC/面积/频率见 [recovery-width-7-20261017.md](recovery-width-7-20261017.md)。
+
 缓存并行化后的当前瓶颈、上游综合框架更新和最高档优化方案见 [tier3-performance-investigation-20261014.md](tier3-performance-investigation-20261014.md)。
 
 返回标签选择的结构见 [response-ownership.md](response-ownership.md)，完整正确性与新版官方PPA验收见 [return-tag-validation-20261014.md](return-tag-validation-20261014.md)。

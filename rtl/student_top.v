@@ -3,7 +3,7 @@
 module student_top #(
     parameter FE_WIDTH = 2,
     parameter BE_WIDTH = 2,
-    parameter RECOVERY_WIDTH = 4,
+    parameter RECOVERY_WIDTH = 7,
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
     parameter STORE_HINTS = 16,
