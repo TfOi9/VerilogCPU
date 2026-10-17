@@ -1,6 +1,6 @@
 # 默认性能配置选择（2026-10-17）
 
-本轮把 `student_top` 的默认参数从单发射、4 KiB 直接映射 D-Cache 切换为已验收的 FE=2、BE=2、PRF64、ROB32、I-Cache 1 KiB 单路、D-Cache 16 KiB 两路、128 项 Store 目录、2 项 MSHR。参数范围不变，所有配置仍可通过顶层参数覆盖。
+本轮把 `student_top` 的默认参数从单发射、4 KiB 直接映射 D-Cache 切换为已验收的 FE=2、BE=2、PRF64、ROB32、I-Cache 1 KiB 单路、D-Cache 16 KiB 两路、256 项 Store 目录、2 项 MSHR。参数范围不变，所有配置仍可通过顶层参数覆盖。
 
 后续的提前重定向和恢复宽度 7 进一步把默认六项 IPC 提升到 0.812045，见 [early-redirect-optimization-20261017.md](early-redirect-optimization-20261017.md) 和 [recovery-width-7-20261017.md](recovery-width-7-20261017.md)。
 
