@@ -78,6 +78,8 @@ Load 多笔在途、Store 同拍提交与提前取指预测的正式实现及部
 
 256 项 Store 驻留目录在恢复宽度 7 上的 IPC、面积和频率见 [store-directory-256-20261017.md](store-directory-256-20261017.md)。
 
+默认前端宽度 4、后端宽度 2 的对照与 PPA 见 [fe4-be2-20261017.md](fe4-be2-20261017.md)。
+
 缓存并行化后的当前瓶颈、上游综合框架更新和最高档优化方案见 [tier3-performance-investigation-20261014.md](tier3-performance-investigation-20261014.md)。
 
 返回标签选择的结构见 [response-ownership.md](response-ownership.md)，完整正确性与新版官方PPA验收见 [return-tag-validation-20261014.md](return-tag-validation-20261014.md)。

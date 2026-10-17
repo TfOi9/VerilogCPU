@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 module student_top #(
-    parameter FE_WIDTH = 2,
+    parameter FE_WIDTH = 4,
     parameter BE_WIDTH = 2,
     parameter RECOVERY_WIDTH = 7,
     parameter POSTED_STORES = 1,
