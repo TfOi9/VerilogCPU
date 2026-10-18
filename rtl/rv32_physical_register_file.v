@@ -21,12 +21,12 @@ module rv32_physical_register_file #(
         PHYS_REGS[PHYS_REG_ADDR_WIDTH:0];
 
     reg [31:0] registers [0:PHYS_REGS-1];
+    reg [PHYS_REGS-1:0] initialized;
     reg [(READ_PORTS*32)-1:0] read_data_reg;
     reg [PHYS_REG_ADDR_WIDTH-1:0] current_read_address;
 
     integer read_index;
     integer bypass_index;
-    integer register_index;
     integer write_index;
 
     function integer address_width_for_count;
@@ -75,8 +75,9 @@ module rv32_physical_register_file #(
                     (current_read_address !=
                         {PHYS_REG_ADDR_WIDTH{1'b0}}) &&
                     ({1'b0, current_read_address} < PHYS_REGS_LIMIT)) begin
-                read_data_reg[read_index*32 +: 32] =
-                    registers[current_read_address];
+                if (initialized[current_read_address])
+                    read_data_reg[read_index*32 +: 32] =
+                        registers[current_read_address];
                 for (bypass_index = 0; bypass_index < BE_WIDTH;
                         bypass_index = bypass_index + 1) begin
                     if (write_valid_i[bypass_index] &&
@@ -94,10 +95,7 @@ module rv32_physical_register_file #(
 
     always @(posedge clk_i) begin
         if (reset_i) begin
-            for (register_index = 0; register_index < PHYS_REGS;
-                    register_index = register_index + 1) begin
-                registers[register_index] <= 32'd0;
-            end
+            initialized <= {PHYS_REGS{1'b0}};
         end else begin
             registers[0] <= 32'd0;
             for (write_index = 0; write_index < BE_WIDTH;
@@ -114,6 +112,9 @@ module rv32_physical_register_file #(
                         write_index*PHYS_REG_ADDR_WIDTH +:
                         PHYS_REG_ADDR_WIDTH]] <=
                         write_data_i[write_index*32 +: 32];
+                    initialized[write_addr_i[
+                        write_index*PHYS_REG_ADDR_WIDTH +:
+                        PHYS_REG_ADDR_WIDTH]] <= 1'b1;
                 end
             end
         end

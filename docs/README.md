@@ -2,6 +2,8 @@
 
 此目录保存各个 CPU 元件的中文设计文档。
 
+当前默认配置的面积优化及三项指标见 [area-optimization-20261018.md](area-optimization-20261018.md)，PRF 的有效位复位结构见 [prf.md](prf.md)。
+
 每个 RTL 元件完成时，应记录其内部结构、主要逻辑和模块接线。
 
 当前已完成的程序镜像流水线见 [image_pipeline.md](image_pipeline.md)。

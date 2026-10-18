@@ -196,7 +196,7 @@ lint: mshr-lint issue-lint core-lint memory-lint main-memory-lint icache-lint dc
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: mshr-unit store-confirm-unit store-directory-unit int-rs-reuse-unit response-owner-unit deep-unit issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
+unit: prf-reset-unit mshr-unit store-confirm-unit store-directory-unit int-rs-reuse-unit response-owner-unit deep-unit issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -1420,3 +1420,7 @@ store-confirm-unit:
 .PHONY: int-rs-reuse-unit
 int-rs-reuse-unit:
 	@$(TIMEOUT) 120 $(PYTHON) tools/test_int_rs_reuse.py
+
+.PHONY: prf-reset-unit
+prf-reset-unit:
+	@$(TIMEOUT) 180 $(PYTHON) tools/test_prf_reset.py
