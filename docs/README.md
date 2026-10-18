@@ -2,7 +2,7 @@
 
 此目录保存各个 CPU 元件的中文设计文档。
 
-当前默认配置的面积优化及三项指标见 [area-optimization-20261018.md](area-optimization-20261018.md)，PRF 的有效位复位结构见 [prf.md](prf.md)。
+当前默认配置的 DeepSeek 分支对照、面积预算及 IPC/频率结果见 [deepseek-crosscheck-20261018.md](deepseek-crosscheck-20261018.md)。前一阶段面积优化见 [area-optimization-20261018.md](area-optimization-20261018.md)，PRF 的有效位复位结构见 [prf.md](prf.md)。
 
 每个 RTL 元件完成时，应记录其内部结构、主要逻辑和模块接线。
 

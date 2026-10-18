@@ -1,6 +1,6 @@
 # Store 后续命中确认与共用返回寄存器
 
-Store 目录或 FIFO 驻留提示在接收请求时提供快速驻留证明。缺少证明时，请求仍进入 Cache 的正常流水线；真实 tag 命中进入 s2 的边沿产生一次后续确认，普通 RAM Store 可在最终响应前退休。miss、MMIO、非法地址、已经获得快速证明的请求均不产生该确认。默认顶层使用 8 项 FIFO 驻留提示并启用后续确认，面积选择见 [area-optimization-20261018.md](area-optimization-20261018.md)；独立 Cache 和独立 core 默认关闭后续确认以兼容原有接口。
+Store 目录或 FIFO 驻留提示在接收请求时提供快速驻留证明。缺少证明时，请求仍进入 Cache 的正常流水线；真实 tag 命中进入 s2 的边沿产生一次后续确认，普通 RAM Store 可在最终响应前退休。miss、MMIO、非法地址、已经获得快速证明的请求均不产生该确认。默认顶层使用 64 项目录并启用后续确认，面积选择见 [deepseek-crosscheck-20261018.md](deepseek-crosscheck-20261018.md)；独立 Cache 和独立 core 默认关闭后续确认以兼容原有接口。
 
 ## 内部结构与接线
 

@@ -1,0 +1,127 @@
+{
+  "completed": true,
+  "passed": true,
+  "baseline_revision": "41752dc",
+  "selected": "fe4-d64-h8",
+  "configuration": {
+    "FE_WIDTH": 4,
+    "BE_WIDTH": 2,
+    "PHYS_REGS": 56,
+    "ROB_ENTRIES": 32,
+    "STORE_DIRECTORY_ENTRIES": 64,
+    "STORE_HINTS": 8
+  },
+  "baseline": {
+    "area_um2": 28060.99808100134,
+    "ipc_geomean": 0.8041716404061972,
+    "estimated_fmax_mhz": 333.8767525268992
+  },
+  "candidate": {
+    "area_um2": 30330.60836099509,
+    "ipc_geomean": 0.8223194830107736,
+    "estimated_fmax_mhz": 347.1186440677966
+  },
+  "change_percent": {
+    "area_um2": 8.08813098323251,
+    "ipc_geomean": 2.2567125838222513,
+    "estimated_fmax_mhz": 3.9661016949152472
+  },
+  "throughput_proxy_change_percent": 6.312317794773836,
+  "area_cap_um2": 30867.09788910148,
+  "gates": {
+    "area_strictly_below_110_percent": true,
+    "ipc_increased": true,
+    "frequency_increased": true
+  },
+  "screens": [
+    {
+      "name": "fe4-d0-h8",
+      "ipc_geomean": 0.8161478796671602,
+      "screen_sha256": "78713f1ade02622cd8510cd2bccb1bf93d924c5e7222e603274e2d77a71e0fa6",
+      "area_um2": 28643.294120998737,
+      "estimated_fmax_mhz": 325.07936507936506,
+      "ppa_sha256": "1fb1c9076e37285c1d90aa689170dfd4d0f95b5b440aeef679151f5094f83400"
+    },
+    {
+      "name": "fe4-d32-h8",
+      "ipc_geomean": 0.8185045458889995,
+      "screen_sha256": "9cf6edf0d614fcc34f212ec01a44335fab98c7e8ec7a79816a194d0f6242e1e9"
+    },
+    {
+      "name": "fe4-d64-h8",
+      "ipc_geomean": 0.8223194830107736,
+      "screen_sha256": "21007bfdef105784ac7b4172e42c9e9d8dd85b3676efd62842f58cb7e5ce6e17",
+      "area_um2": 30330.60836099509,
+      "estimated_fmax_mhz": 347.1186440677966,
+      "ppa_sha256": "52f3cc476b3b8844b86f4b74a29a4c8195e2e5012403db7c0115594fa740db52"
+    }
+  ],
+  "driver_sha256": {
+    "qualify_top.py": "e7291420b16d9eefc84da118e0645e0c19fbca45dcc72df12cf9d075b04d1a9e",
+    "qualify_core.py": "e140d49915cb7ba39cc3685ed45ee7f366dd67f911d53531c577934a0d91c126",
+    "finalize.py": "f1b7cd421bcb787fdfbbc27e560fe0c59e026c41930f7b10159a11e8fb054de1",
+    "qualify_mshr.py": "124f00294e0c5550287cb8eba83b470981406bc62e1299d8b173128d36ce9672",
+    "audit_deepseek.py": "35f9159acd8542e99f3dc93e35c41d96a03a1e281251b57ce71da79d2160102c"
+  },
+  "selected_source_sha256": {
+    "rtl/.gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "rtl/rv32_branch_predictor.v": "2a3f4bc299aaf69fcb76a8b13b0c8965e1f296c2c137f9ac5625c8f4a055a371",
+    "rtl/rv32_completion_writeback_network.v": "3cb43793c0dda0dc9d065bc1368096f33e1603fb1d46bd1b6ac73c35ed616950",
+    "rtl/rv32_cpu_core.v": "9311ee3fdc9909a3e537422a1a3b0f82f91db28d37c4b6a127eab85eabbab7a0",
+    "rtl/rv32_decode_rename_dispatch.v": "df3a4a6d22c1854006eeeca365858cc7b7dd3840d95bb6f5a8ebe2f2f9ce2ab5",
+    "rtl/rv32_fetch_pipeline.v": "f8fc88f5944c30b90ceeb1672ae1c411b25a3ebc2211dd305d879f5bd35f088f",
+    "rtl/rv32_integer_reservation_station.v": "6485ce16127d8ecb238d4ce598b064930782ef8eefeb659bb554db61422d0ca4",
+    "rtl/rv32_issue_arbiter.v": "c9ea9b77ba570e53c3e37c938d5321936729ffb01cb26ff7f4fd01dde73af7c1",
+    "rtl/rv32_l1_cache_axi_bridge.v": "a753e5c620b9456a8b621f122dd41a1facd0bd5cb32106a81fe715b59f52e68c",
+    "rtl/rv32_l1_data_cache.v": "5885cf6770a116f1f484b13de396ac12f63cc188187339aff930a8ba4238aa6e",
+    "rtl/rv32_l1_instruction_cache.v": "4bd7d1e9c7d5ced546ef4373c04edd03faee6b68734fb13a2cee2a663c5cf9c0",
+    "rtl/rv32_load_store_queue.v": "12eafa6f0a0456761651d6d11385b8ca075812eb0cad86959fff3196af54772c",
+    "rtl/rv32_mdu_reservation_stations.v": "e701426dad6d37e1cb143c98d605e0d759930e0b77bd3812bb534b6f3d0be9aa",
+    "rtl/rv32_memory_reservation_station.v": "f31e776ed29805ad1ee79dabc467b8c8a02c86f2ef4ef02846a2d7ace8bbe8f5",
+    "rtl/rv32_physical_register_file.v": "6d71b2c8a344c9a98586703b9315474df991216848770854ceeb9edb5ae784b1",
+    "rtl/rv32_ranked_select.v": "5d431c0a9f2c2bba8bf5d921c785fd8c485f253ac43d51eafae2a3cdeee72f11",
+    "rtl/rv32_rename_unit.v": "83a3e861e89eb59d59ad7af707e56e72553e2aab640f93628336c4659c46c072",
+    "rtl/rv32_reorder_buffer.v": "39b0725468bfc497b5b0436eab69ddbb12b56eeeeb08e4f616d629d111d9129d",
+    "rtl/rv32i_alu.v": "e7d2dec003603f806349a3f0ac07bd1b1fe126b29648a00ffce359f80d40d9fd",
+    "rtl/rv32im_decoder.v": "3ce6671c29569caa6078ab0207a97af73ab4a7244cba962fd1d513c6cc093b84",
+    "rtl/rv32im_defs.vh": "f53bfa40d9f8847dd83af31ba01553722820e7f238f04fb9eb4b6fdba4312432",
+    "rtl/rv32m_divider.v": "96bb78f8b6062d5ecfacc7faa979bdd9061b15fcb131b7a49a855988251909b0",
+    "rtl/rv32m_multiplier.v": "c869c50e0339a87db83c536c2efe4bc0d4a2bd15b7e069053cf20f5663e42de4",
+    "rtl/student_top.v": "8589069bfbdd22d15c370d5f00bd7522f0c27954194b732be5e4218898a6ef07"
+  },
+  "deepseek_reference": {
+    "revision": "0b544c178619c659b7316a198d8fa3fc7c2c3f6a",
+    "branch": "deepseek/area-reduction-20261018",
+    "wrapper_completed": true,
+    "wrapper_passed": false,
+    "wrapper_sources_unchanged": false,
+    "frozen_input_matches_embedded_report_hashes": true,
+    "same_native_tools_libraries_and_framework": true,
+    "area_um2": 32030.126060990377,
+    "estimated_fmax_mhz": 348.0625424881033,
+    "minimum_period_ns": 2.873046875,
+    "note": "Wrapper source drift remains recorded. Frozen PPA input was independently matched to the branch; no full correctness qualification is inferred."
+  },
+  "evidence_sha256": {
+    "build/cross-deepseek-20261018/fe4-d64-h8/snapshot.json": "ddd679d5f49de163c9d2b5ec9cc1b2291c07546e022332752ba0484a6a7e9e77",
+    "build/cross-deepseek-20261018/fe4-d64-h8/suite-results.json": "9b70a778edc8c7f44ea0c0008da1b1f9001daccc7e01c28d2e30f6e51a3f8ec6",
+    "build/cross-deepseek-20261018/fe4-d64-h8/ppa-results.json": "52f3cc476b3b8844b86f4b74a29a4c8195e2e5012403db7c0115594fa740db52",
+    "build/cross-deepseek-20261018/fe4-d64-h8/focused/results.json": "413f50291656d203471d9b5878e88ef439f7e1e91d4829af95e613d3e2fc7205",
+    "build/cross-deepseek-20261018/fe4-d64-h8/mshr/results.json": "5b682e3d1421dcfa4562d3b873b3ad1c7a2fb88f6c9dab68805dfa5e901f2146",
+    "build/cross-deepseek-20261018/fe4-d0-h8/retirement/results.json": "b95a29e232c8b5051d7e8f283e7c0a7fa339c11227d44b88f5a4ac513a09ee44",
+    "build/cross-deepseek-20261018/deepseek-audit/results.json": "88996ef7bb8b6bc63db10c691fb6cfb20fd1f4cc5ccda800e413fa6158c82d8b",
+    "build/area-codex-20261018/final-matrix.json": "938e8749b434be2df23864808d0449061e22ba75cac039d03079370b23722773"
+  },
+  "validation": {
+    "official_programs": 25,
+    "retirement_seeds": 3,
+    "fresh_focused_checks": 17,
+    "dual_mshr_cases": 3,
+    "prior_matrix": {
+      "checks": 381,
+      "passed": true,
+      "full_parameter_elaborations_equivalent": false,
+      "scope": "Unchanged core/component evidence reused. Cache-integrated parameter matrix was not rerun; directory changes are covered by selected integration and focused protocol checks."
+    }
+  }
+}

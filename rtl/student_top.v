@@ -1,13 +1,13 @@
 `timescale 1ns/1ps
 
 module student_top #(
-    parameter FE_WIDTH = 2,
+    parameter FE_WIDTH = 4,
     parameter BE_WIDTH = 2,
     parameter RECOVERY_WIDTH = 7,
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
     parameter STORE_HINTS = 8,
-    parameter STORE_DIRECTORY_ENTRIES = 0,
+    parameter STORE_DIRECTORY_ENTRIES = 64,
     parameter LATE_STORE_CONFIRM = 1,
     parameter NONBLOCKING_DCACHE = 1,
     parameter DCACHE_MSHR_ENTRIES = 2,
