@@ -59,6 +59,13 @@ def main():
                     for seed in (1, 2, 42):
                         test('rv32_cache_mshr_tb', f'cache-{ways}-{late}-{latency}-{seed}',
                              {'WAYS': ways, 'LATE_CONFIRM': late, 'LATENCY': latency, 'SEED': seed}, [ram, cache])
+        for ways in (1, 2, 4):
+            for late in (0, 1):
+                for latency in (1, 31):
+                    for seed in (1, 42):
+                        test('rv32_cache_mshr_tb', f'four-bank-{ways}-{late}-{latency}-{seed}',
+                             {'SETS': 8, 'HINTS': 8, 'WAYS': ways, 'LATE_CONFIRM': late,
+                              'LATENCY': latency, 'SEED': seed}, [ram, cache])
         for ways in (1, 2, 3, 4):
             for directory in (1, 2, 8, 128):
                 test('rv32_cache_mshr_tb', f'directory-{ways}-{directory}',
@@ -75,12 +82,12 @@ def main():
         mutant.write_text(text)
         test('rv32_l1_cache_mshr_bridge_tb', 'reject-lost-bridge-id', {}, [mutant],
              'D read response identity or data')
-        mutant = out/'disabled_read_cache.v'
-        text, count = re.subn(r'MSHR_ENTRIES == 2 \? !refill_install : \(pipeline_run',
-                             '(pipeline_run', cache.read_text())
+        mutant = out/'lost_bank_cache.v'
+        text, count = re.subn(r'else if \(array_read_enable\) read_bank <= read_set\[BANK_BITS-1:0\];',
+                             "else if (array_read_enable) read_bank <= {BANK_BITS{1'b0}};", cache.read_text())
         assert count == 1
         mutant.write_text(text)
-        test('rv32_cache_mshr_tb', 'reject-disabled-s1-read', {}, [ram, mutant],
+        test('rv32_cache_mshr_tb', 'reject-lost-read-bank', {}, [ram, mutant],
              'ERROR rv32_l1_data_cache proven Store entered an MSHR')
         assert all(digest(Path(p)) == h for p, h in result['source_sha256'].items())
         result.update(completed=True, passed=True)

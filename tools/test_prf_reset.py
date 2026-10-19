@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check PRF lazy reset across widths, capacities, collisions and reset reuse."""
+import argparse
 import json
 from pathlib import Path
 import sys
@@ -20,11 +21,15 @@ def run(command, log, seconds):
 
 
 def main():
-    out = ROOT / 'build/prf-reset-unit'
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--source', type=Path, default=ROOT / 'rtl/rv32_physical_register_file.v')
+    parser.add_argument('--out', type=Path, default=ROOT / 'build/prf-reset-unit')
+    args = parser.parse_args()
+    out = args.out.resolve()
     if out.exists():
         out = out / ('run-' + str(time.time_ns()))
     out.mkdir(parents=True, exist_ok=False)
-    source = ROOT / 'rtl/rv32_physical_register_file.v'
+    source = args.source.resolve()
     tb = ROOT / 'tb/rv32_physical_register_file_tb.v'
     result = {'completed': False, 'passed': False,
               'sha256': {str(p): digest(p) for p in (source, tb, Path(__file__))}, 'tests': []}

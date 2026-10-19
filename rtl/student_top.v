@@ -7,7 +7,7 @@ module student_top #(
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
     parameter STORE_HINTS = 8,
-    parameter STORE_DIRECTORY_ENTRIES = 64,
+    parameter STORE_DIRECTORY_ENTRIES = 0,
     parameter LATE_STORE_CONFIRM = 1,
     parameter NONBLOCKING_DCACHE = 1,
     parameter DCACHE_MSHR_ENTRIES = 2,

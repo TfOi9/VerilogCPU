@@ -1,5 +1,7 @@
 # Load 依赖交接与 Store 连续推进
 
+本文保留本地提交 `6056713` 的历史吞吐检查点。当前选定配置及最终测量见 [0.90 IPC 面积方案](area-selected32k-20261019.md)。
+
 ## 检查点与目标
 
 基于 main `88362c8bafbe5c645a77757dcfa64e9e57d82510`，工作分支为 `codex/load-store-throughput-20261019`。本地保存，不推送远程，不操作 deepseek 分支。

@@ -189,7 +189,7 @@ module rv32_lsq_handoff_tb;
 
     task check;
         input condition;
-        input [255:0] message;
+        input [1023:0] message;
         begin
             checks = checks + 1;
             if (!condition) begin
@@ -553,7 +553,16 @@ module rv32_lsq_handoff_tb;
                     "store proof registers before retirement");
                 tick();
                 check(writes == 1 && commit_ready_o[0], "registered store proof permits head");
-                commit_fire_i[0] = 1;
+                check(!cache_request_valid_o, "nonretiring prefix blocks next store");
+                commit_fire_i[0] = 1; commit_exception_valid_i[0] = 1;
+                #1; check(!cache_request_valid_o, "exception prefix blocks next store");
+                commit_exception_valid_i[0] = 0;
+                commit_rob_tag_i[ROB_TAG_WIDTH +: ROB_TAG_WIDTH] = tag(1) ^ (1 << ROB_INDEX_WIDTH);
+                #1; check(!cache_request_valid_o, "prefix checks complete ROB generation");
+                commit_rob_tag_i[ROB_TAG_WIDTH +: ROB_TAG_WIDTH] = tag(1);
+                commit_lsq_tag_i[LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] = second_tag ^ (1 << LSQ_INDEX_WIDTH);
+                #1; check(!cache_request_valid_o, "prefix checks LSQ generation");
+                commit_lsq_tag_i[LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] = second_tag;
                 #1; check(cache_request_valid_o && cache_request_address_o == 32'h504 &&
                     !cache_request_mmio_o, "retiring prefix authorizes next RAM store");
                 tick();
@@ -563,6 +572,33 @@ module rv32_lsq_handoff_tb;
                 commit_fire_i = 0; cache_request_ready_i = 0; cache_request_irrevocable_i = 0;
                 send_response(0, 0); send_response(0, 0);
                 check(occupancy_o == 0 && writes == 2, "posted responses retain independent ownership");
+
+                reset_case();
+                allocate_one(1, tag(0), `RV32_MEMORY_WORD, 0, first_tag);
+                allocate_one(1, tag(1), `RV32_MEMORY_WORD, 0, second_tag);
+                store_address(tag(0), first_tag, 32'h580);
+                store_data(tag(0), first_tag, 32'h11111111);
+                expect_completion(tag(0), 0, 0, 0);
+                store_address(tag(1), second_tag, 32'h80000000);
+                store_data(tag(1), second_tag, 32'h2a);
+                expect_completion(tag(1), 0, 0, 0);
+                commit_head(tag(0), first_tag);
+                commit_valid_i[1] = 1; commit_lsq_valid_i[1] = 1;
+                commit_op_i[`RV32_OP_WIDTH +: `RV32_OP_WIDTH] = `RV32_OP_SW;
+                commit_rob_tag_i[ROB_TAG_WIDTH +: ROB_TAG_WIDTH] = tag(1);
+                commit_lsq_tag_i[LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] = second_tag;
+                cache_request_ready_i = 1; cache_request_irrevocable_i = 1;
+                tick(); commit_fire_i[0] = 1;
+                #1; check(!cache_request_valid_o, "MMIO cannot use retiring prefix");
+                tick(); cache_request_ready_i = 0; commit_valid_i = 0; commit_fire_i = 0;
+                send_response(0, 0);
+                commit_head(tag(1), second_tag); rob_head_index_i = 1;
+                expect_mmio_request(32'h2a);
+                check(!commit_ready_o[0], "MMIO waits for write response despite proof");
+                send_response(0, 0);
+                check(commit_ready_o[0], "MMIO becomes ready after write response");
+                commit_fire_i[0] = 1; tick(); commit_valid_i = 0; commit_fire_i = 0;
+                check(occupancy_o == 0 && writes == 2, "MMIO head commits exactly once");
             end
         end
 

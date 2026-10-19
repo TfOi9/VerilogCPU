@@ -4,6 +4,8 @@ module rv32_cache_mshr_tb;
     parameter BAD_ID = 0;
     parameter AUX = 0;
     parameter WAYS = 2;
+    parameter SETS = 4;
+    parameter HINTS = 16;
     parameter LATE_CONFIRM = 0;
     wire confirm_valid;
     wire [1:0] confirm_id;
@@ -102,8 +104,8 @@ module rv32_cache_mshr_tb;
     reg [31:0] old_value;
 
     always #5 clk = ~clk;
-    rv32_l1_data_cache #(.CACHE_SIZE_BYTES(64*WAYS), .NUM_SETS(4),
-        .NUM_WAYS(WAYS), .STORE_HINTS(16), .LATE_STORE_CONFIRM(LATE_CONFIRM),
+    rv32_l1_data_cache #(.CACHE_SIZE_BYTES(SETS*16*WAYS), .NUM_SETS(SETS),
+        .NUM_WAYS(WAYS), .STORE_HINTS(HINTS), .LATE_STORE_CONFIRM(LATE_CONFIRM),
         .STORE_DIRECTORY_ENTRIES(DIRECTORY), .AUX_RETURNS(AUX), .NONBLOCKING(1), .MSHR_ENTRIES(2)) cache (
         .memory_request_id_o(mem_id), .memory_response_id_i(cache_resp_id),
         .request_rob_tag_i(req_rob_tag), .response_rob_tag_o(resp_rob_tag),
@@ -157,7 +159,7 @@ module rv32_cache_mshr_tb;
             if (cache.m_join && cache.m_delivery && cache.m_match_slot == cache.m_delivery_slot)
                 join_pop = join_pop + 1;
             if (req_valid && !req_ready && cache.miss_active &&
-                    req_address[5:4] == cache.miss_index) locked = locked + 1;
+                    ((req_address >> 4) & (SETS-1)) == cache.miss_index) locked = locked + 1;
             if (confirm_valid) begin
                 if (!pending[confirm_id] || !expected_write[confirm_id] ||
                         expected_error[confirm_id] || expected_posted[confirm_id])
@@ -322,33 +324,33 @@ module rv32_cache_mshr_tb;
 
         fresh;
         for (w = 0; w < WAYS; w = w + 1) begin
-            send(0,1,w*64,32'h31415926 ^ w,15,0); drain;
-            send(0,1,w*64+16,32'h27182818 ^ w,15,0); drain;
+            send(0,1,w*SETS*16,32'h31415926 ^ w,15,0); drain;
+            send(0,1,w*SETS*16+16,32'h27182818 ^ w,15,0); drain;
         end
         inject_write_error = 1; inject_read_error = SEED % 3 == 0; hold_returns = 1;
-        send(0,0,WAYS*64,0,0,1);
-        send(1,0,WAYS*64+4,0,0,1);
-        send(2,0,WAYS*64+16,0,0,0);
+        send(0,0,WAYS*SETS*16,0,0,1);
+        send(1,0,WAYS*SETS*16+4,0,0,1);
+        send(2,0,WAYS*SETS*16+16,0,0,0);
         wait_dual;
         repeat (5) @(negedge clk); hold_returns = 0;
         drain;
         start_reads = read_requests;
         send(0,0,0,0,0,0); drain;
         if (read_requests != start_reads) fail("writeback error destroyed dirty victim");
-        send(0,0,WAYS*64,0,0,0); drain;
+        send(0,0,WAYS*SETS*16,0,0,0); drain;
         if (memory[0] !== reference[0]) fail("dirty victim retry lost data");
 
         fresh;
         for (w = 0; w < WAYS; w = w + 1) begin
-            send(0,1,w*64,32'h42424242 ^ w,15,0); drain;
+            send(0,1,w*SETS*16,32'h42424242 ^ w,15,0); drain;
         end
         inject_read_error = 1;
-        send(0,0,WAYS*64,0,0,1);
-        send(1,1,WAYS*64+4,32'hdead0123,15,1); drain;
+        send(0,0,WAYS*SETS*16,0,0,1);
+        send(1,1,WAYS*SETS*16+4,32'hdead0123,15,1); drain;
         if (cache.line_dirty[0][0] || memory[0] !== reference[0])
             fail("successful writeback did not preserve a clean victim after refill error");
         start_reads = write_requests;
-        send(0,0,WAYS*64,0,0,0); drain;
+        send(0,0,WAYS*SETS*16,0,0,0); drain;
         if (write_requests != start_reads) fail("clean victim was written back again");
 
         fresh; inject_read_error = 1; hold_returns = 1;

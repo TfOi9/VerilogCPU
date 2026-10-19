@@ -68,6 +68,8 @@ module rv32_l1_data_cache #(
         end
     endfunction
 
+    localparam BANK_BITS = NUM_SETS >= 8 ? 2 : 1;
+    localparam BANK_COUNT = 1 << BANK_BITS;
     localparam integer LINE_BYTES = 16;
     localparam integer INDEX_WIDTH = cache_clog2(NUM_SETS);
     localparam integer WAY_WIDTH = (NUM_WAYS > 1) ?
@@ -88,12 +90,12 @@ module rv32_l1_data_cache #(
     reg [WAY_WIDTH-1:0] replacement_way [0:NUM_SETS-1];
     wire [127:0] data_ram_read [0:NUM_WAYS-1];
     wire [TAG_WIDTH-1:0] tag_ram_read [0:NUM_WAYS-1];
-    wire [INDEX_WIDTH-1:0] data_ram_address [0:NUM_WAYS-1];
-    wire data_ram_enable [0:NUM_WAYS-1];
-    wire data_ram_write [0:NUM_WAYS-1];
+    /* verilator lint_off UNUSEDSIGNAL */ wire [INDEX_WIDTH-1:0] data_ram_address [0:NUM_WAYS-1]; /* verilator lint_on UNUSEDSIGNAL */
+    /* verilator lint_off UNUSEDSIGNAL */ wire data_ram_enable [0:NUM_WAYS-1]; /* verilator lint_on UNUSEDSIGNAL */
+    /* verilator lint_off UNUSEDSIGNAL */ wire data_ram_write [0:NUM_WAYS-1]; /* verilator lint_on UNUSEDSIGNAL */
     wire [127:0] data_ram_write_data [0:NUM_WAYS-1];
-    wire tag_ram_enable [0:NUM_WAYS-1];
-    wire tag_ram_write [0:NUM_WAYS-1];
+    /* verilator lint_off UNUSEDSIGNAL */ wire tag_ram_enable [0:NUM_WAYS-1]; /* verilator lint_on UNUSEDSIGNAL */
+    /* verilator lint_off UNUSEDSIGNAL */ wire tag_ram_write [0:NUM_WAYS-1]; /* verilator lint_on UNUSEDSIGNAL */
     wire [TAG_WIDTH-1:0] tag_ram_write_data [0:NUM_WAYS-1];
 
     reg hint_match;
@@ -516,8 +518,6 @@ module rv32_l1_data_cache #(
             s1_selected_dirty = 1'b1;
     end
 
-    localparam BANK_BITS = NUM_SETS >= 8 ? 2 : 1;
-    localparam BANK_COUNT = 1 << BANK_BITS;
     genvar way_gen, bank_gen;
     generate
         for (way_gen = 0; way_gen < NUM_WAYS;

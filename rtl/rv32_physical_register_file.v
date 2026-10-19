@@ -21,7 +21,7 @@ module rv32_physical_register_file #(
         PHYS_REGS[PHYS_REG_ADDR_WIDTH:0];
 
     reg [31:0] registers [0:PHYS_REGS-1];
-    reg [PHYS_REGS-1:0] initialized;
+    /* verilator lint_off UNUSEDSIGNAL */ reg [PHYS_REGS-1:0] initialized; /* verilator lint_on UNUSEDSIGNAL */
     reg [(READ_PORTS*32)-1:0] read_data_reg;
     reg [PHYS_REG_ADDR_WIDTH-1:0] current_read_address;
 
@@ -60,6 +60,29 @@ module rv32_physical_register_file #(
         end
     end
 
+    localparam READ_LEAVES = 1 << PHYS_REG_ADDR_WIDTH;
+    wire [31:0] decoded_read [0:READ_PORTS-1];
+    genvar read_port, read_leaf, read_node;
+    generate
+        for (read_port = 0; read_port < READ_PORTS; read_port = read_port + 1) begin: read_port_tree
+            wire [31:0] tree [1:2*READ_LEAVES-1];
+            for (read_leaf = 0; read_leaf < READ_LEAVES; read_leaf = read_leaf + 1) begin: read_word
+                if (read_leaf > 0 && read_leaf < PHYS_REGS) begin: stored_word
+                    localparam [PHYS_REG_ADDR_WIDTH-1:0] ADDRESS = read_leaf;
+                    wire selected = initialized[read_leaf] &&
+                        read_addr_i[read_port*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH] == ADDRESS;
+                    assign tree[READ_LEAVES+read_leaf] = {32{selected}} & registers[read_leaf];
+                end else begin: empty_word
+                    assign tree[READ_LEAVES+read_leaf] = 32'd0;
+                end
+            end
+            for (read_node = 1; read_node < READ_LEAVES; read_node = read_node + 1) begin: merge_word
+                assign tree[read_node] = tree[2*read_node] | tree[2*read_node+1];
+            end
+            assign decoded_read[read_port] = tree[1];
+        end
+    endgenerate
+
     assign read_data_o = read_data_reg;
 
     always @* begin
@@ -75,9 +98,7 @@ module rv32_physical_register_file #(
                     (current_read_address !=
                         {PHYS_REG_ADDR_WIDTH{1'b0}}) &&
                     ({1'b0, current_read_address} < PHYS_REGS_LIMIT)) begin
-                if (initialized[current_read_address])
-                    read_data_reg[read_index*32 +: 32] =
-                        registers[current_read_address];
+                read_data_reg[read_index*32 +: 32] = decoded_read[read_index];
                 for (bypass_index = 0; bypass_index < BE_WIDTH;
                         bypass_index = bypass_index + 1) begin
                     if (write_valid_i[bypass_index] &&

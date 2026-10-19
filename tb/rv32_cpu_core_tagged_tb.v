@@ -65,6 +65,7 @@ module rv32_cpu_core_tagged_tb;
     integer reordered;
     integer max_pending;
     integer pending_count;
+    integer prefix_stores;
     reg exit_pending;
     reg exit_responded;
     reg exit_retired;
@@ -141,6 +142,86 @@ module rv32_cpu_core_tagged_tb;
 
     always #5 clk = ~clk;
 
+    function store_at_commit_boundary;
+        input [BE_WIDTH-1:0] valid;
+        input [BE_WIDTH-1:0] fire;
+        input [BE_WIDTH-1:0] exception;
+        input [BE_WIDTH-1:0] lsq_valid;
+        input [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] tags;
+        input [(BE_WIDTH*32)-1:0] instruction;
+        input [ROB_TAG_WIDTH-1:0] request_tag;
+        input mmio;
+        integer slot;
+        integer older;
+        reg older_retired;
+        begin
+            store_at_commit_boundary = 1'b0;
+            for (slot = 0; slot < BE_WIDTH; slot = slot + 1) begin
+                older_retired = 1'b1;
+                for (older = 0; older < slot; older = older + 1)
+                    if (!valid[older] || !fire[older] || exception[older])
+                        older_retired = 1'b0;
+                if (older_retired && valid[slot] && lsq_valid[slot] && !exception[slot] &&
+                        instruction[slot*32 +: 7] == 7'h23 &&
+                        instruction[slot*32+12 +: 3] <= 3'd2 &&
+                        tags[slot*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] == request_tag &&
+                        (!mmio || slot == 0))
+                    store_at_commit_boundary = 1'b1;
+            end
+        end
+    endfunction
+
+    task check_store_boundary;
+        reg [BE_WIDTH-1:0] valid, fire, exception, lsq_valid;
+        reg [(BE_WIDTH*ROB_TAG_WIDTH)-1:0] tags;
+        reg [(BE_WIDTH*32)-1:0] instruction;
+        reg [ROB_TAG_WIDTH-1:0] last_tag;
+        integer slot;
+        integer last;
+        begin
+            valid = {BE_WIDTH{1'b1}}; fire = 0; exception = 0;
+            lsq_valid = {BE_WIDTH{1'b1}}; tags = 0; instruction = 0;
+            for (slot = 0; slot < BE_WIDTH; slot = slot + 1) begin
+                tags[slot*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] = slot[ROB_TAG_WIDTH-1:0];
+                instruction[slot*32 +: 32] = 32'h00002023;
+            end
+            if (!store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,0,1))
+                fail("checker rejected head MMIO");
+            if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,
+                    ({{(ROB_TAG_WIDTH-1){1'b0}},1'b1} << ROB_INDEX_WIDTH),0))
+                fail("checker accepted wrong ROB generation");
+            exception[0] = 1;
+            if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,0,0))
+                fail("checker accepted faulting head");
+            exception[0] = 0; instruction[0 +: 32] = 0;
+            if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,0,0))
+                fail("checker accepted non-Store instruction");
+            instruction[0 +: 32] = 32'h00002023;
+            if (BE_WIDTH > 1) begin
+                last = BE_WIDTH-1; last_tag = last[ROB_TAG_WIDTH-1:0];
+                if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,last_tag,0))
+                    fail("checker accepted nonretiring prefix");
+                for (slot = 0; slot < last; slot = slot + 1) fire[slot] = 1;
+                if (!store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,last_tag,0))
+                    fail("checker rejected retiring prefix");
+                if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,last_tag,1))
+                    fail("checker accepted MMIO behind head");
+                fire[0] = 0;
+                if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,last_tag,0))
+                    fail("checker accepted retirement hole");
+                fire[0] = 1; exception[0] = 1;
+                if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,last_tag,0))
+                    fail("checker accepted exceptional prefix");
+                exception[0] = 0; valid[0] = 0;
+                if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,last_tag,0))
+                    fail("checker accepted invalid prefix");
+                valid[0] = 1; lsq_valid[last] = 0;
+                if (store_at_commit_boundary(valid,fire,exception,lsq_valid,tags,instruction,last_tag,0))
+                    fail("checker accepted missing Store identity");
+            end
+        end
+    endtask
+
     /* verilator lint_off BLKSEQ */
     always @(posedge clk) begin
         if (!reset) begin
@@ -206,9 +287,13 @@ module rv32_cpu_core_tagged_tb;
                 request_order = request_order + 1;
                 model_mmio[d_request_id] <= d_mmio;
                 model_data[d_request_id] <= 0;
-                if (d_write && (!dut.commit_valid[0] ||
-                        dut.lsq.request_rob_tag != dut.commit_tag[ROB_TAG_WIDTH-1:0]))
-                    fail("store escaped ROB head");
+                if (d_write && (dut.recover_busy || !store_at_commit_boundary(
+                        dut.commit_valid, dut.commit_fire, dut.commit_exception_valid,
+                        dut.commit_lsq_valid, dut.commit_tag, dut.rob.commit_instruction_o,
+                        d_request_rob_tag, d_mmio)))
+                    fail("store not authorized by retiring prefix");
+                if (d_write && d_request_rob_tag != dut.commit_tag[ROB_TAG_WIDTH-1:0])
+                    prefix_stores = prefix_stores + 1;
                 if (d_mmio) begin
                     if (pending_count != 0 || !d_write || d_address != 32'h80000000 ||
                             d_enable != 4'hf || d_write_data != expected_exit)
@@ -308,7 +393,7 @@ module rv32_cpu_core_tagged_tb;
                     fail("missing discarded data or stale MDU response");
                 if (max_pending < 2 || reordered == 0)
                     fail("missing out-of-order memory coverage");
-                $display("COVER tagged pending=%0d reordered=%0d",max_pending,reordered);
+                $display("COVER tagged pending=%0d reordered=%0d prefix_stores=%0d",max_pending,reordered,prefix_stores);
                 $display("PASS core FE=%0d BE=%0d PHYS=%0d ROB=%0d seed=%0d cycles=%0d retired=%0d max_sources=%0d late_response=%0d discarded_data=%0d stale_mdu=%0d",
                     FE_WIDTH, BE_WIDTH, PHYS_REGS, ROB_ENTRIES, seed, cycles, retired, maximum_sources,
                     late_response_seen, discarded_data_response_seen, stale_mdu_seen);
@@ -334,6 +419,7 @@ module rv32_cpu_core_tagged_tb;
         request_order = 0;
         reordered = 0;
         max_pending = 0;
+        prefix_stores = 0;
         for (init_index = 0; init_index < 4; init_index = init_index + 1) begin
             model_due[init_index] = 0;
             model_order[init_index] = 0;
@@ -377,6 +463,7 @@ module rv32_cpu_core_tagged_tb;
         $readmemh(program_path, instructions);
         trace_file = $fopen(trace_path, "r");
         if (trace_file == 0) fail("cannot open reference trace");
+        check_store_boundary();
         repeat (4) @(negedge clk);
         reset = 0;
     end
