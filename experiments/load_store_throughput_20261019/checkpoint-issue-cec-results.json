@@ -1,0 +1,25 @@
+{
+  "completed": true,
+  "passed": true,
+  "method": "ABC combinational equivalence, all input bits and output grants",
+  "tests": [
+    {
+      "name": "be4-r16",
+      "passed": true,
+      "log": "/private/tmp/verilogcpu-throughput-20261019/issue-cec/be4-r16-cec.log",
+      "sha256": "682d6478cf19aa2b6bd9f86b7a14cdd25561dbf7d1ac9d5600d10ed7a8974484"
+    },
+    {
+      "name": "be4-r32",
+      "passed": true,
+      "log": "/private/tmp/verilogcpu-throughput-20261019/issue-cec/be4-r32-cec.log",
+      "sha256": "dcd372b870ebe0c9ac1934f0d0c1f932c81490d8f280e89a621d8186d63f865b"
+    },
+    {
+      "name": "be4-r64",
+      "passed": true,
+      "log": "/private/tmp/verilogcpu-throughput-20261019/issue-cec/be4-r64-cec.log",
+      "sha256": "4f8896dc64fd1acd74783d6d97e352387d59913453f41f705a86d1b6f623468e"
+    }
+  ]
+}

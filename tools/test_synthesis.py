@@ -64,17 +64,20 @@ class SynthesisTests(unittest.TestCase):
 
     def test_forwarding_byte_equivalence(self):
         text = (ROOT / "rtl/rv32_load_store_queue.v").read_text()
-        start = text.index("case (byte_offset)")
-        selection = text[start:text.index("endcase", start) + len("endcase")]
-        selection = selection.replace("forwarding_value[i][byte_index*8 +: 8]", "selected")
-        selection = selection.replace("store_data[j]", "store_data")
+        functions = []
+        for name in ("align_store_word", "unalign_word", "unalign_mask"):
+            width = "3:0" if name == "unalign_mask" else "31:0"
+            start = text.index("    function [" + width + "] " + name + ";")
+            end = text.index("endfunction", start)
+            functions.append(text[start:end + len("endfunction")])
         out = ROOT / "build/synthesis-unit"
         out.mkdir(parents=True, exist_ok=True)
         source = out / "forwarding_equivalence.v"
-        source.write_text("module proof(input [31:0] store_data, input [1:0] byte_offset, output equal);\n"
-                          "wire [7:0] expected = store_data >> (byte_offset*8);\n"
-                          "reg [7:0] selected;\nalways @* begin\n" + selection +
-                          "\nend\nassign equal = expected == selected;\nendmodule\n")
+        source.write_text("module proof(input [31:0] value, input [3:0] mask, "
+                          "input [1:0] offset, output equal);\n" + "\n".join(functions) +
+                          "\nassign equal = (align_store_word(value, offset) == (value << (offset*8))) && "
+                          "(unalign_word(value, offset) == (value >> (offset*8))) && "
+                          "(unalign_mask(mask, offset) == (mask >> offset));\nendmodule\n")
         script = out / "forwarding_equivalence.ys"
         script.write_text("read_verilog " + str(source) + "; hierarchy -top proof; proc; opt; "
                           "sat -verify -prove equal 1 -show-inputs\n")

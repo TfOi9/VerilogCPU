@@ -299,14 +299,16 @@ module rv32_memory_reservation_station #(
             for (sequential_index = 0; sequential_index < RS_ENTRIES;
                     sequential_index = sequential_index + 1) begin
                 if (busy[sequential_index]) begin
-                    base_ready[sequential_index] <=
-                        effective_base_ready[sequential_index];
-                    base_value[sequential_index] <=
-                        effective_base_value[sequential_index];
-                    store_data_ready[sequential_index] <=
-                        effective_data_ready[sequential_index];
-                    store_data_value[sequential_index] <=
-                        effective_data_value[sequential_index];
+                    if (!base_ready[sequential_index] &&
+                            effective_base_ready[sequential_index]) begin
+                        base_ready[sequential_index] <= 1'b1;
+                        base_value[sequential_index] <= effective_base_value[sequential_index];
+                    end
+                    if (!store_data_ready[sequential_index] &&
+                            effective_data_ready[sequential_index]) begin
+                        store_data_ready[sequential_index] <= 1'b1;
+                        store_data_value[sequential_index] <= effective_data_value[sequential_index];
+                    end
                     address_handshake = address_valid_o && address_ready_i &&
                         address_slot == sequential_index;
                     data_handshake = data_valid_o && data_ready_i &&

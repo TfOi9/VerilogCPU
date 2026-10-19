@@ -11,31 +11,53 @@ module rv32_issue_arbiter #(
     input wire [BE_WIDTH+3:0] candidate_valid_i,
     input wire [BE_WIDTH+3:0] candidate_ready_i,
     input wire [((BE_WIDTH+4)*ROB_TAG_WIDTH)-1:0] candidate_tag_i,
-    output reg [BE_WIDTH+3:0] grant_o
+    output wire [BE_WIDTH+3:0] grant_o
 );
     localparam CANDIDATES = BE_WIDTH + 4;
-    /* verilator lint_off WIDTHEXPAND */
-    /* verilator lint_off WIDTHTRUNC */
-    integer lane;
-    integer source;
-    integer winner;
-    integer best_distance;
-    integer distance;
-    reg memory_selected;
-
+    localparam [3:0] ISSUE_LIMIT = BE_WIDTH[3:0];
+    wire [ROB_INDEX_WIDTH-1:0] age [0:CANDIDATES-1];
+    wire [CANDIDATES-1:0] eligible;
     /* verilator lint_off UNUSEDSIGNAL */
-    function integer distance_from_head;
+    function [ROB_INDEX_WIDTH-1:0] age_from_tag;
         input [ROB_TAG_WIDTH-1:0] tag;
         input [ROB_INDEX_WIDTH-1:0] head;
-        integer index_value;
-        begin
-            index_value = tag[ROB_INDEX_WIDTH-1:0];
-            distance_from_head = index_value - head;
-            if (distance_from_head < 0)
-                distance_from_head = distance_from_head + ROB_ENTRIES;
-        end
+        begin age_from_tag = tag[ROB_INDEX_WIDTH-1:0] - head; end
     endfunction
     /* verilator lint_on UNUSEDSIGNAL */
+    genvar candidate, other, node;
+    generate
+        for (candidate = 0; candidate < CANDIDATES; candidate = candidate + 1) begin: rank_candidate
+            wire [CANDIDATES-1:0] older;
+            wire [3:0] count_tree [1:15];
+            assign age[candidate] = age_from_tag(
+                candidate_tag_i[candidate*ROB_TAG_WIDTH +: ROB_TAG_WIDTH], rob_head_index_i);
+            if (candidate >= BE_WIDTH+2) begin: memory_candidate
+                localparam OTHER_MEMORY = candidate == BE_WIDTH+2 ? BE_WIDTH+3 : BE_WIDTH+2;
+                wire older_memory = candidate_valid_i[OTHER_MEMORY] && candidate_ready_i[OTHER_MEMORY] &&
+                    (age[OTHER_MEMORY] < age[candidate] ||
+                        (age[OTHER_MEMORY] == age[candidate] && OTHER_MEMORY < candidate));
+                assign eligible[candidate] = !hold_i && candidate_valid_i[candidate] &&
+                    candidate_ready_i[candidate] && !older_memory;
+            end else begin: execution_candidate
+                assign eligible[candidate] = !hold_i && candidate_valid_i[candidate] && candidate_ready_i[candidate];
+            end
+            for (other = 0; other < CANDIDATES; other = other + 1) begin: compare_age
+                assign older[other] = eligible[other] &&
+                    (age[other] < age[candidate] || (age[other] == age[candidate] && other < candidate));
+            end
+            for (node = 0; node < 8; node = node + 1) begin: count_leaf
+                if (node < CANDIDATES) begin: valid_leaf
+                    assign count_tree[8+node] = {3'd0, older[node]};
+                end else begin: empty_leaf
+                    assign count_tree[8+node] = 4'd0;
+                end
+            end
+            for (node = 1; node < 8; node = node + 1) begin: count_node
+                assign count_tree[node] = count_tree[2*node] + count_tree[2*node+1];
+            end
+            assign grant_o[candidate] = eligible[candidate] && count_tree[1] < ISSUE_LIMIT;
+        end
+    endgenerate
 
     initial begin
         if ((BE_WIDTH != 1 && BE_WIDTH != 2 && BE_WIDTH != 4) ||
@@ -46,33 +68,4 @@ module rv32_issue_arbiter #(
         end
     end
 
-    always @* begin
-        grant_o = 0;
-        memory_selected = 1'b0;
-        winner = -1;
-        best_distance = ROB_ENTRIES;
-        distance = 0;
-        for (lane = 0; lane < BE_WIDTH; lane = lane + 1) begin
-            winner = -1;
-            best_distance = ROB_ENTRIES;
-            for (source = 0; source < CANDIDATES; source = source + 1) begin
-                distance = distance_from_head(candidate_tag_i[
-                    source*ROB_TAG_WIDTH +: ROB_TAG_WIDTH], rob_head_index_i);
-                if (!hold_i && candidate_valid_i[source] &&
-                        candidate_ready_i[source] && !grant_o[source] &&
-                        !(memory_selected && source >= BE_WIDTH+2) &&
-                        distance < best_distance) begin
-                    winner = source;
-                    best_distance = distance;
-                end
-            end
-            if (winner >= 0) begin
-                grant_o[winner] = 1'b1;
-                if (winner >= BE_WIDTH+2)
-                    memory_selected = 1'b1;
-            end
-        end
-    end
-    /* verilator lint_on WIDTHTRUNC */
-    /* verilator lint_on WIDTHEXPAND */
 endmodule

@@ -1,0 +1,59 @@
+{
+  "completed": true,
+  "passed": true,
+  "configuration": {
+    "FE_WIDTH": 4,
+    "BE_WIDTH": 4,
+    "PHYS_REGS": 56,
+    "ROB_ENTRIES": 32,
+    "STORE_DIRECTORY_ENTRIES": 64,
+    "STORE_HINTS": 8
+  },
+  "snapshot_sha256": "db5b6256f4f97ee219ce8d9f2dc66615a9265034672b45db178ad528a440e41b",
+  "sim_sha256": "9c017211c1181ec3945779bf814528394de13f74262cb80d137977d4c9051392",
+  "cases": [
+    {
+      "name": "perf_median",
+      "cycles": 10662,
+      "log_sha256": "9362a57bdb8e85b651bd1b5cb64fe959b95cabc18b1b498502b8322cb1b085e2",
+      "dynamic_instructions": 6961,
+      "ipc": 0.6528793847308197
+    },
+    {
+      "name": "perf_multiply",
+      "cycles": 18068,
+      "log_sha256": "9d0afeedba0bdde45f533a4d444547779308d7d2d1c3532ecdeed6421915b63f",
+      "dynamic_instructions": 21722,
+      "ipc": 1.2022359973433694
+    },
+    {
+      "name": "perf_qsort",
+      "cycles": 162799,
+      "log_sha256": "8e0056c465bdba2cb58dfd4953f4b049d98381b15a016403233a5ceb15bd6e5e",
+      "dynamic_instructions": 139900,
+      "ipc": 0.859341887849434
+    },
+    {
+      "name": "perf_rsort",
+      "cycles": 151750,
+      "log_sha256": "a76f1c822fb1abda5ce6f117e80378d34575b26e05a36179b33cc5880cc60b0a",
+      "dynamic_instructions": 195719,
+      "ipc": 1.2897462932454695
+    },
+    {
+      "name": "perf_towers",
+      "cycles": 6260,
+      "log_sha256": "b4c07b3408bc5552239ea2991e7e18c8d00109301b3cb3b9ee4da40d364172b1",
+      "dynamic_instructions": 5278,
+      "ipc": 0.8431309904153355
+    },
+    {
+      "name": "perf_vvadd",
+      "cycles": 6023,
+      "log_sha256": "c49c1383b2c751fb7526b6f4f24d3915726a07ad9dd2c57b264e8d78b11ca37d",
+      "dynamic_instructions": 4524,
+      "ipc": 0.7511207039681222
+    }
+  ],
+  "ipc_geomean": 0.9054190402568272
+}

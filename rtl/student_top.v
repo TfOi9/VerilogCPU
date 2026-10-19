@@ -2,7 +2,7 @@
 
 module student_top #(
     parameter FE_WIDTH = 4,
-    parameter BE_WIDTH = 2,
+    parameter BE_WIDTH = 4,
     parameter RECOVERY_WIDTH = 7,
     parameter POSTED_STORES = 1,
     parameter RESULT_FALLTHROUGH = 1,
@@ -14,6 +14,7 @@ module student_top #(
     parameter FAST_MEMORY_RETURNS = NONBLOCKING_DCACHE,
     parameter PARALLEL_BRIDGE = NONBLOCKING_DCACHE,
     parameter HIT_UNDER_MISS = NONBLOCKING_DCACHE,
+    parameter LSQ_ENTRIES = 8,
     parameter PHYS_REGS = 56,
     parameter PHYS_REG_ADDR_WIDTH = address_width_for_count(PHYS_REGS),
     parameter ROB_ENTRIES = 32,
@@ -154,6 +155,9 @@ module student_top #(
         .LATE_STORE_CONFIRM(LATE_STORE_CONFIRM),
         .FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH), .RECOVERY_WIDTH(RECOVERY_WIDTH), .OUT_OF_ORDER_MEMORY(NONBLOCKING_DCACHE), .ECHO_MEMORY_ROB_TAG(NONBLOCKING_DCACHE), .FAST_MEMORY_RETURNS(FAST_MEMORY_RETURNS), .POSTED_STORES(POSTED_STORES),
         .RESULT_FALLTHROUGH(RESULT_FALLTHROUGH),
+        .LSQ_ENTRIES(LSQ_ENTRIES),
+        .LSQ_INDEX_WIDTH(address_width_for_count(LSQ_ENTRIES)),
+        .LSQ_TAG_WIDTH(address_width_for_count(LSQ_ENTRIES)+2),
         .PHYS_REGS(PHYS_REGS),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
         .ROB_ENTRIES(ROB_ENTRIES), .ROB_INDEX_WIDTH(ROB_INDEX_WIDTH),

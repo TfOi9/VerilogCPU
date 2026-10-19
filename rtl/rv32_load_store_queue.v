@@ -132,6 +132,29 @@ module rv32_load_store_queue #(
     reg [31:0] request_write_data;
     reg [3:0] request_byte_enable;
     reg request_mmio;
+    reg request_prepared;
+    reg prepared_store_authorized;
+    reg store_authorize_prefix;
+    integer store_authorize_lane;
+    always @* begin
+        prepared_store_authorized = 1'b0;
+        store_authorize_prefix = 1'b1;
+        for (store_authorize_lane = 0; store_authorize_lane < BE_WIDTH;
+                store_authorize_lane = store_authorize_lane + 1) begin
+            if (store_authorize_prefix && commit_valid_i[store_authorize_lane] &&
+                    commit_lsq_valid_i[store_authorize_lane] &&
+                    !commit_exception_valid_i[store_authorize_lane] &&
+                    commit_rob_tag_i[store_authorize_lane*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] == request_rob_tag &&
+                    commit_lsq_tag_i[store_authorize_lane*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] == request_lsq_tag &&
+                    (store_authorize_lane == 0 || !request_mmio))
+                prepared_store_authorized = 1'b1;
+            store_authorize_prefix = store_authorize_prefix &&
+                commit_fire_i[store_authorize_lane] && !commit_exception_valid_i[store_authorize_lane];
+        end
+    end
+    wire prepared_store_waiting = request_valid && request_prepared &&
+        !prepared_store_authorized;
+
     localparam INFLIGHT_INDEX_WIDTH = (MAX_INFLIGHT > 1) ?
         index_width_for_count(MAX_INFLIGHT) : 1;
     reg [INFLIGHT_INDEX_WIDTH-1:0] inflight_head;
@@ -183,6 +206,17 @@ module rv32_load_store_queue #(
         cache_response_rob_tag_i : pending_rob_tag[response_slot];
     wire [LSQ_TAG_WIDTH-1:0] inflight_lsq_tag = pending_lsq_tag[response_slot];
     wire [31:0] inflight_address = pending_address[response_slot];
+    reg direct_store_barrier;
+    integer direct_store_lane;
+    wire direct_load;
+    wire direct_payload = FAST_RETURN != 0 && !request_valid;
+    reg [INFLIGHT_INDEX_WIDTH-1:0] direct_id;
+    reg direct_id_found;
+    integer direct_id_index;
+    wire [LSQ_TAG_WIDTH-1:0] accepted_lsq_tag = direct_payload ?
+        load_address_lsq_tag_i : request_lsq_tag;
+    wire [ROB_TAG_WIDTH-1:0] accepted_rob_tag = direct_payload ?
+        load_address_rob_tag_i : request_rob_tag;
     wire request_fire = cache_request_valid_o && cache_request_ready_i;
     wire response_fire = cache_response_valid_i && cache_response_ready_o;
     integer pending_index;
@@ -216,29 +250,65 @@ module rv32_load_store_queue #(
     wire [3:0] incoming_byte_mask = access_mask(width[load_slot], load_address_i[1:0]);
     wire incoming_load_request = load_address_valid_i && load_address_ready_o &&
         !incoming_load_blocked && !address_fault(load_address_i, width[load_slot], 1'b0);
+    wire [3:0] parallel_forward_mask [0:LSQ_ENTRIES];
+    wire [31:0] parallel_forward_value [0:LSQ_ENTRIES];
+    wire parallel_load_blocked [0:LSQ_ENTRIES];
+    wire [LSQ_ENTRIES-1:0] forward_byte_selected [0:LSQ_ENTRIES][0:3];
+    wire [3:0] forward_wanted [0:LSQ_ENTRIES];
     integer source_candidate;
+    wire [31:0] selected_forward_word;
+    wire [LSQ_INDEX_WIDTH-1:0] selected_forward_slot =
+        source_candidate < 0 ? 0 : source_candidate[LSQ_INDEX_WIDTH-1:0];
+    wire [31:0] selected_forward_value = unalign_word(selected_forward_word,
+        address[selected_forward_slot][1:0]);
+    wire [31:0] aligned_store_data [0:LSQ_ENTRIES-1];
+    wire [3:0] store_byte_mask [0:LSQ_ENTRIES-1];
+    wire [LSQ_ENTRIES-1:0] newer_store_mask [0:LSQ_ENTRIES-1];
+    wire [LSQ_ENTRIES-1:0] unknown_store_mask;
+    wire fast_store_address = FAST_RETURN != 0 && store_address_valid_i &&
+        store_address_ready_o && !report_sent[store_slot] &&
+        !address_fault(store_address_i, width[store_slot], 1'b1) &&
+        (data_valid[store_slot] || (store_data_valid_i && store_data_ready_o &&
+            data_slot == store_slot));
+    wire fast_store_data = FAST_RETURN != 0 && store_data_valid_i &&
+        store_data_ready_o && !report_sent[data_slot] &&
+        address_valid[data_slot] && !fault_valid[data_slot];
+    wire [LSQ_INDEX_WIDTH-1:0] fast_store_slot = fast_store_address ?
+        store_slot : data_slot;
+    wire [31:0] fast_store_tval = fast_store_address ?
+        store_address_i : address[data_slot];
+    wire [LSQ_ENTRIES-1:0] source_eligible;
+    wire [LSQ_ENTRIES-1:0] request_eligible;
+    wire [LSQ_ENTRIES-1:0] prepare_eligible;
+    wire [LSQ_ENTRIES-1:0] source_selected;
+    wire [LSQ_ENTRIES-1:0] request_selected;
+    wire [LSQ_ENTRIES-1:0] prepare_selected;
+    wire [LSQ_ENTRIES-1:0] older_entry [0:LSQ_ENTRIES-1];
     integer request_candidate;
     integer store_request_candidate;
+    integer store_prepare_candidate;
+    integer store_prepare_oldest;
+    integer store_prepare_index;
+    integer store_prepare_distance;
+    integer selected_store_candidate;
+    wire replace_prepared_store = prepared_store_waiting &&
+        (store_request_candidate >= 0 || request_candidate >= 0 || incoming_load_request);
+
     integer store_request_lane;
     reg store_request_prefix;
     reg [LSQ_INDEX_WIDTH-1:0] store_request_slot;
     integer candidate_distance;
     integer best_distance;
-    integer best_store_distance;
     integer i;
     integer j;
     integer occupancy_index;
-    integer byte_index;
     integer alloc_choice;
-    integer access_bytes;
     integer precompute_index;
     integer sequential_index;
     integer sequential_lane;
     integer assertion_lane;
     reg [LSQ_INDEX_WIDTH-1:0] assertion_slot;
-    reg [31:0] byte_address;
     reg [1:0] byte_offset;
-    reg best_store_data_ready;
     reg [31:0] raw_value;
 
     function integer index_width_for_count;
@@ -282,13 +352,49 @@ module rv32_load_store_queue #(
     function integer distance_from_head;
         input [ROB_TAG_WIDTH-1:0] tag_value;
         input [ROB_INDEX_WIDTH-1:0] head_value;
-        integer index_value;
+        reg [ROB_INDEX_WIDTH-1:0] delta;
         begin
-            index_value = tag_value[ROB_INDEX_WIDTH-1:0];
-            if (index_value >= head_value)
-                distance_from_head = index_value - head_value;
-            else
-                distance_from_head = index_value + ROB_ENTRIES - head_value;
+            delta = tag_value[ROB_INDEX_WIDTH-1:0] - head_value;
+            distance_from_head = delta;
+        end
+    endfunction
+
+    function [31:0] align_store_word;
+        input [31:0] value;
+        input [1:0] offset;
+        begin
+            case (offset)
+                2'd0: align_store_word = value;
+                2'd1: align_store_word = {value[23:0], 8'd0};
+                2'd2: align_store_word = {value[15:0], 16'd0};
+                default: align_store_word = {value[7:0], 24'd0};
+            endcase
+        end
+    endfunction
+
+    function [31:0] unalign_word;
+        input [31:0] value;
+        input [1:0] offset;
+        begin
+            case (offset)
+                2'd0: unalign_word = value;
+                2'd1: unalign_word = {8'd0, value[31:8]};
+                2'd2: unalign_word = {16'd0, value[31:16]};
+                default: unalign_word = {24'd0, value[31:24]};
+            endcase
+        end
+    endfunction
+
+    function [3:0] unalign_mask;
+        input [3:0] value;
+        input [1:0] offset;
+        begin
+            case (offset)
+                2'd0: unalign_mask = value;
+                2'd1: unalign_mask = {1'd0, value[3:1]};
+                2'd2: unalign_mask = {2'd0, value[3:2]};
+                default: unalign_mask = {3'd0, value[3]};
+            endcase
         end
     endfunction
 
@@ -382,9 +488,37 @@ module rv32_load_store_queue #(
             FAST_RETURN != 0 ? pending_width[response_slot] : width[inflight_slot],
             FAST_RETURN != 0 ? pending_unsigned[response_slot] : load_unsigned[inflight_slot]);
 
-    assign cache_request_rob_tag_o = ECHO_ROB_TAG != 0 ? request_rob_tag : 0;
+    assign direct_load = FAST_RETURN != 0 && !request_valid &&
+        incoming_load_request && request_candidate < 0 &&
+        !direct_store_barrier && !inflight_mmio;
+    always @* begin
+        direct_store_barrier = 1'b0;
+        for (direct_store_lane = 0; direct_store_lane < BE_WIDTH;
+                direct_store_lane = direct_store_lane + 1) begin
+            if (commit_valid_i[direct_store_lane] &&
+                    is_store_op(commit_op_i[direct_store_lane*`RV32_OP_WIDTH +: `RV32_OP_WIDTH]) &&
+                    !write_requested[commit_lsq_tag_i[
+                        direct_store_lane*LSQ_TAG_WIDTH +: LSQ_INDEX_WIDTH]])
+                direct_store_barrier = 1'b1;
+        end
+    end
+    always @* begin
+        direct_id = 0;
+        direct_id_found = 1'b0;
+        for (direct_id_index = 0; direct_id_index < MAX_INFLIGHT;
+                direct_id_index = direct_id_index + 1) begin
+            if ((!pending_valid[direct_id_index] ||
+                    (response_fire && response_slot == direct_id_index)) &&
+                    !direct_id_found) begin
+                direct_id = direct_id_index[INFLIGHT_INDEX_WIDTH-1:0];
+                direct_id_found = 1'b1;
+            end
+        end
+    end
+    assign cache_request_rob_tag_o = ECHO_ROB_TAG != 0 ? accepted_rob_tag : 0;
     assign cache_request_id_o = TAGGED_RESPONSES != 0 ?
-        ((inflight_count == MAX_INFLIGHT && response_fire) ? response_slot : request_id) : 0;
+        (direct_payload ? direct_id :
+            (inflight_count == MAX_INFLIGHT && response_fire) ? response_slot : request_id) : 0;
     always @* begin
         free_pending_found = 1'b0;
         free_pending_slot = 0;
@@ -411,13 +545,15 @@ module rv32_load_store_queue #(
     assign completion_exception_tval_o = response_payload ?
         (cache_response_error_i ? inflight_address : 32'd0) : source_exception_tval;
     assign cache_request_valid_o = !reset_i && !flush_i && !recover_i &&
-        request_valid && (inflight_count < MAX_INFLIGHT || response_fire) &&
-        (request_mmio ? !inflight : !(inflight && inflight_mmio));
-    assign cache_request_write_o = request_write;
-    assign cache_request_address_o = request_address;
-    assign cache_request_write_data_o = request_write_data;
-    assign cache_request_byte_enable_o = request_byte_enable;
-    assign cache_request_mmio_o = request_mmio;
+        ((request_valid && !prepared_store_waiting) || direct_load) &&
+        (inflight_count < MAX_INFLIGHT || response_fire) &&
+        ((request_valid && request_mmio) ? !inflight : !(inflight && inflight_mmio));
+    assign cache_request_write_o = request_valid && request_write;
+    assign cache_request_address_o = direct_payload ?
+        {load_address_i[31:2], 2'b00} : request_address;
+    assign cache_request_write_data_o = direct_payload ? 32'd0 : request_write_data;
+    assign cache_request_byte_enable_o = direct_payload ? 4'd0 : request_byte_enable;
+    assign cache_request_mmio_o = request_valid && request_mmio;
     assign store_data_ready_o = !reset_i && !flush_i && !recover_i &&
         store_data_valid_i && data_match && !data_valid[data_slot];
     assign cache_response_ready_o = !reset_i && !flush_i &&
@@ -437,13 +573,7 @@ module rv32_load_store_queue #(
 
     always @* begin
         alloc_choice = -1;
-        access_bytes = 0;
-        best_store_distance = -1;
-        byte_address = 0;
-        byte_offset = 0;
-        best_store_data_ready = 1'b0;
         j = 0;
-        byte_index = 0;
         source_candidate = -1;
         request_candidate = -1;
         candidate_distance = ROB_ENTRIES;
@@ -509,98 +639,22 @@ module rv32_load_store_queue #(
         end
 
         for (i = 0; i < LSQ_ENTRIES; i = i + 1) begin
-            forwarding_mask[i] = 0;
-            forwarding_value[i] = 0;
-            load_blocked[i] = !address_valid[i] || fault_valid[i];
-            if (busy[i] && !is_store[i] && address_valid[i] &&
-                    !fault_valid[i]) begin
-                access_bytes = entry_size[i];
-                for (j = 0; j < LSQ_ENTRIES; j = j + 1) begin
-                    if (busy[j] && is_store[j] &&
-                            entry_distance[j] < entry_distance[i] &&
-                            !address_valid[j])
-                        load_blocked[i] = 1'b1;
-                end
-                for (byte_index = 0; byte_index < 4;
-                        byte_index = byte_index + 1) begin
-                    if (byte_index < access_bytes) begin
-                        byte_address = address[i] + byte_index;
-                        best_store_distance = -1;
-                        best_store_data_ready = 1'b0;
-                        for (j = 0; j < LSQ_ENTRIES; j = j + 1) begin
-                            if (busy[j] && is_store[j] && address_valid[j] &&
-                                    !fault_valid[j] &&
-                                    entry_distance[j] < entry_distance[i] &&
-                                    byte_address[31:2] == address[j][31:2] &&
-                                    byte_address[1:0] >= address[j][1:0] &&
-                                    (byte_address[1:0] - address[j][1:0]) <
-                                        entry_size[j] &&
-                                    (best_store_distance < 0 ||
-                                        entry_distance[j] >
-                                            best_store_distance)) begin
-                                best_store_distance = entry_distance[j];
-                                best_store_data_ready = data_valid[j];
-                                forwarding_mask[i][byte_index] = 1'b1;
-                                byte_offset = byte_address[1:0] -
-                                    address[j][1:0];
-                                case (byte_offset)
-                                    2'd0: forwarding_value[i][byte_index*8 +: 8] =
-                                        store_data[j][7:0];
-                                    2'd1: forwarding_value[i][byte_index*8 +: 8] =
-                                        store_data[j][15:8];
-                                    2'd2: forwarding_value[i][byte_index*8 +: 8] =
-                                        store_data[j][23:16];
-                                    default: forwarding_value[i][byte_index*8 +: 8] =
-                                        store_data[j][31:24];
-                                endcase
-                            end
-                        end
-                        if (forwarding_mask[i][byte_index] &&
-                                !best_store_data_ready)
-                            load_blocked[i] = 1'b1;
-                    end
-                end
-                if (forwarding_mask[i] != 0 &&
-                        forwarding_mask[i] != (4'b1111 >> (4-access_bytes)))
-                    load_blocked[i] = 1'b1;
-            end
+            forwarding_mask[i] = parallel_forward_mask[i];
+            forwarding_value[i] = parallel_forward_value[i];
+            load_blocked[i] = parallel_load_blocked[i];
         end
 
         source_candidate = -1;
-        best_distance = ROB_ENTRIES;
-        for (i = 0; i < LSQ_ENTRIES; i = i + 1) begin
-            if (busy[i] && !report_sent[i] && address_valid[i] &&
-                    (is_store[i] ? (data_valid[i] || fault_valid[i]) :
-                        (fault_valid[i] || (!started[i] &&
-                            !load_blocked[i] && forwarding_mask[i] != 0)))) begin
-                candidate_distance = entry_distance[i];
-                if (candidate_distance < best_distance) begin
-                    source_candidate = i;
-                    best_distance = candidate_distance;
-                end
-            end
-            if (busy[i] && is_store[i] && late_error[i] &&
-                    !late_error_sent[i]) begin
-                candidate_distance = entry_distance[i];
-                if (candidate_distance < best_distance) begin
-                    source_candidate = i;
-                    best_distance = candidate_distance;
-                end
-            end
-        end
-
         request_candidate = -1;
-        best_distance = ROB_ENTRIES;
-        for (i = 0; i < LSQ_ENTRIES; i = i + 1) begin
-            if (busy[i] && !is_store[i] && address_valid[i] &&
-                    !fault_valid[i] && !report_sent[i] && !started[i] &&
-                    !load_blocked[i] && forwarding_mask[i] == 0) begin
-                candidate_distance = entry_distance[i];
-                if (candidate_distance < best_distance) begin
-                    request_candidate = i;
-                    best_distance = candidate_distance;
-                end
-            end
+        if (|source_selected) begin
+            source_candidate = 0;
+            for (i = 0; i < LSQ_ENTRIES; i = i + 1)
+                if (source_selected[i]) source_candidate = source_candidate | i;
+        end
+        if (|request_selected) begin
+            request_candidate = 0;
+            for (i = 0; i < LSQ_ENTRIES; i = i + 1)
+                if (request_selected[i]) request_candidate = request_candidate | i;
         end
 
         commit_ready_o = {BE_WIDTH{1'b1}};
@@ -627,14 +681,14 @@ module rv32_load_store_queue #(
                                     i*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] &&
                                     cache_store_confirm_rob_tag_i == commit_rob_tag_i[
                                     i*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]) ||
-                                (POSTED_STORES != 0 && request_fire &&
+                                ((FAST_RETURN == 0 || BE_WIDTH == 1) && POSTED_STORES != 0 && request_fire &&
                                     request_write && !request_mmio &&
                                     cache_request_irrevocable_i &&
                                     request_lsq_tag == commit_lsq_tag_i[
                                         i*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] &&
                                     request_rob_tag == commit_rob_tag_i[
                                         i*ROB_TAG_WIDTH +: ROB_TAG_WIDTH]) ||
-                                (response_fire && inflight_write &&
+                                ((FAST_RETURN == 0 || BE_WIDTH == 1) && response_fire && inflight_write &&
                                     !pending_posted[response_slot] && !inflight_mmio && !inflight_discard &&
                                     inflight_match && !cache_response_error_i &&
                                     inflight_slot == commit_slot) ||
@@ -645,6 +699,148 @@ module rv32_load_store_queue #(
             end
         end
     end
+
+    genvar rank_entry, rank_other;
+    generate
+        for (rank_entry = 0; rank_entry < LSQ_ENTRIES; rank_entry = rank_entry + 1) begin: rank_ready
+            assign source_eligible[rank_entry] = busy[rank_entry] &&
+                ((!report_sent[rank_entry] && address_valid[rank_entry] &&
+                    (is_store[rank_entry] ? (data_valid[rank_entry] || fault_valid[rank_entry]) :
+                        (fault_valid[rank_entry] || (!started[rank_entry] &&
+                            !load_blocked[rank_entry] && forwarding_mask[rank_entry] != 0)))) ||
+                    (is_store[rank_entry] && late_error[rank_entry] && !late_error_sent[rank_entry]));
+            assign request_eligible[rank_entry] = busy[rank_entry] && !is_store[rank_entry] &&
+                address_valid[rank_entry] && !fault_valid[rank_entry] &&
+                !report_sent[rank_entry] && !started[rank_entry] &&
+                !load_blocked[rank_entry] && forwarding_mask[rank_entry] == 0;
+            assign prepare_eligible[rank_entry] = busy[rank_entry] && is_store[rank_entry] &&
+                !write_requested[rank_entry];
+            for (rank_other = 0; rank_other < LSQ_ENTRIES; rank_other = rank_other + 1) begin: compare_age
+                assign older_entry[rank_entry][rank_other] =
+                    entry_distance[rank_other] < entry_distance[rank_entry] ||
+                    (entry_distance[rank_other] == entry_distance[rank_entry] && rank_other < rank_entry);
+            end
+            assign source_selected[rank_entry] = source_eligible[rank_entry] &&
+                !(|(older_entry[rank_entry] & source_eligible));
+            assign request_selected[rank_entry] = request_eligible[rank_entry] &&
+                !(|(older_entry[rank_entry] & request_eligible));
+            assign prepare_selected[rank_entry] = prepare_eligible[rank_entry] &&
+                !(|(older_entry[rank_entry] & prepare_eligible));
+        end
+    endgenerate
+
+    genvar forward_store, forward_newer, forward_load, forward_byte;
+    generate
+        for (forward_store = 0; forward_store < LSQ_ENTRIES;
+                forward_store = forward_store + 1) begin: forward_store_data
+            assign aligned_store_data[forward_store] =
+                align_store_word(store_data[forward_store], address[forward_store][1:0]);
+            assign store_byte_mask[forward_store] = access_mask(
+                width[forward_store], address[forward_store][1:0]);
+            assign unknown_store_mask[forward_store] = !address_valid[forward_store];
+            for (forward_newer = 0; forward_newer < LSQ_ENTRIES;
+                    forward_newer = forward_newer + 1) begin: compare_store_age
+                assign newer_store_mask[forward_store][forward_newer] =
+                    entry_distance[forward_newer] > entry_distance[forward_store] ||
+                    (entry_distance[forward_newer] == entry_distance[forward_store] &&
+                        forward_newer < forward_store);
+            end
+        end
+        for (forward_load = 0; forward_load <= LSQ_ENTRIES;
+                forward_load = forward_load + 1) begin: forward_load_data
+            wire [31:0] lookup_address;
+            wire [`RV32_MEMORY_WIDTH-1:0] lookup_width;
+            wire [LSQ_ENTRIES-1:0] older;
+            wire lookup_enable;
+            wire [3:0] wanted;
+            wire [3:0] covered;
+            wire [3:0] missing;
+            wire [31:0] word_value;
+            if (forward_load == LSQ_ENTRIES) begin: incoming
+                assign lookup_address = load_address_i;
+                assign lookup_width = width[load_slot];
+                assign older = older_store_mask[load_slot];
+                assign lookup_enable = FAST_RETURN != 0 && load_match &&
+                    !address_fault(load_address_i, width[load_slot], 1'b0);
+            end else begin: resident
+                assign lookup_address = address[forward_load];
+                assign lookup_width = width[forward_load];
+                assign older = older_store_mask[forward_load];
+                assign lookup_enable = busy[forward_load] && !is_store[forward_load] &&
+                    address_valid[forward_load] && !fault_valid[forward_load];
+            end
+            assign wanted = access_mask(lookup_width, lookup_address[1:0]);
+            assign forward_wanted[forward_load] = wanted;
+            for (forward_byte = 0; forward_byte < 4;
+                    forward_byte = forward_byte + 1) begin: select_byte
+                wire [LSQ_ENTRIES-1:0] eligible;
+                wire [LSQ_ENTRIES-1:0] selected;
+                wire [LSQ_ENTRIES-1:0] unready;
+                wire [7:0] value_tree [1:2*LSQ_ENTRIES-1];
+                for (forward_store = 0; forward_store < LSQ_ENTRIES;
+                        forward_store = forward_store + 1) begin: select_store
+                    assign eligible[forward_store] = older[forward_store] &&
+                        address_valid[forward_store] && !fault_valid[forward_store] &&
+                        lookup_address[31:2] == address[forward_store][31:2] &&
+                        store_byte_mask[forward_store][forward_byte];
+                    assign selected[forward_store] = eligible[forward_store] &&
+                        !(|(eligible & newer_store_mask[forward_store]));
+                    assign unready[forward_store] = selected[forward_store] &&
+                        !data_valid[forward_store];
+                    if (forward_load == LSQ_ENTRIES) begin: incoming_value
+                        assign value_tree[LSQ_ENTRIES+forward_store] =
+                            {8{selected[forward_store] && wanted[forward_byte]}} &
+                            aligned_store_data[forward_store][forward_byte*8 +: 8];
+                    end else begin: shared_value
+                        assign value_tree[LSQ_ENTRIES+forward_store] = 8'd0;
+                    end
+                end
+                for (forward_store = 1; forward_store < LSQ_ENTRIES;
+                        forward_store = forward_store + 1) begin: merge_byte
+                    assign value_tree[forward_store] = value_tree[2*forward_store] |
+                        value_tree[2*forward_store+1];
+                end
+                assign forward_byte_selected[forward_load][forward_byte] = selected;
+                assign covered[forward_byte] = wanted[forward_byte] && (|eligible);
+                assign missing[forward_byte] = wanted[forward_byte] && (|unready);
+                assign word_value[forward_byte*8 +: 8] = value_tree[1];
+            end
+            assign parallel_forward_mask[forward_load] = lookup_enable ?
+                unalign_mask(covered, lookup_address[1:0]) : 4'd0;
+            assign parallel_forward_value[forward_load] = lookup_enable ?
+                unalign_word(word_value, lookup_address[1:0]) : 32'd0;
+            if (forward_load == LSQ_ENTRIES) begin: incoming_blocked
+                assign parallel_load_blocked[forward_load] = !lookup_enable ||
+                    (|(older & unknown_store_mask)) || (|missing) ||
+                    (covered != 0 && covered != wanted);
+            end else begin: resident_blocked
+                assign parallel_load_blocked[forward_load] =
+                    !address_valid[forward_load] || fault_valid[forward_load] ||
+                    (lookup_enable && ((|(older & unknown_store_mask)) ||
+                        (|missing) || (covered != 0 && covered != wanted)));
+            end
+        end
+    endgenerate
+
+    genvar shared_byte, shared_store;
+    generate
+        for (shared_byte = 0; shared_byte < 4; shared_byte = shared_byte + 1) begin: shared_forward_byte
+            wire [LSQ_ENTRIES-1:0] selected = forward_byte_selected[selected_forward_slot][shared_byte];
+            wire wanted = forward_wanted[selected_forward_slot][shared_byte];
+            wire [7:0] tree [1:2*LSQ_ENTRIES-1];
+            for (shared_store = 0; shared_store < LSQ_ENTRIES;
+                    shared_store = shared_store + 1) begin: select_store
+                assign tree[LSQ_ENTRIES+shared_store] =
+                    {8{selected[shared_store] && wanted}} &
+                    aligned_store_data[shared_store][shared_byte*8 +: 8];
+            end
+            for (shared_store = 1; shared_store < LSQ_ENTRIES;
+                    shared_store = shared_store + 1) begin: merge_store
+                assign tree[shared_store] = tree[2*shared_store] | tree[2*shared_store+1];
+            end
+            assign selected_forward_word[shared_byte*8 +: 8] = tree[1];
+        end
+    endgenerate
 
     always @* begin
         incoming_store_conflict = 0;
@@ -701,6 +897,27 @@ module rv32_load_store_queue #(
     end
 
     always @* begin
+        store_prepare_oldest = -1;
+        if (|prepare_selected) begin
+            store_prepare_oldest = 0;
+            for (store_prepare_index = 0; store_prepare_index < LSQ_ENTRIES;
+                    store_prepare_index = store_prepare_index + 1)
+                if (prepare_selected[store_prepare_index])
+                    store_prepare_oldest = store_prepare_oldest | store_prepare_index;
+        end
+        store_prepare_candidate = -1;
+        if (FAST_RETURN != 0 && store_prepare_oldest >= 0 &&
+                address_valid[store_prepare_oldest] && data_valid[store_prepare_oldest] &&
+                !fault_valid[store_prepare_oldest] &&
+                !is_mmio_store(address[store_prepare_oldest], width[store_prepare_oldest]))
+            store_prepare_candidate = store_prepare_oldest;
+        selected_store_candidate = store_request_candidate;
+        if (selected_store_candidate < 0 && request_candidate < 0 &&
+                !incoming_load_request)
+            selected_store_candidate = store_prepare_candidate;
+    end
+
+    always @* begin
         occupancy_o = 0;
         for (occupancy_index = 0; occupancy_index < LSQ_ENTRIES;
                 occupancy_index = occupancy_index + 1)
@@ -738,16 +955,17 @@ module rv32_load_store_queue #(
             if (request_fire) begin
                 inflight_tail <= (MAX_INFLIGHT == 1) ? 0 :
                     inflight_tail + 1'b1;
-                pending_width[accepted_slot] <= width[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
-                pending_unsigned[accepted_slot] <= load_unsigned[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
-                pending_write[accepted_slot] <= request_write;
+                pending_width[accepted_slot] <= width[accepted_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
+                pending_unsigned[accepted_slot] <= load_unsigned[accepted_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
+                pending_write[accepted_slot] <= cache_request_write_o;
                 pending_posted[accepted_slot] <= POSTED_STORES != 0 &&
-                    request_write && !request_mmio && cache_request_irrevocable_i;
-                pending_mmio[accepted_slot] <= request_mmio;
+                    cache_request_write_o && !cache_request_mmio_o && cache_request_irrevocable_i;
+                pending_mmio[accepted_slot] <= cache_request_mmio_o;
                 pending_discard[accepted_slot] <= 1'b0;
-                pending_rob_tag[accepted_slot] <= request_rob_tag;
-                pending_lsq_tag[accepted_slot] <= request_lsq_tag;
+                pending_rob_tag[accepted_slot] <= accepted_rob_tag;
+                pending_lsq_tag[accepted_slot] <= accepted_lsq_tag;
                 pending_address[accepted_slot] <=
+                    direct_payload ? load_address_i :
                     address[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]];
             end
             if (response_fire)
@@ -811,6 +1029,7 @@ module rv32_load_store_queue #(
             request_write_data <= 0;
             request_byte_enable <= 0;
             request_mmio <= 1'b0;
+            request_prepared <= 1'b0;
         end else begin
             if (recover_i) begin
                 for (sequential_index = 0; sequential_index < LSQ_ENTRIES;
@@ -842,6 +1061,10 @@ module rv32_load_store_queue #(
             end else begin
                 if (confirm_live)
                     write_done[confirm_lsq_slot] <= 1'b1;
+                if (FAST_RETURN != 0 && BE_WIDTH > 1 && POSTED_STORES != 0 &&
+                        request_fire && cache_request_write_o &&
+                        !cache_request_mmio_o && cache_request_irrevocable_i)
+                    write_done[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]] <= 1'b1;
                 if (source_valid && completion_ready_i) begin
                     source_valid <= 1'b0;
                     if (busy[source_lsq_tag[LSQ_INDEX_WIDTH-1:0]] &&
@@ -885,7 +1108,11 @@ module rv32_load_store_queue #(
                             report_sent[inflight_slot] <= 1'b1;
                         end
                     end
-                end else if ((!source_valid || completion_ready_i) &&
+                end
+                // Store acknowledgments do not consume the completion register.
+                if (!(response_fire && !inflight_write &&
+                        !inflight_discard && inflight_match) &&
+                        (!source_valid || completion_ready_i) &&
                         source_candidate >= 0) begin
                     source_valid <= 1'b1;
                     source_rob_tag <= rob_tag[source_candidate];
@@ -903,34 +1130,66 @@ module rv32_load_store_queue #(
                             fault_cause[source_candidate] : 4'd0;
                         source_value <= is_store[source_candidate] ||
                             fault_valid[source_candidate] ? 32'd0 :
-                            extend_value(forwarding_value[source_candidate],
+                            extend_value(selected_forward_value,
                                 width[source_candidate],
                                 load_unsigned[source_candidate]);
                         report_sent[source_candidate] <= 1'b1;
                     end
+                end else if (!(response_fire && !inflight_write &&
+                        !inflight_discard && inflight_match) &&
+                        (!source_valid || completion_ready_i) &&
+                        (fast_store_address || fast_store_data)) begin
+                    source_valid <= 1'b1;
+                    source_rob_tag <= rob_tag[fast_store_slot];
+                    source_lsq_tag <= {generation[fast_store_slot], fast_store_slot};
+                    source_value <= 0;
+                    source_exception_valid <= 1'b0;
+                    source_exception_cause <= 0;
+                    source_exception_tval <= fast_store_tval;
+                    report_sent[fast_store_slot] <= 1'b1;
+                end else if (FAST_RETURN != 0 &&
+                        !(response_fire && !inflight_write &&
+                            !inflight_discard && inflight_match) &&
+                        (!source_valid || completion_ready_i) &&
+                        load_address_valid_i && load_address_ready_o &&
+                        !parallel_load_blocked[LSQ_ENTRIES] &&
+                        parallel_forward_mask[LSQ_ENTRIES] != 0) begin
+                    source_valid <= 1'b1;
+                    source_rob_tag <= load_address_rob_tag_i;
+                    source_lsq_tag <= load_address_lsq_tag_i;
+                    source_value <= extend_value(parallel_forward_value[LSQ_ENTRIES],
+                        width[load_slot], load_unsigned[load_slot]);
+                    source_exception_valid <= 1'b0;
+                    source_exception_cause <= 0;
+                    source_exception_tval <= load_address_i;
+                    report_sent[load_slot] <= 1'b1;
                 end
 
-                if ((!request_valid || request_fire) &&
+                if (replace_prepared_store)
+                    write_requested[request_lsq_tag[LSQ_INDEX_WIDTH-1:0]] <= 1'b0;
+                if ((!request_valid || request_fire || replace_prepared_store) &&
                         !(request_valid && request_mmio) &&
                         !(inflight && inflight_mmio)) begin
-                    if (store_request_candidate >= 0) begin
+                    if (selected_store_candidate >= 0) begin
                         request_valid <= 1'b1;
+                        request_prepared <= store_request_candidate < 0;
                         request_id <= free_pending_slot;
                         request_write <= 1'b1;
-                        request_rob_tag <= rob_tag[store_request_candidate];
-                        request_lsq_tag <= {generation[store_request_candidate],
-                            store_request_candidate[LSQ_INDEX_WIDTH-1:0]};
-                        request_address <= {address[store_request_candidate][31:2], 2'b00};
-                        request_write_data <= store_data[store_request_candidate] <<
-                            (address[store_request_candidate][1:0]*8);
+                        request_rob_tag <= rob_tag[selected_store_candidate];
+                        request_lsq_tag <= {generation[selected_store_candidate],
+                            selected_store_candidate[LSQ_INDEX_WIDTH-1:0]};
+                        request_address <= {address[selected_store_candidate][31:2], 2'b00};
+                        request_write_data <= store_data[selected_store_candidate] <<
+                            (address[selected_store_candidate][1:0]*8);
                         request_byte_enable <= (4'b1111 >>
-                            (4-size_bytes(width[store_request_candidate]))) <<
-                            address[store_request_candidate][1:0];
-                        request_mmio <= is_mmio_store(address[store_request_candidate],
-                            width[store_request_candidate]);
-                        write_requested[store_request_candidate] <= 1'b1;
+                            (4-size_bytes(width[selected_store_candidate]))) <<
+                            address[selected_store_candidate][1:0];
+                        request_mmio <= is_mmio_store(address[selected_store_candidate],
+                            width[selected_store_candidate]);
+                        write_requested[selected_store_candidate] <= 1'b1;
                     end else if (request_candidate >= 0) begin
                         request_valid <= 1'b1;
+                        request_prepared <= 1'b0;
                         request_id <= free_pending_slot;
                         request_write <= 1'b0;
                         request_rob_tag <= rob_tag[request_candidate];
@@ -942,7 +1201,8 @@ module rv32_load_store_queue #(
                         request_mmio <= 1'b0;
                         started[request_candidate] <= 1'b1;
                     end else if (incoming_load_request) begin
-                        request_valid <= 1'b1;
+                        request_valid <= !(direct_load && request_fire);
+                        request_prepared <= 1'b0;
                         request_id <= free_pending_slot;
                         request_write <= 1'b0;
                         request_rob_tag <= load_address_rob_tag_i;

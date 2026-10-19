@@ -362,15 +362,15 @@ module rv32_l1_data_cache #(
     assign s2_bad_address = s2_address[1:0] != 0 ||
         s2_address > 32'h0ffffffc;
     assign s2_miss = s2_valid && !s2_bad_address && !s2_hit;
-    assign pipeline_run = MSHR_ENTRIES == 2 ? !m_delivery && !m_replay :
+    assign pipeline_run = MSHR_ENTRIES == 2 ? !m_replay :
         mode == RUN || (NONBLOCKING != 0 && HIT_UNDER_MISS != 0 && mode != DELIVER && mode != REPLAY);
     assign s1_locked = MSHR_ENTRIES == 2 ? m_s1_locked :
         NONBLOCKING != 0 && miss_active && s1_set == miss_index;
     assign s2_ready = !s2_valid ||
-        (pipeline_run && !s2_miss && r_ready && !refill_install);
+        (pipeline_run && !m_delivery && !s2_miss && r_ready && !refill_install);
     assign s1_can_advance = (!s1_valid || s2_ready) && !s1_locked;
     assign array_read_conflict = store_commit && s0_valid &&
-        (s0_set != s2_set);
+        (s0_set != s2_set) && (NUM_SETS < 4 || s0_set[BANK_BITS-1:0] == s2_set[BANK_BITS-1:0]);
     assign pipeline_read_accept = pipeline_run && !refill_install && !s2_miss &&
         s1_can_advance && s0_valid && !array_read_conflict;
     assign array_read_enable = !reset_i &&
@@ -422,7 +422,7 @@ module rv32_l1_data_cache #(
         s1_write && s1_hit && !s1_irrevocable &&
         s1_address[1:0] == 0 && s1_address <= 32'h0ffffffc;
 
-    assign store_commit = pipeline_run && !refill_install && s2_valid &&
+    assign store_commit = pipeline_run && !m_delivery && !refill_install && s2_valid &&
         !s2_bad_address && s2_hit && s2_write && r_ready;
     assign store_line = merge_word(s2_line, s2_address[3:2],
         s2_write_data, s2_byte_enable);
@@ -516,7 +516,9 @@ module rv32_l1_data_cache #(
             s1_selected_dirty = 1'b1;
     end
 
-    genvar way_gen;
+    localparam BANK_BITS = NUM_SETS >= 8 ? 2 : 1;
+    localparam BANK_COUNT = 1 << BANK_BITS;
+    genvar way_gen, bank_gen;
     generate
         for (way_gen = 0; way_gen < NUM_WAYS;
                 way_gen = way_gen + 1) begin : cache_way
@@ -540,6 +542,39 @@ module rv32_l1_data_cache #(
             assign tag_ram_write[way_gen] = refill_this_way;
             assign tag_ram_write_data[way_gen] = miss_tag;
 
+            if (NUM_SETS >= 4) begin: banked_arrays
+                wire [INDEX_WIDTH-1:0] read_set = pipeline_read_accept ? s0_set : s1_set;
+                reg [BANK_BITS-1:0] read_bank;
+                wire [127:0] data_read [0:BANK_COUNT-1];
+                wire [TAG_WIDTH-1:0] tag_read [0:BANK_COUNT-1];
+                always @(posedge clk_i) begin
+                    if (reset_i) read_bank <= {BANK_BITS{1'b0}};
+                    else if (array_read_enable) read_bank <= read_set[BANK_BITS-1:0];
+                end
+                assign data_ram_read[way_gen] = data_read[read_bank];
+                assign tag_ram_read[way_gen] = tag_read[read_bank];
+                for (bank_gen = 0; bank_gen < BANK_COUNT; bank_gen = bank_gen + 1) begin: bank
+                    wire write_store = store_this_way && s2_set[BANK_BITS-1:0] == bank_gen;
+                    wire write_refill = refill_this_way && miss_index[BANK_BITS-1:0] == bank_gen;
+                    wire read_enable = array_read_enable && read_set[BANK_BITS-1:0] == bank_gen;
+                    wire [INDEX_WIDTH-BANK_BITS-1:0] data_index = write_refill ?
+                        miss_index[INDEX_WIDTH-1:BANK_BITS] : write_store ?
+                        s2_set[INDEX_WIDTH-1:BANK_BITS] : read_set[INDEX_WIDTH-1:BANK_BITS];
+                    wire [INDEX_WIDTH-BANK_BITS-1:0] tag_index = write_refill ?
+                        miss_index[INDEX_WIDTH-1:BANK_BITS] : read_set[INDEX_WIDTH-1:BANK_BITS];
+                    sram_fakeram #(.DEPTH(NUM_SETS/BANK_COUNT), .WIDTH(128),
+                        .WRITE_GRANULARITY(8)) data_array (
+                        .clk(clk_i), .en(read_enable || write_store || write_refill),
+                        .we(write_store || write_refill),
+                        .wmask((write_store || write_refill) ? 16'hffff : 16'd0),
+                        .addr(data_index), .wdata(data_ram_write_data[way_gen]),
+                        .rdata(data_read[bank_gen]));
+                    sram_fakeram #(.DEPTH(NUM_SETS/BANK_COUNT), .WIDTH(TAG_WIDTH)) tag_array (
+                        .clk(clk_i), .en(read_enable || write_refill), .we(write_refill),
+                        .wmask(1'b1), .addr(tag_index), .wdata(tag_ram_write_data[way_gen]),
+                        .rdata(tag_read[bank_gen]));
+                end
+            end else begin: single_arrays
             sram_fakeram #(
                 .DEPTH(NUM_SETS),
                 .WIDTH(128),
@@ -566,6 +601,7 @@ module rv32_l1_data_cache #(
                 .wdata(tag_ram_write_data[way_gen]),
                 .rdata(tag_ram_read[way_gen])
             );
+            end
         end
     endgenerate
 
