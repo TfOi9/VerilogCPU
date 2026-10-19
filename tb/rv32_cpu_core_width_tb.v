@@ -7,6 +7,9 @@ module rv32_cpu_core_width_tb;
     parameter RECOVERY_WIDTH = 4;
     parameter PHYS_REGS = 64;
     parameter ROB_ENTRIES = 32;
+    parameter LOAD_VALUE_ENTRIES = 0;
+    parameter FETCH_LINE_BUFFER_ENTRIES = 4;
+    parameter FETCH_LINE_BUFFER_SRAM = 0;
     localparam ROB_INDEX_WIDTH = address_width_for_count(ROB_ENTRIES);
     localparam ROB_TAG_WIDTH = ROB_INDEX_WIDTH + 2;
     function integer address_width_for_count;
@@ -94,6 +97,9 @@ module rv32_cpu_core_width_tb;
 
     rv32_cpu_core #(.FE_WIDTH(FE_WIDTH), .BE_WIDTH(BE_WIDTH),
         .RECOVERY_WIDTH(RECOVERY_WIDTH), .RESULT_FALLTHROUGH(RESULT_FALLTHROUGH),
+        .LOAD_VALUE_ENTRIES(LOAD_VALUE_ENTRIES),
+        .FETCH_LINE_BUFFER_ENTRIES(FETCH_LINE_BUFFER_ENTRIES),
+        .FETCH_LINE_BUFFER_SRAM(FETCH_LINE_BUFFER_SRAM),
         .PHYS_REGS(PHYS_REGS), .ROB_ENTRIES(ROB_ENTRIES)) dut (
         .dcache_request_rob_tag_o(), .dcache_response_rob_tag_i(0),
         .dcache_request_id_o(), .dcache_response_id_i(2'd0),

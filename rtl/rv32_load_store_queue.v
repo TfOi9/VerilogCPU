@@ -18,6 +18,7 @@ module rv32_load_store_queue #(
     parameter FAST_RETURN = ECHO_ROB_TAG && TAGGED_RESPONSES,
     parameter POSTED_STORES = 0,
     parameter LATE_STORE_CONFIRM = 0,
+    parameter LOAD_VALUE_ENTRIES = 0,
     parameter LOAD_FALLTHROUGH = 0
 ) (
     input  wire clk_i,
@@ -152,7 +153,7 @@ module rv32_load_store_queue #(
                 commit_fire_i[store_authorize_lane] && !commit_exception_valid_i[store_authorize_lane];
         end
     end
-    wire prepared_store_waiting = request_valid && request_prepared &&
+    wire prepared_store_waiting = FAST_RETURN != 0 && request_valid && request_prepared &&
         !prepared_store_authorized;
 
     localparam INFLIGHT_INDEX_WIDTH = (MAX_INFLIGHT > 1) ?
@@ -248,8 +249,102 @@ module rv32_load_store_queue #(
     reg [LSQ_ENTRIES-1:0] older_store_mask [0:LSQ_ENTRIES-1];
     reg [LSQ_ENTRIES-1:0] incoming_store_conflict;
     wire [3:0] incoming_byte_mask = access_mask(width[load_slot], load_address_i[1:0]);
-    wire incoming_load_request = load_address_valid_i && load_address_ready_o &&
+    localparam LOAD_VALUE_STORAGE = LOAD_VALUE_ENTRIES > 0 ? LOAD_VALUE_ENTRIES : 1;
+    localparam LOAD_VALUE_INDEX_WIDTH = LOAD_VALUE_STORAGE > 1 ? index_width_for_count(LOAD_VALUE_STORAGE) : 1;
+    localparam LOAD_VALUE_TAG_LOW = LOAD_VALUE_STORAGE > 1 ? 2 + LOAD_VALUE_INDEX_WIDTH : 2;
+    localparam LOAD_VALUE_ADDRESS_WIDTH = index_width_for_count(MEMORY_BYTES);
+    localparam LOAD_VALUE_TAG_HIGH = LOAD_VALUE_ADDRESS_WIDTH > LOAD_VALUE_TAG_LOW ?
+        LOAD_VALUE_ADDRESS_WIDTH - 1 : LOAD_VALUE_TAG_LOW;
+    localparam LOAD_VALUE_TAG_WIDTH = LOAD_VALUE_TAG_HIGH - LOAD_VALUE_TAG_LOW + 1;
+    // The hash and tag reconstruct every legal RAM word address.
+    // Only validity resets; each fill supplies a complete word and tag.
+    reg lv_valid [0:LOAD_VALUE_STORAGE-1];
+    reg [LOAD_VALUE_TAG_WIDTH-1:0] lv_tag [0:LOAD_VALUE_STORAGE-1];
+    reg [31:0] lv_data [0:LOAD_VALUE_STORAGE-1];
+    wire [LOAD_VALUE_INDEX_WIDTH-1:0] lv_lookup_index = LOAD_VALUE_ENTRIES == 1 ? 0 :
+        (load_address_i[2 +: LOAD_VALUE_INDEX_WIDTH] ^
+         load_address_i[2+LOAD_VALUE_INDEX_WIDTH +: LOAD_VALUE_INDEX_WIDTH]);
+    wire [LOAD_VALUE_INDEX_WIDTH-1:0] lv_fill_index = LOAD_VALUE_ENTRIES == 1 ? 0 :
+        (inflight_address[2 +: LOAD_VALUE_INDEX_WIDTH] ^
+         inflight_address[2+LOAD_VALUE_INDEX_WIDTH +: LOAD_VALUE_INDEX_WIDTH]);
+    wire [LOAD_VALUE_INDEX_WIDTH-1:0] lv_store_index = LOAD_VALUE_ENTRIES == 1 ? 0 :
+        (store_address_i[2 +: LOAD_VALUE_INDEX_WIDTH] ^
+         store_address_i[2+LOAD_VALUE_INDEX_WIDTH +: LOAD_VALUE_INDEX_WIDTH]);
+    wire [LOAD_VALUE_INDEX_WIDTH-1:0] lv_request_index = LOAD_VALUE_ENTRIES == 1 ? 0 :
+        (cache_request_address_o[2 +: LOAD_VALUE_INDEX_WIDTH] ^
+         cache_request_address_o[2+LOAD_VALUE_INDEX_WIDTH +: LOAD_VALUE_INDEX_WIDTH]);
+    wire [LOAD_VALUE_TAG_WIDTH+31:0] lv_lookup_tree [0:2*LOAD_VALUE_STORAGE-2];
+    wire [LOAD_VALUE_TAG_WIDTH-1:0] lv_lookup_tag = lv_lookup_tree[0][LOAD_VALUE_TAG_WIDTH+31:32];
+    wire [31:0] lv_lookup_data = lv_lookup_tree[0][31:0];
+    genvar lv_read_leaf, lv_read_node;
+    generate
+        for (lv_read_leaf = 0; lv_read_leaf < LOAD_VALUE_STORAGE;
+                lv_read_leaf = lv_read_leaf + 1) begin: value_read_leaf
+            assign lv_lookup_tree[LOAD_VALUE_STORAGE-1+lv_read_leaf] =
+                lv_lookup_index == lv_read_leaf && lv_valid[lv_read_leaf] ?
+                {lv_tag[lv_read_leaf], lv_data[lv_read_leaf]} : 0;
+        end
+        for (lv_read_node = 0; lv_read_node < LOAD_VALUE_STORAGE-1;
+                lv_read_node = lv_read_node + 1) begin: value_read_node
+            assign lv_lookup_tree[lv_read_node] =
+                lv_lookup_tree[2*lv_read_node+1] | lv_lookup_tree[2*lv_read_node+2];
+        end
+    endgenerate
+    wire lv_hit = LOAD_VALUE_ENTRIES != 0 && lv_valid[lv_lookup_index] &&
+        lv_lookup_tag == load_address_i[LOAD_VALUE_TAG_HIGH:LOAD_VALUE_TAG_LOW];
+    wire lv_capture = load_address_valid_i && load_address_ready_o && lv_hit &&
         !incoming_load_blocked && !address_fault(load_address_i, width[load_slot], 1'b0);
+    integer lv_reset, lv_commit;
+    reg [LSQ_INDEX_WIDTH-1:0] lv_commit_slot;
+    reg [LOAD_VALUE_INDEX_WIDTH-1:0] lv_commit_index;
+    always @(posedge clk_i) begin
+        if (reset_i || flush_i) begin
+            for (lv_reset = 0; lv_reset < LOAD_VALUE_STORAGE; lv_reset = lv_reset + 1) begin
+                lv_valid[lv_reset] <= 1'b0;
+            end
+        end else if (LOAD_VALUE_ENTRIES != 0) begin
+            if (response_fire && !inflight_write && !inflight_discard && inflight_match &&
+                    !cache_response_error_i && !recover_i &&
+                    pending_width[response_slot] == `RV32_MEMORY_WORD &&
+                    !(store_address_valid_i && store_address_ready_o &&
+                        store_address_i[31:2] == inflight_address[31:2]) &&
+                    !(request_fire && cache_request_write_o &&
+                        cache_request_address_o[31:2] == inflight_address[31:2])) begin
+                lv_valid[lv_fill_index] <= 1'b1;
+                lv_tag[lv_fill_index] <= inflight_address[LOAD_VALUE_TAG_HIGH:LOAD_VALUE_TAG_LOW];
+                lv_data[lv_fill_index] <= cache_response_read_data_i;
+            end
+            if (store_address_valid_i && store_address_ready_o)
+                lv_valid[lv_store_index] <= 1'b0;
+            if (request_fire && cache_request_write_o)
+                lv_valid[lv_request_index] <= 1'b0;
+            // Store retirement is restricted to commit slot zero.
+            for (lv_commit = 0; lv_commit < 1; lv_commit = lv_commit + 1) begin
+                lv_commit_slot = commit_lsq_tag_i[lv_commit*LSQ_TAG_WIDTH +: LSQ_INDEX_WIDTH];
+                lv_commit_index = LOAD_VALUE_ENTRIES == 1 ? 0 :
+                    ((address[lv_commit_slot] >> 2) ^
+                     (address[lv_commit_slot] >> (2+LOAD_VALUE_INDEX_WIDTH))) & (LOAD_VALUE_STORAGE - 1);
+                if (commit_fire_i[lv_commit] && commit_lsq_valid_i[lv_commit] &&
+                        is_store_op(commit_op_i[lv_commit*`RV32_OP_WIDTH +: `RV32_OP_WIDTH]) &&
+                        busy[lv_commit_slot] && is_store[lv_commit_slot] && !fault_valid[lv_commit_slot] &&
+                        {generation[lv_commit_slot], lv_commit_slot} ==
+                            commit_lsq_tag_i[lv_commit*LSQ_TAG_WIDTH +: LSQ_TAG_WIDTH] &&
+                        rob_tag[lv_commit_slot] == commit_rob_tag_i[lv_commit*ROB_TAG_WIDTH +: ROB_TAG_WIDTH] &&
+                        !is_mmio_store(address[lv_commit_slot], width[lv_commit_slot])) begin
+                    if (width[lv_commit_slot] == `RV32_MEMORY_WORD) begin
+                        lv_valid[lv_commit_index] <= 1'b1;
+                        lv_tag[lv_commit_index] <= address[lv_commit_slot][LOAD_VALUE_TAG_HIGH:LOAD_VALUE_TAG_LOW];
+                        lv_data[lv_commit_index] <= store_data[lv_commit_slot];
+                    end else begin
+                        // Partial Stores conservatively discard the cached word.
+                        lv_valid[lv_commit_index] <= 1'b0;
+                    end
+                end
+            end
+        end
+    end
+    wire incoming_load_request = load_address_valid_i && load_address_ready_o &&
+        !incoming_load_blocked && !lv_hit && !address_fault(load_address_i, width[load_slot], 1'b0);
     wire [3:0] parallel_forward_mask [0:LSQ_ENTRIES];
     wire [31:0] parallel_forward_value [0:LSQ_ENTRIES];
     wire parallel_load_blocked [0:LSQ_ENTRIES];
@@ -498,7 +593,11 @@ module rv32_load_store_queue #(
             if (commit_valid_i[direct_store_lane] &&
                     is_store_op(commit_op_i[direct_store_lane*`RV32_OP_WIDTH +: `RV32_OP_WIDTH]) &&
                     !write_requested[commit_lsq_tag_i[
-                        direct_store_lane*LSQ_TAG_WIDTH +: LSQ_INDEX_WIDTH]])
+                        direct_store_lane*LSQ_TAG_WIDTH +: LSQ_INDEX_WIDTH]] &&
+                    is_mmio_store(address[commit_lsq_tag_i[
+                        direct_store_lane*LSQ_TAG_WIDTH +: LSQ_INDEX_WIDTH]],
+                        width[commit_lsq_tag_i[
+                        direct_store_lane*LSQ_TAG_WIDTH +: LSQ_INDEX_WIDTH]]))
                 direct_store_barrier = 1'b1;
         end
     end
@@ -706,13 +805,13 @@ module rv32_load_store_queue #(
             assign source_eligible[rank_entry] = busy[rank_entry] &&
                 ((!report_sent[rank_entry] && address_valid[rank_entry] &&
                     (is_store[rank_entry] ? (data_valid[rank_entry] || fault_valid[rank_entry]) :
-                        (fault_valid[rank_entry] || (!started[rank_entry] &&
+                        (fault_valid[rank_entry] || data_valid[rank_entry] || (!started[rank_entry] &&
                             !load_blocked[rank_entry] && forwarding_mask[rank_entry] != 0)))) ||
                     (is_store[rank_entry] && late_error[rank_entry] && !late_error_sent[rank_entry]));
             assign request_eligible[rank_entry] = busy[rank_entry] && !is_store[rank_entry] &&
                 address_valid[rank_entry] && !fault_valid[rank_entry] &&
                 !report_sent[rank_entry] && !started[rank_entry] &&
-                !load_blocked[rank_entry] && forwarding_mask[rank_entry] == 0;
+                !data_valid[rank_entry] && !load_blocked[rank_entry] && forwarding_mask[rank_entry] == 0;
             assign prepare_eligible[rank_entry] = busy[rank_entry] && is_store[rank_entry] &&
                 !write_requested[rank_entry];
             for (rank_other = 0; rank_other < LSQ_ENTRIES; rank_other = rank_other + 1) begin: compare_age
@@ -1130,7 +1229,7 @@ module rv32_load_store_queue #(
                             fault_cause[source_candidate] : 4'd0;
                         source_value <= is_store[source_candidate] ||
                             fault_valid[source_candidate] ? 32'd0 :
-                            extend_value(selected_forward_value,
+                            extend_value(data_valid[source_candidate] ? store_data[source_candidate] : selected_forward_value,
                                 width[source_candidate],
                                 load_unsigned[source_candidate]);
                         report_sent[source_candidate] <= 1'b1;
@@ -1152,12 +1251,12 @@ module rv32_load_store_queue #(
                             !inflight_discard && inflight_match) &&
                         (!source_valid || completion_ready_i) &&
                         load_address_valid_i && load_address_ready_o &&
-                        !parallel_load_blocked[LSQ_ENTRIES] &&
-                        parallel_forward_mask[LSQ_ENTRIES] != 0) begin
+                        (lv_capture || (!parallel_load_blocked[LSQ_ENTRIES] &&
+                        parallel_forward_mask[LSQ_ENTRIES] != 0))) begin
                     source_valid <= 1'b1;
                     source_rob_tag <= load_address_rob_tag_i;
                     source_lsq_tag <= load_address_lsq_tag_i;
-                    source_value <= extend_value(parallel_forward_value[LSQ_ENTRIES],
+                    source_value <= extend_value(lv_capture ? (lv_lookup_data >> (load_address_i[1:0]*8)) : parallel_forward_value[LSQ_ENTRIES],
                         width[load_slot], load_unsigned[load_slot]);
                     source_exception_valid <= 1'b0;
                     source_exception_cause <= 0;
@@ -1215,6 +1314,12 @@ module rv32_load_store_queue #(
                     end
                 end
 
+                if (direct_load && request_fire)
+                    started[load_slot] <= 1'b1;
+                if (lv_capture) begin
+                    data_valid[load_slot] <= 1'b1;
+                    store_data[load_slot] <= lv_lookup_data >> (load_address_i[1:0]*8);
+                end
                 if (load_address_valid_i && load_address_ready_o) begin
                     address_valid[load_slot] <= 1'b1;
                     address[load_slot] <= load_address_i;

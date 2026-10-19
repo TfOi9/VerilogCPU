@@ -34,7 +34,7 @@ def main():
     result = {'completed': False, 'passed': False,
               'sha256': {str(p): digest(p) for p in (source, tb, Path(__file__))}, 'tests': []}
     try:
-        for count in (33, 48, 56, 64, 96):
+        for count in (33, 48, 56, 59, 64, 96):
             width = (count - 1).bit_length()
             for lanes in (1, 2, 4):
                 name = f'p{count}-b{lanes}'

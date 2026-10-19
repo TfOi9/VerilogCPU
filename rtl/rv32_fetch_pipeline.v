@@ -6,7 +6,8 @@ module rv32_fetch_pipeline #(
     parameter BE_WIDTH = 1,
     parameter FETCH_QUEUE_ENTRIES = 8,
     parameter FETCH_QUEUE_INDEX_WIDTH = 3,
-    parameter FETCH_LINE_BUFFER_ENTRIES = 4
+    parameter FETCH_LINE_BUFFER_ENTRIES = 4,
+    parameter FETCH_LINE_BUFFER_SRAM = 0
 ) (
     input  wire                                         clk_i,
     input  wire                                         reset_i,
@@ -61,13 +62,16 @@ module rv32_fetch_pipeline #(
     localparam LINE_BUFFER_INDEX_WIDTH = LINE_BUFFER_STORAGE > 1 ?
         address_width_for_count(LINE_BUFFER_STORAGE) : 1;
 
+    localparam LINE_BUFFER_TAG_LOW = LINE_BUFFER_STORAGE > 1 ?
+        4 + LINE_BUFFER_INDEX_WIDTH : 4;
+    localparam LINE_BUFFER_TAG_WIDTH = 32 - LINE_BUFFER_TAG_LOW;
+    // Index bits are implicit; a valid fill initializes every tag bit.
     reg line_buffer_valid [0:LINE_BUFFER_STORAGE-1];
-    reg [27:0] line_buffer_tag [0:LINE_BUFFER_STORAGE-1];
-    reg [127:0] line_buffer_data [0:LINE_BUFFER_STORAGE-1];
+    reg [LINE_BUFFER_TAG_WIDTH-1:0] line_buffer_tag [0:LINE_BUFFER_STORAGE-1];
     reg local_response_valid_reg;
     reg request_blocked_reg;
     reg [31:0] local_response_pc_reg;
-    reg [127:0] local_response_line_reg;
+    wire [127:0] local_response_line_reg;
     reg [LINE_BUFFER_INDEX_WIDTH-1:0] line_buffer_request_index;
     reg [LINE_BUFFER_INDEX_WIDTH-1:0] line_buffer_response_index;
     integer line_buffer_reset_index;
@@ -278,11 +282,40 @@ module rv32_fetch_pipeline #(
             (LINE_BUFFER_STORAGE - 1);
     end
 
+    wire line_buffer_fill = response_enqueue_fire && !local_response_valid_reg &&
+        !response_error && FETCH_LINE_BUFFER_ENTRIES != 0;
+    generate
+        if (FETCH_LINE_BUFFER_SRAM != 0 && FETCH_LINE_BUFFER_ENTRIES != 0) begin: line_buffer_sram
+            wire [LINE_BUFFER_INDEX_WIDTH-1:0] held_index =
+                (local_response_pc_reg >> 4) & (LINE_BUFFER_STORAGE - 1);
+            wire [LINE_BUFFER_INDEX_WIDTH-1:0] ram_index = line_buffer_fill ?
+                line_buffer_response_index : local_request_valid ? line_buffer_request_index : held_index;
+            sram_fakeram #(.DEPTH(LINE_BUFFER_STORAGE), .WIDTH(128)) data_array (
+                .clk(clk_i), .en(!reset_i && (line_buffer_fill || local_request_valid || local_response_valid_reg)),
+                .we(line_buffer_fill), .wmask(1'b1), .addr(ram_index),
+                .wdata(response_line), .rdata(local_response_line_reg));
+        end else begin: line_buffer_registers
+            reg [127:0] data [0:LINE_BUFFER_STORAGE-1];
+            reg [127:0] response_data;
+            integer reset_index;
+            assign local_response_line_reg = response_data;
+            always @(posedge clk_i) begin
+                if (reset_i) begin
+                    response_data <= 0;
+                    for (reset_index = 0; reset_index < LINE_BUFFER_STORAGE; reset_index = reset_index + 1)
+                        data[reset_index] <= 0;
+                end else begin
+                    if (line_buffer_fill) data[line_buffer_response_index] <= response_line;
+                    if (local_request_valid) response_data <= data[line_buffer_request_index];
+                end
+            end
+        end
+    endgenerate
     assign line_buffer_hit = FETCH_LINE_BUFFER_ENTRIES != 0 &&
         line_buffer_valid[line_buffer_request_index] &&
-        line_buffer_tag[line_buffer_request_index] == next_request_pc_reg[31:4];
+        line_buffer_tag[line_buffer_request_index] == next_request_pc_reg[31:LINE_BUFFER_TAG_LOW];
     assign local_request_valid = request_available && !request_blocked_reg &&
-        line_buffer_hit &&
+        line_buffer_hit && !(FETCH_LINE_BUFFER_SRAM != 0 && line_buffer_fill) &&
         ((request_count_reg == 0) ||
             ((request_count_reg == 1) && local_response_valid_reg &&
                 response_enqueue_fire));
@@ -320,7 +353,11 @@ module rv32_fetch_pipeline #(
         if ((FETCH_LINE_BUFFER_ENTRIES != 0) &&
                 (FETCH_LINE_BUFFER_ENTRIES != 1) &&
                 (FETCH_LINE_BUFFER_ENTRIES != 2) &&
-                (FETCH_LINE_BUFFER_ENTRIES != 4)) begin
+                (FETCH_LINE_BUFFER_ENTRIES != 4) &&
+                (FETCH_LINE_BUFFER_ENTRIES != 8) &&
+                (FETCH_LINE_BUFFER_ENTRIES != 16) &&
+                (FETCH_LINE_BUFFER_ENTRIES != 32) &&
+                (FETCH_LINE_BUFFER_ENTRIES != 64)) begin
             $display("ERROR rv32_fetch_pipeline invalid line buffer entries=%0d",
                 FETCH_LINE_BUFFER_ENTRIES);
             $finish(1);
@@ -468,20 +505,16 @@ module rv32_fetch_pipeline #(
             local_response_valid_reg <= 1'b0;
             request_blocked_reg <= 1'b0;
             local_response_pc_reg <= 32'd0;
-            local_response_line_reg <= 128'd0;
             for (line_buffer_reset_index = 0;
                     line_buffer_reset_index < LINE_BUFFER_STORAGE;
                     line_buffer_reset_index = line_buffer_reset_index + 1) begin
                 line_buffer_valid[line_buffer_reset_index] <= 1'b0;
-                line_buffer_tag[line_buffer_reset_index] <= 28'd0;
-                line_buffer_data[line_buffer_reset_index] <= 128'd0;
             end
         end else begin
             if (response_enqueue_fire && !local_response_valid_reg &&
                     !response_error && FETCH_LINE_BUFFER_ENTRIES != 0) begin
                 line_buffer_valid[line_buffer_response_index] <= 1'b1;
-                line_buffer_tag[line_buffer_response_index] <= response_pc[31:4];
-                line_buffer_data[line_buffer_response_index] <= response_line;
+                line_buffer_tag[line_buffer_response_index] <= response_pc[31:LINE_BUFFER_TAG_LOW];
             end
             if (redirect_valid_i || icache_flush_reg ||
                     (response_enqueue_fire &&
@@ -491,7 +524,6 @@ module rv32_fetch_pipeline #(
             end else if (local_request_valid) begin
                 local_response_valid_reg <= 1'b1;
                 local_response_pc_reg <= next_request_pc_reg;
-                local_response_line_reg <= line_buffer_data[line_buffer_request_index];
             end else if (response_enqueue_fire) begin
                 local_response_valid_reg <= 1'b0;
             end

@@ -1,0 +1,103 @@
+{
+  "status": "All final local qualification gates passed; actual OJ submission and per-case limits are not verified",
+  "files": [
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-source-identity.json",
+      "file": "shared-mshr-source-identity.json",
+      "sha256": "293e7f2c4dd6abf208e78fb0355d0d22a46e9fc05c15e9b5269fa087a78e3e08"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-raw-ppa/opt/report.json",
+      "file": "shared-mshr-raw-ppa--opt--report.json",
+      "sha256": "1e88163d213bf83e6c5f4787b4e16d384ee5a7190f626be9682641a1b9459aa6"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-run/suite-results.json",
+      "file": "shared-mshr-run--suite-results.json",
+      "sha256": "93ae4ac5564dbc13bcdc0323a8da7cce75bea86f839de85dafeeaad5ca331186"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-retirement/results.json",
+      "file": "shared-mshr-retirement--results.json",
+      "sha256": "ea8c4c6a43cc06cc85afe98ce4656a351207129aaff83441dd0c3d19c8ecc041"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/linux-shared-mshr-native-runtime/results.json",
+      "file": "linux-shared-mshr-native-runtime--results.json",
+      "sha256": "85d266b3164301113a51e320df226dae56164c9ffebca9791e914bc434b3cb82"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/oj-shared-mshr-arm-build/results.json",
+      "file": "oj-shared-mshr-arm-build--results.json",
+      "sha256": "2f412b0c2fbcbf2f9a6568e539da21b3eac3e7ff2df2230fe208b00c0c9a9663"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/oj-shared-mshr-amd64-build/results.json",
+      "file": "oj-shared-mshr-amd64-build--results.json",
+      "sha256": "93ce642966f2e5e4b99fa7a2310b5eece13384e536fc877f4d63555fbb4c5aa7"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-run/snapshot.json",
+      "file": "shared-mshr-run--snapshot.json",
+      "sha256": "e6f532b6194c9bad112980d8febd49202bca4df3664f8c14878fac4ffe36e6ab"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/incremental-rtl-review.json",
+      "file": "incremental-rtl-review.json",
+      "sha256": "b8d4e223fa2d2772ade2f61d281d8852ae3c5d0c60cbe8a971ca335abd73f6c2"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-matrix.json",
+      "file": "shared-mshr-matrix.json",
+      "sha256": "272bb7f78204651da5d75794d102b6eccd41ebd1467b039502bc45c5d681c3a7"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/final-audit.json",
+      "file": "final-audit.json",
+      "sha256": "70c32dce8f04976829a2cce4eae33624dd236624f064aca74beccf0f2eedfb33"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-gates/strict-lint.exit.json",
+      "file": "shared-mshr-gates--strict-lint.exit.json",
+      "sha256": "5a01be64a1004dfa4e032dfb87f54b2964ba19e0109a20c0a60c4b2e1eaa3c88"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-gates/unit-hum.exit.json",
+      "file": "shared-mshr-gates--unit-hum.exit.json",
+      "sha256": "0f06315797fc204cef0ebe60cca9099adb9558273e2d9c1089bf264f65bd0e18"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-gates/suite.exit.json",
+      "file": "shared-mshr-gates--suite.exit.json",
+      "sha256": "25369d4307b9139ecad9788b425e2ab7762e2f2046b7105a40f7a3ab77ffdb25"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-gates/retirement.exit.json",
+      "file": "shared-mshr-gates--retirement.exit.json",
+      "sha256": "4c812742c01bdb7f6000ee36b395c4379c1cc60ae3bad6e50715c638f65938b4"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-gates/raw-ppa.exit.json",
+      "file": "shared-mshr-gates--raw-ppa.exit.json",
+      "sha256": "003ca8614ce75f11dd224aaca39b4a9c889deedef654831d351687dca543c27b"
+    },
+    {
+      "source": "/private/tmp/verilogcpu-tier3-resume-20261019/shared-mshr-gates/matrix.exit.json",
+      "file": "shared-mshr-gates--matrix.exit.json",
+      "sha256": "71d9ec63f99d6d4272d50f76001c3f999d82d4c2ec3a97f2d9cb9f71ed966ce9"
+    }
+  ],
+  "requirements_sources": [
+    {
+      "path": "/Users/zhaoruicheng/Downloads/CPU 2026 · ACMOJ.pdf",
+      "sha256": "08d6a8551b614cbf596e667dca54fe16a28039fb91bc31cd00be2eba33f75987"
+    },
+    {
+      "upstream_repository": "https://github.com/ACMClassCourse-2025/RISC-V-CPU-2026",
+      "revision": "302f0cf3cccdaa5de084a2120e0d950c663e4cf5"
+    },
+    {
+      "testcase_revision": "29f980727f7d99a1842a58f34091c7579ba3fe85"
+    }
+  ]
+}

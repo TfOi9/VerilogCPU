@@ -1,0 +1,79 @@
+{
+  "completed": true,
+  "passed": true,
+  "configuration": {
+    "FE_WIDTH": 4,
+    "BE_WIDTH": 4,
+    "PHYS_REGS": 59,
+    "LSQ_ENTRIES": 8,
+    "LOAD_VALUE_ENTRIES": 64,
+    "FETCH_LINE_BUFFER_ENTRIES": 64,
+    "FETCH_LINE_BUFFER_SRAM": 1,
+    "ROB_ENTRIES": 32,
+    "RECOVERY_WIDTH": 7
+  },
+  "source_sha256": {
+    "/private/tmp/verilogcpu-tier3-resume-20261019/RISC-V-CPU-2026/scripts/ram/sram_fakeram.sv": "c0a2389d5c3211fbd2fbca22a2e2e86edc38eafa9260407d72a55841274098cc",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32im_decoder.v": "3ce6671c29569caa6078ab0207a97af73ab4a7244cba962fd1d513c6cc093b84",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_branch_predictor.v": "2a3f4bc299aaf69fcb76a8b13b0c8965e1f296c2c137f9ac5625c8f4a055a371",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_fetch_pipeline.v": "1b4c161a3b467092ba60070ba2c4af6c4deb8d8857788b9e711d058d66efc10e",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_physical_register_file.v": "e6df809a811a34fd8b22b34390f877aab38f9cf567f318134a797a49856f7564",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_rename_unit.v": "83a3e861e89eb59d59ad7af707e56e72553e2aab640f93628336c4659c46c072",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_decode_rename_dispatch.v": "df3a4a6d22c1854006eeeca365858cc7b7dd3840d95bb6f5a8ebe2f2f9ce2ab5",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_reorder_buffer.v": "cb13fe26dce336c397afc7af19af5a3731e46825c1b47e46b99fb3e96da79c00",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_integer_reservation_station.v": "6485ce16127d8ecb238d4ce598b064930782ef8eefeb659bb554db61422d0ca4",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32i_alu.v": "e7d2dec003603f806349a3f0ac07bd1b1fe126b29648a00ffce359f80d40d9fd",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32m_multiplier.v": "c869c50e0339a87db83c536c2efe4bc0d4a2bd15b7e069053cf20f5663e42de4",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32m_divider.v": "96bb78f8b6062d5ecfacc7faa979bdd9061b15fcb131b7a49a855988251909b0",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_mdu_reservation_stations.v": "e701426dad6d37e1cb143c98d605e0d759930e0b77bd3812bb534b6f3d0be9aa",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_memory_reservation_station.v": "92e5aa41398a6ef7c7ccabfc867527a07e427a65378591685c7cab7e1b76cc88",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_load_store_queue.v": "dc8c95655eb28f29303cf670e4252129fc3a5385cd027c8267d4080bc8569de2",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_completion_writeback_network.v": "3cb43793c0dda0dc9d065bc1368096f33e1603fb1d46bd1b6ac73c35ed616950",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_issue_arbiter.v": "95b7a369a56a537aacdda5ed364c39f2d9f08d2acf40fd8672cacfdcf0c79c6d",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_cpu_core.v": "a4e3e446012fd67f127d030c475797b1714b74f5c1231fc8ff423cedaa014109",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32_ranked_select.v": "5d431c0a9f2c2bba8bf5d921c785fd8c485f253ac43d51eafae2a3cdeee72f11",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/rtl/rv32im_defs.vh": "f53bfa40d9f8847dd83af31ba01553722820e7f238f04fb9eb4b6fdba4312432",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/tb/rv32_cpu_core_width_tb.v": "556ca94230f2c62cca87885821a452847e9fbb490c25942dcf83f036b429607d",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/tb/rv32_cpu_core_tagged_tb.v": "add08661fc2a0047f160beb5477c1b597ba396f48b5c2763910a55ccc872b5cd",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/experiments/tier3_20261019/qualify_retirement.py": "cd9958bb5231226c91fbe22ad6d12b79776076096b5e831cb93524235d4ef64d",
+    "/private/tmp/verilogcpu-tier3-resume-20261019/compact-shared-mshr/tools/generate_core_vectors.py": "909fc73930e5147e892ca4b3c5280b6495b7d73558513308f643ab5dfe3497bc"
+  },
+  "tests": [
+    {
+      "bench": "rv32_cpu_core_width_tb",
+      "seed": 9217,
+      "passed": true,
+      "log_sha256": "9443b9efe0570ee5f4079b61adbda3071bab52dfa6c92e2a5e5565d1f36147c6"
+    },
+    {
+      "bench": "rv32_cpu_core_width_tb",
+      "seed": 9218,
+      "passed": true,
+      "log_sha256": "074f338db339a4874d3c8081c02276285e9cbd3a02e3683708f9c32aae3a2e14"
+    },
+    {
+      "bench": "rv32_cpu_core_width_tb",
+      "seed": 9219,
+      "passed": true,
+      "log_sha256": "6d8fa3a938ca718fc7051c3b986554a46e46357ff6ad2cdd34de300bf6c5ef8f"
+    },
+    {
+      "bench": "rv32_cpu_core_tagged_tb",
+      "seed": 9217,
+      "passed": true,
+      "log_sha256": "22bcbf5eedefee0b532b483b1d0be5f5877562e76eead10adc192e89a1716909"
+    },
+    {
+      "bench": "rv32_cpu_core_tagged_tb",
+      "seed": 9218,
+      "passed": true,
+      "log_sha256": "c1513b0d51545c8a6ae79ecfd36c2d8b39dceeee6ab26b370f3efb4be50568a1"
+    },
+    {
+      "bench": "rv32_cpu_core_tagged_tb",
+      "seed": 9219,
+      "passed": true,
+      "log_sha256": "ca64ddaa64893a4a1a8ded550d12fd60b6b03f457d7e67e7931f3ca57dea934d"
+    }
+  ]
+}

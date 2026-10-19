@@ -2,7 +2,9 @@
 
 module rv32_l1_cache_arbiter #(
     parameter PARALLEL = 0,
-    parameter D_TAGGED = 0
+    parameter D_TAGGED = 0,
+    parameter D_ID_WIDTH = 1,
+    parameter READ_ENTRIES = 2
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -16,7 +18,7 @@ module rv32_l1_cache_arbiter #(
     input  wire d_request_valid_i,
     output wire d_request_ready_o,
     input  wire d_request_write_i,
-    input wire d_request_id_i,
+    input wire [D_ID_WIDTH-1:0] d_request_id_i,
     input  wire [31:0] d_request_address_i,
     input  wire [127:0] d_request_write_data_i,
     input  wire [15:0] d_request_byte_enable_i,
@@ -25,7 +27,7 @@ module rv32_l1_cache_arbiter #(
     output wire [127:0] d_response_read_data_o,
     output wire d_response_error_o,
     output wire d_response_write_o,
-    output wire d_response_id_o,
+    output wire [D_ID_WIDTH-1:0] d_response_id_o,
     input  wire m_request_valid_i,
     output wire m_request_ready_o,
     input  wire [31:0] m_request_address_i,
@@ -53,19 +55,21 @@ module rv32_l1_cache_arbiter #(
     localparam OWNER_M = 2'd2;
 
     reg [1:0] owner;
-    reg owner_id;
+    integer read_reset;
+    reg [D_ID_WIDTH-1:0] owner_id;
     reg grant_locked;
     reg [1:0] grant_owner;
     wire [1:0] selected_owner;
     wire selected_valid;
-    reg [1:0] read_owner [0:1];
-    reg [1:0] read_id;
-    reg read_head;
-    reg read_tail;
-    reg [1:0] read_count;
+    localparam READ_INDEX_WIDTH = $clog2(READ_ENTRIES);
+    reg [1:0] read_owner [0:READ_ENTRIES-1];
+    reg [D_ID_WIDTH-1:0] read_id [0:READ_ENTRIES-1];
+    reg [READ_INDEX_WIDTH-1:0] read_head;
+    reg [READ_INDEX_WIDTH-1:0] read_tail;
+    reg [READ_INDEX_WIDTH:0] read_count;
     reg write_busy;
     reg [1:0] write_owner;
-    reg write_id;
+    reg [D_ID_WIDTH-1:0] write_id;
     wire request_fire = memory_request_valid_o && memory_request_ready_i;
     wire response_fire = memory_response_valid_i && memory_response_ready_o;
     wire parallel_busy = read_count != 0 || write_busy;
@@ -75,7 +79,7 @@ module rv32_l1_cache_arbiter #(
         (memory_response_write_i ? write_busy : read_count != 0) : busy;
     wire request_available = PARALLEL != 0 ?
         (selected_owner == OWNER_M ? !parallel_busy :
-            (memory_request_write_o ? !write_busy : read_count < 2)) : !busy;
+            (memory_request_write_o ? !write_busy : read_count < READ_ENTRIES)) : !busy;
 
 
     assign selected_owner = grant_locked ? grant_owner :
@@ -119,20 +123,21 @@ module rv32_l1_cache_arbiter #(
     assign d_response_error_o = memory_response_error_i;
     assign m_response_error_o = memory_response_error_i;
     assign d_response_write_o = memory_response_write_i;
-    assign d_response_id_o = D_TAGGED != 0 && (PARALLEL != 0 ?
-        (memory_response_write_i ? write_id : read_id[read_head]) : owner_id);
+    assign d_response_id_o = D_TAGGED != 0 ? (PARALLEL != 0 ?
+        (memory_response_write_i ? write_id : read_id[read_head]) : owner_id) : 0;
     assign memory_response_ready_o = !reset_i && response_owned &&
         (response_owner == OWNER_I ? i_response_ready_i :
          (response_owner == OWNER_D ? d_response_ready_i : m_response_ready_i));
 
     always @(posedge clk_i) begin
         if (reset_i) begin
-            read_head <= 1'b0;
-            read_tail <= 1'b0;
+            read_head <= {READ_INDEX_WIDTH{1'b0}};
+            read_tail <= {READ_INDEX_WIDTH{1'b0}};
             read_count <= 0;
-            read_owner[0] <= OWNER_I;
-            read_owner[1] <= OWNER_I;
-            read_id <= 0;
+            for (read_reset = 0; read_reset < READ_ENTRIES; read_reset = read_reset + 1) begin
+                read_owner[read_reset] <= OWNER_I;
+                read_id[read_reset] <= 0;
+            end
             write_busy <= 1'b0;
             write_owner <= OWNER_D;
             write_id <= 0;
@@ -148,15 +153,15 @@ module rv32_l1_cache_arbiter #(
             if (request_fire && memory_request_write_o) begin
                 write_busy <= 1'b1;
                 write_owner <= selected_owner;
-                write_id <= selected_owner == OWNER_D && d_request_id_i;
+                write_id <= selected_owner == OWNER_D ? d_request_id_i : 0;
             end
             if (request_fire && !memory_request_write_o) begin
                 read_owner[read_tail] <= selected_owner;
-                read_id[read_tail] <= selected_owner == OWNER_D && d_request_id_i;
-                read_tail <= !read_tail;
+                read_id[read_tail] <= selected_owner == OWNER_D ? d_request_id_i : 0;
+                read_tail <= read_tail + 1'b1;
             end
             if (response_fire && !memory_response_write_i)
-                read_head <= !read_head;
+                read_head <= read_head + 1'b1;
         end
     end
 
@@ -179,7 +184,7 @@ module rv32_l1_cache_arbiter #(
         end else if (memory_request_valid_o && memory_request_ready_i) begin
             busy <= 1'b1;
             owner <= selected_owner;
-            owner_id <= selected_owner == OWNER_D && d_request_id_i;
+            owner_id <= selected_owner == OWNER_D ? d_request_id_i : 0;
             grant_locked <= 1'b0;
         end else if (memory_request_valid_o && !grant_locked) begin
             grant_locked <= 1'b1;
@@ -350,7 +355,9 @@ endmodule
 
 module rv32_l1_cache_axi_bridge #(
     parameter PARALLEL = 0,
-    parameter D_TAGGED = 0
+    parameter D_TAGGED = 0,
+    parameter D_ID_WIDTH = 1,
+    parameter READ_ENTRIES = 2
 ) (
     input  wire clk_i,
     input  wire reset_i,
@@ -364,7 +371,7 @@ module rv32_l1_cache_axi_bridge #(
     input  wire d_request_valid_i,
     output wire d_request_ready_o,
     input  wire d_request_write_i,
-    input wire d_request_id_i,
+    input wire [D_ID_WIDTH-1:0] d_request_id_i,
     input  wire [31:0] d_request_address_i,
     input  wire [127:0] d_request_write_data_i,
     input  wire [15:0] d_request_byte_enable_i,
@@ -373,7 +380,7 @@ module rv32_l1_cache_axi_bridge #(
     output wire [127:0] d_response_read_data_o,
     output wire d_response_error_o,
     output wire d_response_write_o,
-    output wire d_response_id_o,
+    output wire [D_ID_WIDTH-1:0] d_response_id_o,
     input  wire m_request_valid_i,
     output wire m_request_ready_o,
     input  wire [31:0] m_request_address_i,
@@ -413,7 +420,7 @@ module rv32_l1_cache_axi_bridge #(
     wire memory_response_error;
     wire memory_response_write;
 
-    rv32_l1_cache_arbiter #(.PARALLEL(PARALLEL), .D_TAGGED(D_TAGGED)) arbiter (
+    rv32_l1_cache_arbiter #(.PARALLEL(PARALLEL), .D_TAGGED(D_TAGGED), .D_ID_WIDTH(D_ID_WIDTH), .READ_ENTRIES(READ_ENTRIES)) arbiter (
         .clk_i(clk_i), .reset_i(reset_i),
         .i_request_valid_i(i_request_valid_i),
         .i_request_ready_o(i_request_ready_o),
@@ -527,7 +534,7 @@ module rv32_l1_cache_axi_bridge #(
         .bresp_i(bresp_i), .bvalid_i(bvalid_i), .bready_o(legacy_bready)
     );
 
-    rv32_cache_axi4_lite_parallel_adapter parallel_adapter (
+    rv32_cache_axi4_lite_parallel_adapter #(.READ_ENTRIES(READ_ENTRIES)) parallel_adapter (
         .clk_i(clk_i), .reset_i(reset_i || PARALLEL == 0),
         .request_valid_i(memory_request_valid && PARALLEL != 0),
         .request_ready_o(parallel_request_ready),
@@ -551,7 +558,7 @@ module rv32_l1_cache_axi_bridge #(
     );
 endmodule
 
-module rv32_cache_axi4_lite_parallel_adapter (
+module rv32_cache_axi4_lite_parallel_adapter #(parameter READ_ENTRIES = 2) (
     input  wire clk_i,
     input  wire reset_i,
     input  wire request_valid_i,
@@ -584,19 +591,20 @@ module rv32_cache_axi4_lite_parallel_adapter (
     input  wire bvalid_i,
     output wire bready_o
 );
-    reg [1:0] read_valid;
-    reg [1:0] read_done;
-    reg [1:0] read_error;
-    reg [1:0] read_word;
-    reg [31:0] read_address [0:1];
-    reg [127:0] read_data [0:1];
-    reg [2:0] ar_count [0:1];
-    reg [2:0] r_count [0:1];
-    reg read_tail;
-    reg ar_head;
-    reg r_head;
-    reg response_head;
-    reg [1:0] read_count;
+    localparam READ_INDEX_WIDTH = $clog2(READ_ENTRIES);
+    reg [READ_ENTRIES-1:0] read_valid;
+    reg [READ_ENTRIES-1:0] read_done;
+    reg [READ_ENTRIES-1:0] read_error;
+    reg [READ_ENTRIES-1:0] read_word;
+    reg [31:0] read_address [0:READ_ENTRIES-1];
+    reg [127:0] read_data [0:READ_ENTRIES-1];
+    reg [2:0] ar_count [0:READ_ENTRIES-1];
+    reg [2:0] r_count [0:READ_ENTRIES-1];
+    reg [READ_INDEX_WIDTH-1:0] read_tail;
+    reg [READ_INDEX_WIDTH-1:0] ar_head;
+    reg [READ_INDEX_WIDTH-1:0] r_head;
+    reg [READ_INDEX_WIDTH-1:0] response_head;
+    reg [READ_INDEX_WIDTH:0] read_count;
     reg write_valid;
     reg write_done;
     reg write_error;
@@ -621,7 +629,7 @@ module rv32_cache_axi4_lite_parallel_adapter (
 
     assign request_ready_o = !reset_i && (request_write_i ?
         (!write_valid || (response_fire && select_write)) :
-        (read_count < 2 || (response_fire && !select_write)));
+        (read_count < READ_ENTRIES || (response_fire && !select_write)));
     assign response_valid_o = !reset_i && (select_write ? write_response : read_response);
     assign response_write_o = select_write;
     assign response_error_o = select_write ? write_error : read_error[response_head];
@@ -660,7 +668,7 @@ module rv32_cache_axi4_lite_parallel_adapter (
             b_count <= 0;
             response_locked <= 0;
             locked_write <= 0;
-            for (index = 0; index < 2; index = index + 1) begin
+            for (index = 0; index < READ_ENTRIES; index = index + 1) begin
                 read_address[index] <= 0;
                 read_data[index] <= 0;
                 ar_count[index] <= 0;
@@ -679,7 +687,7 @@ module rv32_cache_axi4_lite_parallel_adapter (
             endcase
             if (arvalid_o && arready_i) begin
                 ar_count[ar_head] <= ar_count[ar_head] + 1'b1;
-                if (ar_count[ar_head] + 3'd1 == ar_words) ar_head <= !ar_head;
+                if (ar_count[ar_head] + 3'd1 == ar_words) ar_head <= ar_head + 1'b1;
             end
             if (rvalid_i && rready_o) begin
                 r_count[r_head] <= r_count[r_head] + 1'b1;
@@ -688,7 +696,7 @@ module rv32_cache_axi4_lite_parallel_adapter (
                 else read_data[r_head][r_count[r_head][1:0]*32 +: 32] <= rdata_i;
                 if (r_count[r_head] + 3'd1 == r_words) begin
                     read_done[r_head] <= 1'b1;
-                    r_head <= !r_head;
+                    r_head <= r_head + 1'b1;
                 end
             end
             if (awvalid_o && awready_i) aw_count <= aw_count + 1'b1;
@@ -702,7 +710,7 @@ module rv32_cache_axi4_lite_parallel_adapter (
                 if (select_write) write_valid <= 1'b0;
                 else begin
                     read_valid[response_head] <= 1'b0;
-                    response_head <= !response_head;
+                    response_head <= response_head + 1'b1;
                 end
             end
             if (request_fire) begin
@@ -728,7 +736,7 @@ module rv32_cache_axi4_lite_parallel_adapter (
                     read_data[read_tail] <= 0;
                     ar_count[read_tail] <= 0;
                     r_count[read_tail] <= 0;
-                    read_tail <= !read_tail;
+                    read_tail <= read_tail + 1'b1;
                 end
             end
         end

@@ -1,0 +1,21 @@
+{
+  "completed": true,
+  "source_sha256": {
+    "rtl/rv32_l1_data_cache.v": "9348c5d5a3dab5581c8386804b944803d0d0d6031d7a348bd1a6c7aa7cd67faa",
+    "rtl/rv32_load_store_queue.v": "dc8c95655eb28f29303cf670e4252129fc3a5385cd027c8267d4080bc8569de2",
+    "rtl/rv32_physical_register_file.v": "e6df809a811a34fd8b22b34390f877aab38f9cf567f318134a797a49856f7564",
+    "rtl/rv32_reorder_buffer.v": "cb13fe26dce336c397afc7af19af5a3731e46825c1b47e46b99fb3e96da79c00",
+    "rtl/rv32_fetch_pipeline.v": "1b4c161a3b467092ba60070ba2c4af6c4deb8d8857788b9e711d058d66efc10e",
+    "rtl/student_top.v": "4e4773c755fd1d4b477a9c99b5b7c92df051d57e543c9a0aff3729be8c7a5184"
+  },
+  "reviewed_invariants": [
+    "MSHR writeback payload is accepted before a read can overwrite its shared buffer",
+    "MSHR allocation and response ownership initialize all live payloads",
+    "Compressed cache tags retain the full legal RAM address and reject high addresses",
+    "Fetch tags retain all non-index bits including bit 31",
+    "PRF write priority remains highest-lane wins and x0 remains zero",
+    "Load-value invalidation is conservative and retains address-fault/rollback/identity guards",
+    "ROB payload fields are initialized at allocation before valid retirement or recovery"
+  ],
+  "unresolved_code_findings": []
+}

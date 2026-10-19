@@ -89,6 +89,7 @@ module rv32_l1_cache_parameter_tb;
         .request_rob_tag_i(0), .response_rob_tag_o(),
         .request_id_i(2'd0), .response_id_o(),
         .memory_response_write_i(1'b0),
+        .prefetch_enable_i(1'b0), .idle_o(),
         .clk_i(clk_i), .reset_i(reset_i),
         .request_valid_i(d_request_valid),
         .request_ready_o(d_request_ready),

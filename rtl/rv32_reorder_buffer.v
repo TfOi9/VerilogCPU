@@ -657,31 +657,20 @@ module rv32_reorder_buffer #(
             for (sequential_entry_index = 0;
                     sequential_entry_index < ROB_ENTRIES;
                     sequential_entry_index = sequential_entry_index + 1) begin
+                // Allocating a live entry initializes all payload fields.
                 entry_busy[sequential_entry_index] <= 1'b0;
                 entry_generation[sequential_entry_index] <=
                     {ROB_GENERATION_WIDTH{1'b0}};
                 entry_complete[sequential_entry_index] <= 1'b0;
-                entry_pc[sequential_entry_index] <= 32'd0;
-                entry_instruction[sequential_entry_index] <= 32'd0;
                 entry_op[sequential_entry_index] <=
                     {`RV32_OP_WIDTH{1'b0}};
                 entry_writes_rd[sequential_entry_index] <= 1'b0;
-                entry_rd[sequential_entry_index] <= 5'd0;
                 entry_new_phys[sequential_entry_index] <=
                     {PHYS_REG_ADDR_WIDTH{1'b0}};
-                entry_old_phys[sequential_entry_index] <=
-                    {PHYS_REG_ADDR_WIDTH{1'b0}};
-                entry_value[sequential_entry_index] <= 32'd0;
                 entry_control_valid[sequential_entry_index] <= 1'b0;
                 entry_control_taken[sequential_entry_index] <= 1'b0;
-                entry_predicted_next_pc[sequential_entry_index] <= 32'd0;
-                entry_next_pc[sequential_entry_index] <= 32'd0;
                 entry_lsq_valid[sequential_entry_index] <= 1'b0;
-                entry_lsq_tag[sequential_entry_index] <=
-                    {LSQ_TAG_WIDTH{1'b0}};
                 entry_exception_valid[sequential_entry_index] <= 1'b0;
-                entry_exception_cause[sequential_entry_index] <= 4'd0;
-                entry_exception_tval[sequential_entry_index] <= 32'd0;
                 next_generation[sequential_entry_index] <=
                     {ROB_GENERATION_WIDTH{1'b0}};
             end

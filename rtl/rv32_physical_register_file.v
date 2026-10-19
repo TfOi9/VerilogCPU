@@ -27,7 +27,6 @@ module rv32_physical_register_file #(
 
     integer read_index;
     integer bypass_index;
-    integer write_index;
 
     function integer address_width_for_count;
         input integer count;
@@ -114,31 +113,43 @@ module rv32_physical_register_file #(
         end
     end
 
-    always @(posedge clk_i) begin
-        if (reset_i) begin
-            initialized <= {PHYS_REGS{1'b0}};
-        end else begin
-            registers[0] <= 32'd0;
-            for (write_index = 0; write_index < BE_WIDTH;
-                    write_index = write_index + 1) begin
-                if (write_valid_i[write_index] &&
-                        (write_addr_i[
-                            write_index*PHYS_REG_ADDR_WIDTH +:
-                            PHYS_REG_ADDR_WIDTH] !=
-                        {PHYS_REG_ADDR_WIDTH{1'b0}}) &&
-                        ({1'b0, write_addr_i[
-                            write_index*PHYS_REG_ADDR_WIDTH +:
-                            PHYS_REG_ADDR_WIDTH]} < PHYS_REGS_LIMIT)) begin
-                    registers[write_addr_i[
-                        write_index*PHYS_REG_ADDR_WIDTH +:
-                        PHYS_REG_ADDR_WIDTH]] <=
-                        write_data_i[write_index*32 +: 32];
-                    initialized[write_addr_i[
-                        write_index*PHYS_REG_ADDR_WIDTH +:
-                        PHYS_REG_ADDR_WIDTH]] <= 1'b1;
+    genvar write_word, write_lane, write_other;
+    generate
+        for (write_word = 0; write_word < PHYS_REGS; write_word = write_word + 1) begin: write_word_decode
+            if (write_word == 0) begin: zero_word
+                always @(posedge clk_i) begin
+                    initialized[write_word] <= 1'b0;
+                    registers[write_word] <= 32'd0;
+                end
+            end else begin: stored_word
+                wire [BE_WIDTH-1:0] match;
+                wire [BE_WIDTH-1:0] selected;
+                wire [31:0] data_tree [1:2*BE_WIDTH-1];
+                for (write_lane = 0; write_lane < BE_WIDTH; write_lane = write_lane + 1) begin: lane
+                    localparam [PHYS_REG_ADDR_WIDTH-1:0] ADDRESS = write_word;
+                    wire [BE_WIDTH-1:0] higher_match;
+                    assign match[write_lane] = write_valid_i[write_lane] &&
+                        write_addr_i[write_lane*PHYS_REG_ADDR_WIDTH +: PHYS_REG_ADDR_WIDTH] == ADDRESS;
+                    for (write_other = 0; write_other < BE_WIDTH; write_other = write_other + 1) begin: priority_mask
+                        assign higher_match[write_other] = write_other > write_lane ? match[write_other] : 1'b0;
+                    end
+                    assign selected[write_lane] = match[write_lane] && !(|higher_match);
+                    assign data_tree[BE_WIDTH+write_lane] =
+                        {32{selected[write_lane]}} & write_data_i[write_lane*32 +: 32];
+                end
+                for (write_lane = 1; write_lane < BE_WIDTH; write_lane = write_lane + 1) begin: merge_data
+                    assign data_tree[write_lane] = data_tree[2*write_lane] | data_tree[2*write_lane+1];
+                end
+                always @(posedge clk_i) begin
+                    if (reset_i)
+                        initialized[write_word] <= 1'b0;
+                    else if (|match) begin
+                        initialized[write_word] <= 1'b1;
+                        registers[write_word] <= data_tree[1];
+                    end
                 end
             end
         end
-    end
+    endgenerate
 
 endmodule

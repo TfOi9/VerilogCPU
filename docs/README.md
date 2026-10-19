@@ -2,7 +2,7 @@
 
 此目录保存各个 CPU 元件的中文设计文档。
 
-当前默认配置的 DeepSeek 分支对照、面积预算及 IPC/频率结果见 [deepseek-crosscheck-20261018.md](deepseek-crosscheck-20261018.md)。前一阶段面积优化见 [area-optimization-20261018.md](area-optimization-20261018.md)，PRF 的有效位复位结构见 [prf.md](prf.md)。
+当前默认配置、100 分门槛、完整验证及 OJ 封装见 [tier3-optimization-20261019.md](tier3-optimization-20261019.md)。此前配置的对照保留在各阶段报告中，不代表当前默认值。
 
 每个 RTL 元件完成时，应记录其内部结构、主要逻辑和模块接线。
 

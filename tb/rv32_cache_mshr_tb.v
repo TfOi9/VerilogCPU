@@ -109,6 +109,7 @@ module rv32_cache_mshr_tb;
         .STORE_DIRECTORY_ENTRIES(DIRECTORY), .AUX_RETURNS(AUX), .NONBLOCKING(1), .MSHR_ENTRIES(2)) cache (
         .memory_request_id_o(mem_id), .memory_response_id_i(cache_resp_id),
         .request_rob_tag_i(req_rob_tag), .response_rob_tag_o(resp_rob_tag),
+        .prefetch_enable_i(1'b0), .idle_o(),
         .clk_i(clk), .reset_i(reset), .request_valid_i(req_valid),
         .request_ready_o(req_ready), .store_confirm_valid_o(confirm_valid), .store_confirm_id_o(confirm_id),
         .store_confirm_rob_tag_o(confirm_tag),

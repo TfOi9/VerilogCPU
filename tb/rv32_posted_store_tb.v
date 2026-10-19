@@ -151,6 +151,7 @@ module rv32_posted_store_tb;
         .request_rob_tag_i(request_rob), .response_rob_tag_o(response_rob),
         .request_id_i(request_id), .response_id_o(response_id),
         .memory_response_write_i(1'b0),
+        .prefetch_enable_i(1'b0), .idle_o(),
         .clk_i(clk_i), .reset_i(reset_i),
         .request_valid_i(cache_request_valid),
         .request_ready_o(cache_request_ready),

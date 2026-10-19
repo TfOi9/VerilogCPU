@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.DEFAULT_GOAL := doctor
+.DEFAULT_GOAL := code
 
 .PHONY: deep-unit
 deep-unit:
@@ -196,7 +196,7 @@ lint: mshr-lint issue-lint core-lint memory-lint main-memory-lint icache-lint dc
 	@$(TIMEOUT) 30 yosys -q -p \
 		'read_verilog -D SYNTHESIS rtl/rv32_ranked_select.v rtl/rv32_completion_writeback_network.v; chparam -set BE_WIDTH 4 -set SOURCE_COUNT 6 -set PHYS_REGS 96 -set PHYS_REG_ADDR_WIDTH 7 -set ROB_TAG_WIDTH 8 rv32_completion_writeback_network; hierarchy -check -top rv32_completion_writeback_network; proc; memory; opt; select -assert-none t:$$dlatch t:$$div t:$$mod t:$$divfloor t:$$modfloor; check'
 
-unit: lsq-handoff-unit prf-reset-unit mshr-unit store-confirm-unit store-directory-unit int-rs-reuse-unit response-owner-unit deep-unit issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
+unit: mshr-buffer-lifetime-unit fetch-buffer-tags-unit load-value-bounds-unit mshr-waiter-unit load-value-aliases-unit load-values-unit tier3-paths-unit lsq-handoff-unit prf-reset-unit mshr-unit store-confirm-unit store-directory-unit int-rs-reuse-unit response-owner-unit deep-unit issue-unit core-unit memory-unit main-memory-unit icache-unit dcache-unit cache-bridge-unit predictor-unit fetch-unit dispatch-unit
 	@mkdir -p build
 	@$(TIMEOUT) 30 iverilog -g2005 -Wall -I rtl \
 		-s rv32im_decoder_tb -o build/rv32im_decoder_tb.vvp \
@@ -1428,3 +1428,41 @@ prf-reset-unit:
 .PHONY: lsq-handoff-unit
 lsq-handoff-unit:
 	@$(TIMEOUT) 300 $(PYTHON) tools/test_lsq_handoff.py
+
+.PHONY: tier3-paths-unit
+tier3-paths-unit:
+	@$(TIMEOUT) 1200 $(PYTHON) tools/test_tier3_paths.py
+
+.PHONY: load-values-unit
+load-values-unit:
+	@$(TIMEOUT) 1500 $(PYTHON) tools/test_load_values.py
+
+.PHONY: load-value-aliases-unit
+load-value-aliases-unit:
+	@$(TIMEOUT) 1500 $(PYTHON) tools/test_load_value_aliases.py
+
+.PHONY: code
+OJ_FRAMEWORK_DIR ?= third_party/cpu2026
+OJ_BUILD ?= build/oj
+OJ_JOBS ?= 2
+code:
+	$(MAKE) --no-print-directory -f "$(OJ_FRAMEWORK_DIR)/Makefile" code \
+		FILELIST="$(FILELIST)" BUILD="$(OJ_BUILD)" JOBS="$(OJ_JOBS)" \
+		PYTHON="$(PYTHON)" APPIMAGE="$(APPIMAGE)"
+
+.PHONY: load-value-bounds-unit
+load-value-bounds-unit:
+	@$(TIMEOUT) 300 $(PYTHON) tools/test_load_value_bounds.py
+
+.PHONY: mshr-waiter-unit
+mshr-waiter-unit:
+	@$(TIMEOUT) 1200 $(PYTHON) tools/test_tier3_paths.py --waiters 2 --out build/tier3-waiters2
+	@$(TIMEOUT) 300 $(PYTHON) tools/test_mshr_waiter_overflow.py
+
+.PHONY: fetch-buffer-tags-unit
+fetch-buffer-tags-unit:
+	@$(TIMEOUT) 300 $(PYTHON) tools/test_fetch_buffer_tags.py
+
+.PHONY: mshr-buffer-lifetime-unit
+mshr-buffer-lifetime-unit:
+	@$(TIMEOUT) 600 $(PYTHON) tools/test_mshr_buffer_lifetime.py
